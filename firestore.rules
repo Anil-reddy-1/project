@@ -1,0 +1,155 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules — B2B Wholesale Marketplace
+ * Derived from: tech-spec.md §14, rules.md §1
+ *
+ * Core invariant (rules.md §1):
+ *   All writes to orders, users.role, users.status go through Express → Admin SDK.
+ *   Client-side writes to these collections are disabled at this level.
+ *
+ * Exception: live_locations/{partnerUid} — delivery partner writes their own
+ *   location directly from the client (Firestore onSnapshot replaces RTDB for this).
+ *
+ * Frontend clients are allowed READ-ONLY real-time listeners (onSnapshot) for
+ *   orders, shops, and live_locations — this is by design (tech-spec.md §1.1).
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isActive() {
+      return isAuthenticated() && request.auth.token.status == 'active';
+    }
+
+    function isActiveUser() {
+      return isAuthenticated() && isActive();
+    }
+
+    // ─── users/{uid} ─────────────────────────────────────────────────────────
+    //
+    // Read: a user can read their own doc; Admin can read all.
+    // Write: BLOCKED for clients — all writes via Express Admin SDK.
+    //   (role, status changes are server-authoritative per rules.md §1)
+
+    match /users/{uid} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == uid || isAdmin());
+      allow write: if false;
+    }
+
+    // ─── shops/{shopId} ──────────────────────────────────────────────────────
+    //
+    // Read: any authenticated user (retailers need to browse shops).
+    // Write: BLOCKED for clients — wholesaler shop updates go through Express.
+
+    match /shops/{shopId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ─── items/{shopId}/products/{itemId} ────────────────────────────────────
+    //
+    // Read: any authenticated user (catalog browsing).
+    // Write: BLOCKED for clients — stock updates go through Express transactions.
+
+    match /shops/{shopId}/products/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ─── orders/{orderId} ────────────────────────────────────────────────────
+    //
+    // Read: retailerUid, assignedPartnerUid, shop's ownerUid, or Admin.
+    //   Note: shopOwnerUid lookup uses get() — one extra Firestore read per
+    //   security rule evaluation. Acceptable at this scale.
+    // Write: BLOCKED for clients — all state transitions via Express (rules.md §2).
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.retailerUid ||
+        request.auth.uid == resource.data.assignedPartnerUid ||
+        request.auth.uid == get(/databases/$(database)/documents/shops/$(resource.data.shopId)).data.ownerUid
+      );
+      allow write: if false;
+    }
+
+    // ─── ledger_entries/{entryId} ─────────────────────────────────────────────
+    //
+    // Read: the delivery partner who collected cash, the wholesaler who must
+    //   confirm, or Admin.
+    // Write: BLOCKED for clients — ledger entries created/updated via Express.
+
+    match /ledger_entries/{entryId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.partnerUid ||
+        request.auth.uid == resource.data.wholesalerUid
+      );
+      allow write: if false;
+    }
+
+    // ─── disputes/{disputeId} ────────────────────────────────────────────────
+    //
+    // Read: the retailer who raised it, Admin, or the wholesaler whose shop
+    //   order is disputed (shopOwnerUid lookup).
+    // Write: BLOCKED for clients — dispute creation/resolution via Express.
+
+    match /disputes/{disputeId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.raisedByUid ||
+        request.auth.uid == get(/databases/$(database)/documents/orders/$(resource.data.orderId)).data.shopOwnerUid
+      );
+      allow write: if false;
+    }
+
+    // ─── delivery_partners_meta/{uid} ────────────────────────────────────────
+    //
+    // Read: the partner themselves or Admin.
+    // Write: BLOCKED for clients — meta updated via Express (isOnline toggle,
+    //   geohash sync, activeOrderIds). Exception: isOnline and geohash will
+    //   be writable by the partner themselves in Phase 5 (delivery execution).
+    //   For now write stays blocked; open it in Phase 5 when needed.
+
+    match /delivery_partners_meta/{uid} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.uid == uid
+      );
+      allow write: if false;
+    }
+
+    // ─── live_locations/{partnerUid} ─────────────────────────────────────────
+    //
+    // Read: any authenticated user with an active order referencing this partner.
+    //   In practice: retailer tracking their order, wholesaler confirming handoff.
+    //   We allow any authenticated user for now; tighter scoping in Phase 5.
+    // Write: only the delivery partner themselves (client-side GPS pings) — this
+    //   is the ONE collection with client writes enabled (high-frequency location
+    //   updates that bypass Express to avoid latency).
+
+    match /live_locations/{partnerUid} {
+      allow read: if isAuthenticated();
+      allow write: if isActiveUser() &&
+        hasRole('delivery_partner') &&
+        request.auth.uid == partnerUid;
+    }
+
+  }
+}
