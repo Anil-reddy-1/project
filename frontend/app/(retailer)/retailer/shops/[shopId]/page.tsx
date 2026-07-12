@@ -41,6 +41,11 @@ const DAY_LABELS: Record<string, string> = {
   thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
 };
 
+type CartItem = {
+  item: Item;
+  qty: number;
+};
+
 export default function ShopDetailPage() {
   const router = useRouter();
   const { shopId } = useParams<{ shopId: string }>();
@@ -53,6 +58,32 @@ export default function ShopDetailPage() {
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const [cart, setCart] = useState<Record<string, CartItem>>({});
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const updateCartQty = (item: Item, delta: number) => {
+    setCart((prev) => {
+      const current = prev[item.itemId]?.qty || 0;
+      const nextQty = current + delta;
+      
+      if (nextQty <= 0) {
+        const copy = { ...prev };
+        delete copy[item.itemId];
+        return copy;
+      }
+      if (nextQty > item.stockQty) return prev;
+
+      return {
+        ...prev,
+        [item.itemId]: { item, qty: nextQty },
+      };
+    });
+  };
+
+  const cartItems = Object.values(cart);
+  const totalItems = cartItems.reduce((acc, ci) => acc + ci.qty, 0);
+  const totalPrice = cartItems.reduce((acc, ci) => acc + (ci.qty * ci.item.price), 0);
 
   useEffect(() => {
     if (!user || !shopId) return;
@@ -260,56 +291,63 @@ export default function ShopDetailPage() {
                     </div>
                   </div>
 
-                  <div className="sdetail-items-list">
-                    {filteredItems.map((item) => (
-                      <div 
-                        key={item.itemId} 
-                        className="sdetail-item-row tap-target"
-                        onClick={() => { setSelectedItem(item); setActiveImageIndex(0); }}
-                      >
-                        {/* Item images if available */}
-                        {item.images && item.images.length > 0 && (
-                          <div className="sdetail-item-image">
-                            <img 
-                              src={item.images[0].url} 
-                              alt={item.name}
-                              loading="lazy"
-                            />
-                            {item.images.length > 1 && (
-                              <span className="sdetail-image-count">+{item.images.length - 1}</span>
-                            )}
-                          </div>
-                        )}
-                        
-                        <div className="sdetail-item-info">
-                          <span className="sdetail-item-name">{item.name}</span>
-                          <span className="sdetail-item-unit">per {item.unit}</span>
-                        </div>
-                        
-                        <div className="sdetail-item-right">
-                          <span className="sdetail-item-price">&#8377;{item.price.toLocaleString("en-IN")}</span>
-                          <span className={`sdetail-item-stock ${item.stockQty === 0 ? "sdetail-item-stock--out" : ""}`}>
-                            {item.stockQty === 0 ? (
+                  <div className="sdetail-items-grid">
+                    {filteredItems.map((item) => {
+                      const qty = cart[item.itemId]?.qty || 0;
+                      return (
+                        <div 
+                          key={item.itemId} 
+                          className="sdetail-item-card tap-target"
+                          onClick={() => { setSelectedItem(item); setActiveImageIndex(0); }}
+                        >
+                          <div className="sdetail-item-card-image">
+                            {item.images && item.images.length > 0 ? (
                               <>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <circle cx="12" cy="12" r="10"/>
-                                  <line x1="15" y1="9" x2="9" y2="15"/>
-                                  <line x1="9" y1="9" x2="15" y2="15"/>
-                                </svg>
-                                Out of stock
+                                <img 
+                                  src={item.images[0].url} 
+                                  alt={item.name}
+                                  loading="lazy"
+                                />
+                                {item.images.length > 1 && (
+                                  <span className="sdetail-image-count">+{item.images.length - 1}</span>
+                                )}
                               </>
                             ) : (
-                              <>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M20 6L9 17l-5-5"/>
+                              <div className="sdetail-no-image-fallback">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                                  <polyline points="21 15 16 10 5 21"/>
                                 </svg>
-                                {item.stockQty} available
-                              </>
+                              </div>
                             )}
-                          </span>
+                          </div>
+                          
+                          <div className="sdetail-item-card-body">
+                            <span className="sdetail-item-name">{item.name}</span>
+                            <span className="sdetail-item-unit">per {item.unit}</span>
+                            
+                            <div className="sdetail-item-card-footer">
+                              <span className="sdetail-item-price">&#8377;{item.price.toLocaleString("en-IN")}</span>
+                              
+                              <div className="sdetail-item-card-action" onClick={(e) => e.stopPropagation()}>
+                                {item.stockQty === 0 ? (
+                                  <span className="sdetail-item-stock sdetail-item-stock--out">Out of stock</span>
+                                ) : qty > 0 ? (
+                                  <div className="sdetail-qty-control">
+                                    <button onClick={() => updateCartQty(item, -1)}>-</button>
+                                    <span>{qty}</span>
+                                    <button onClick={() => updateCartQty(item, 1)}>+</button>
+                                  </div>
+                                ) : (
+                                  <button className="sdetail-add-btn" onClick={() => updateCartQty(item, 1)}>ADD</button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -405,6 +443,76 @@ export default function ShopDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Sticky Zomato Cart Bar */}
+        {totalItems > 0 && (
+          <div className="zomato-cart-bar">
+            <div className="zomato-cart-bar-left">
+              <span className="zomato-cart-count">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</span>
+              <span className="zomato-cart-total">&#8377;{totalPrice.toLocaleString("en-IN")}</span>
+              <span className="zomato-cart-plus-taxes">plus taxes</span>
+            </div>
+            <button className="zomato-cart-btn tap-target" onClick={() => setIsCartOpen(true)}>
+              View Cart
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Cart Drawer Modal */}
+        {isCartOpen && (
+          <div className="sdetail-modal-overlay" onClick={() => setIsCartOpen(false)}>
+            <div className="sdetail-cart-drawer" onClick={(e) => e.stopPropagation()}>
+              <div className="sdetail-cart-header">
+                <h3 className="sdetail-cart-title">Your Cart</h3>
+                <button className="sdetail-modal-close tap-target" onClick={() => setIsCartOpen(false)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="sdetail-cart-body">
+                {cartItems.length === 0 ? (
+                  <div className="sdetail-cart-empty">Your cart is empty.</div>
+                ) : (
+                  <div className="sdetail-cart-items">
+                    {cartItems.map(({ item, qty }) => (
+                      <div key={item.itemId} className="sdetail-cart-item">
+                        <div className="sdetail-cart-item-info">
+                          <span className="sdetail-cart-item-name">{item.name}</span>
+                          <span className="sdetail-cart-item-price">&#8377;{(item.price * qty).toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="sdetail-qty-control sdetail-qty-control--cart">
+                          <button onClick={() => updateCartQty(item, -1)}>-</button>
+                          <span>{qty}</span>
+                          <button onClick={() => updateCartQty(item, 1)}>+</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {cartItems.length > 0 && (
+                <div className="sdetail-cart-footer">
+                  <div className="sdetail-cart-summary">
+                    <span>Item Total</span>
+                    <span>&#8377;{totalPrice.toLocaleString("en-IN")}</span>
+                  </div>
+                  <button 
+                    className="sdetail-checkout-btn tap-target"
+                    onClick={() => router.push(`/retailer/checkout?shopId=${shopId}`)}
+                  >
+                    Proceed to Checkout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       <style>{`
@@ -496,46 +604,345 @@ export default function ShopDetailPage() {
           color: #94A3B8;
         }
         
-        .sdetail-items-list { display: flex; flex-direction: column; }
-        .sdetail-item-row { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #F8FAFC; transition: background 0.1s; }
-        .sdetail-item-row:last-child { border-bottom: none; }
-        .sdetail-item-row:hover { background: #FAFBFC; }
-        
-        .sdetail-item-image {
-          position: relative;
-          width: 48px;
-          height: 48px;
-          border-radius: 8px;
-          overflow: hidden;
-          background: #F8FAFC;
-          flex-shrink: 0;
+        .sdetail-items-grid { 
+          display: grid; 
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+          gap: 1rem; 
+          padding: 1rem 1.5rem; 
         }
         
-        .sdetail-item-image img {
+        @media (min-width: 480px) {
+          .sdetail-items-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        }
+        
+        .sdetail-item-card { 
+          display: flex; 
+          flex-direction: column; 
+          background: #fff; 
+          border: 1px solid #E2E8F0; 
+          border-radius: 12px; 
+          overflow: hidden; 
+          transition: transform 0.2s, box-shadow 0.2s; 
+          cursor: pointer;
+        }
+        
+        .sdetail-item-card:hover { 
+          transform: translateY(-2px); 
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); 
+        }
+        
+        .sdetail-item-card-image {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1;
+          background: #F8FAFC;
+          border-bottom: 1px solid #F1F5F9;
+        }
+        
+        .sdetail-item-card-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
         
+        .sdetail-no-image-fallback {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #CBD5E1;
+        }
+        
         .sdetail-image-count {
           position: absolute;
-          bottom: 2px;
-          right: 2px;
-          background: rgba(0,0,0,0.7);
+          bottom: 6px;
+          right: 6px;
+          background: rgba(0,0,0,0.6);
           color: #fff;
           font-size: 0.625rem;
           font-weight: 600;
-          padding: 1px 4px;
-          border-radius: 2px;
+          padding: 2px 6px;
+          border-radius: 4px;
         }
         
-        .sdetail-item-info { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
-        .sdetail-item-name { font-size: var(--text-sm); font-weight: 600; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sdetail-item-unit { font-size: 0.6875rem; color: #94A3B8; }
-        .sdetail-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; flex-shrink: 0; }
-        .sdetail-item-price { font-size: var(--text-base); font-weight: 700; color: #1E293B; }
+        .sdetail-item-card-body { 
+          padding: 0.75rem; 
+          display: flex; 
+          flex-direction: column; 
+          flex: 1; 
+        }
+        
+        .sdetail-item-name { 
+          font-size: var(--text-sm); 
+          font-weight: 600; 
+          color: #1E293B; 
+          line-height: 1.25; 
+          margin-bottom: 0.25rem; 
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .sdetail-item-unit { 
+          font-size: 0.6875rem; 
+          color: #64748B; 
+          margin-bottom: 0.75rem;
+          flex: 1;
+        }
+        
+        .sdetail-item-card-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: auto;
+        }
+        
+        .sdetail-item-price { 
+          font-size: var(--text-base); 
+          font-weight: 700; 
+          color: #1E293B; 
+        }
+        
+        .sdetail-item-card-action {
+          position: relative;
+        }
+        
+        .sdetail-add-btn {
+          background: #F1F5F9;
+          color: #1F4E8C;
+          border: 1px solid #E2E8F0;
+          border-radius: 6px;
+          padding: 0.35rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        
+        .sdetail-add-btn:hover {
+          background: #E2E8F0;
+          border-color: #CBD5E1;
+        }
+        
+        .sdetail-qty-control {
+          display: flex;
+          align-items: center;
+          background: #1F4E8C;
+          color: #fff;
+          border-radius: 6px;
+          overflow: hidden;
+          font-size: 0.75rem;
+          font-weight: 700;
+          height: 28px;
+        }
+        
+        .sdetail-qty-control button {
+          background: none;
+          border: none;
+          color: #fff;
+          width: 28px;
+          height: 100%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.1s;
+        }
+        
+        .sdetail-qty-control button:hover {
+          background: rgba(0,0,0,0.1);
+        }
+        
+        .sdetail-qty-control span {
+          width: 24px;
+          text-align: center;
+        }
+
         .sdetail-item-stock { font-size: 0.6875rem; color: #10B981; font-weight: 600; display: flex; align-items: center; gap: 0.25rem; }
-        .sdetail-item-stock--out { color: #EF4444; }
+        .sdetail-item-stock--out { color: #EF4444; font-size: 0.6875rem; }
+
+        /* Zomato Cart Bar */
+        .zomato-cart-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #fff;
+          border-top: 1px solid #E2E8F0;
+          padding: 0.75rem 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          z-index: 40;
+          box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05);
+          padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        }
+
+        .zomato-cart-bar-left {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .zomato-cart-count {
+          font-size: 0.6875rem;
+          font-weight: 600;
+          color: #64748B;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .zomato-cart-total {
+          font-size: 1.125rem;
+          font-weight: 700;
+          color: #1E293B;
+          line-height: 1.2;
+        }
+
+        .zomato-cart-plus-taxes {
+          font-size: 0.625rem;
+          color: #94A3B8;
+        }
+
+        .zomato-cart-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: #1F4E8C;
+          color: #fff;
+          border: none;
+          padding: 0.75rem 1.25rem;
+          border-radius: var(--radius-md);
+          font-size: var(--text-sm);
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        
+        .zomato-cart-btn:hover { background: #173f70; }
+
+        /* Cart Drawer */
+        .sdetail-cart-drawer {
+          background: #fff; 
+          width: 100%; 
+          max-width: 500px; 
+          border-radius: 20px 20px 0 0; 
+          box-shadow: 0 -10px 25px -5px rgba(0,0,0,0.1); 
+          display: flex; 
+          flex-direction: column; 
+          max-height: 85vh; 
+          position: absolute;
+          bottom: 0;
+          animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+
+        .sdetail-cart-header {
+          padding: 1.25rem 1.5rem; 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          border-bottom: 1px solid #F1F5F9;
+        }
+
+        .sdetail-cart-title {
+          margin: 0; 
+          font-family: var(--font-display); 
+          font-size: var(--text-lg); 
+          font-weight: 700; 
+          color: #1E293B;
+        }
+
+        .sdetail-cart-body {
+          padding: 0; 
+          overflow-y: auto;
+          flex: 1;
+        }
+
+        .sdetail-cart-empty {
+          padding: 3rem 1.5rem;
+          text-align: center;
+          color: #94A3B8;
+          font-weight: 500;
+        }
+
+        .sdetail-cart-items {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .sdetail-cart-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #F8FAFC;
+        }
+
+        .sdetail-cart-item-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .sdetail-cart-item-name {
+          font-weight: 600;
+          color: #1E293B;
+          font-size: var(--text-sm);
+        }
+
+        .sdetail-cart-item-price {
+          font-size: var(--text-sm);
+          color: #64748B;
+        }
+
+        .sdetail-qty-control--cart {
+          background: #F1F5F9;
+          color: #1E293B;
+          border: 1px solid #E2E8F0;
+        }
+
+        .sdetail-qty-control--cart button {
+          color: #1F4E8C;
+        }
+
+        .sdetail-cart-footer {
+          padding: 1.25rem 1.5rem;
+          border-top: 1px solid #E2E8F0;
+          background: #FAFBFC;
+          padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+        }
+
+        .sdetail-cart-summary {
+          display: flex;
+          justify-content: space-between;
+          font-weight: 700;
+          color: #1E293B;
+          font-size: var(--text-lg);
+          margin-bottom: 1rem;
+        }
+
+        .sdetail-checkout-btn {
+          width: 100%;
+          padding: 1rem;
+          background: #10B981;
+          color: #fff;
+          border: none;
+          border-radius: var(--radius-md);
+          font-size: var(--text-base);
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .sdetail-checkout-btn:hover {
+          background: #059669;
+        }
 
         /* Modal Styles */
         .sdetail-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }

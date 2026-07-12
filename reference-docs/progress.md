@@ -1,8 +1,8 @@
 # Project Progress — B2B Wholesale Marketplace
 ## Order Management & Delivery Dispatch Platform
 
-**Last Updated:** 2026-07-12T14:35 IST
-**Status:** Phase 2 Complete — Phase 3 (Order Placement & Payment) is next
+**Last Updated:** 2026-07-12T16:30 IST
+**Status:** Phase 2 COMPLETE — Phase 3 (Order Placement & Payment) is next
 **Overall Build Progress:** ~45% (Phase 0-2 complete)
 
 > This file is the authoritative progress log for all agents working on this project.
@@ -17,7 +17,7 @@
 |---|---|---|---|
 | **Phase 0** | Foundations | COMPLETE | All scaffolding in place |
 | **Phase 1** | Identity, Roles & Onboarding | COMPLETE | Authentication and role-gating fully built |
-| **Phase 2** | Shop & Catalog Management | COMPLETE | Backend (shops+items CRUD, geo queries), Wholesaler (setup wizard, catalog MGMT), Retailer (shop discovery, shop detail) |
+| **Phase 2** | Shop & Catalog Management | COMPLETE | Backend (shops+items CRUD, geo queries, validation), Wholesaler (setup wizard, catalog mgmt), Retailer (discovery, detail page w/ cart), Admin (verification mgmt), Firestore indexes, test suite |
 | **Phase 3** | Order Placement & Payment | Not Started | Routes stubbed, logic not built |
 | **Phase 4** | Wholesaler Approval & Inventory Lock | Not Started | Routes stubbed only |
 | **Phase 5** | Delivery Assignment Engine | Not Started | — |
@@ -133,6 +133,150 @@ All foundational scaffolding required for Phase 1 to write into is in place.
 
 **Decision required before starting Phase 1:**
 - `[x]` SMS/email vendor for credential dispatch — Twilio vs. MSG91 vs. other (Resolved: Using CredentialMailer stub).
+
+---
+
+## Phase 2 — COMPLETE
+
+**What was built (implementation-plan.md §2):**
+
+### Backend
+- [x] Shop routes: POST /shops, GET /shops (with geospatial), GET /shops/:id, PATCH /shops/:id, GET /shops/all (admin)
+- [x] Item routes: POST /items, GET /items, PATCH /items/:id, DELETE /items/:id
+- [x] Comprehensive validation middleware (validate.ts) for shops and items
+- [x] Category alignment: 14 categories matching backend validation
+- [x] Geospatial queries using geofire-common
+- [x] Role-based access control on all endpoints
+- [x] Proper error handling and validation responses
+
+### Wholesaler Frontend
+- [x] Shop setup wizard with:
+  - Multi-step form with business details
+  - Location detection and manual coordinate entry
+  - Operating hours selection (days + time range)
+  - Category dropdown (aligned with backend)
+  - Photo upload to Cloudinary
+  - MOQ threshold configuration
+- [x] Catalog management page with:
+  - Item CRUD operations
+  - Multi-image upload (up to 10 per product)
+  - Availability toggle (show/hide from retailers)
+  - Price and stock management
+  - Search/filter functionality
+  - Inline editing modals
+
+### Retailer Frontend
+- [x] Shop discovery page with:
+  - List of verified shops
+  - Location-based search with radius filter (5, 10, 20, 50 km)
+  - Search by name and category
+  - Distance display for nearby shops
+  - Shop cards with key info (MOQ, hours, category)
+- [x] Shop detail page with:
+  - Complete shop information display
+  - Full catalog browsing (available items only)
+  - Item detail modals with image carousel
+  - Add to cart functionality
+  - Zomato-style sticky cart bar
+  - Cart drawer with quantity management
+  - Stock availability indicators
+
+### Admin Frontend
+- [x] Shop verification management with:
+  - Dedicated Shops tab in admin dashboard
+  - List all shops (pending, verified, rejected)
+  - Verify/Reject actions
+  - Status badges and clear visual indicators
+  - User-friendly table layout
+
+### Infrastructure
+- [x] Firestore indexes for efficient querying:
+  - shops: verificationStatus + createdAt
+  - shops: verificationStatus + category
+  - shops: geohash (for proximity queries)
+  - products: isAvailable + updatedAt
+  - users: role + status
+  - users: role + createdAt
+- [x] Security rules already in place (client writes blocked, server-side only)
+- [x] Multi-file image upload endpoint with validation
+
+### Testing
+- [x] Test suite scaffolding (shops.test.ts, items.test.ts)
+- [x] Comprehensive manual testing checklist (170+ test cases)
+- [x] Coverage areas:
+  - API endpoint testing
+  - Frontend user flows
+  - Firestore integration
+  - Image upload workflows
+  - Validation (client + server)
+  - Error handling
+  - Performance benchmarks
+  - Cross-browser compatibility
+  - Accessibility compliance
+
+### Email Integration (Post Phase 2)
+- [x] Brevo email service integration
+- [x] Automated password reset link delivery
+- [x] Professional HTML email templates (4 types)
+- [x] Fallback to console logging
+- [x] Error handling with graceful degradation
+- [x] Configuration via environment variables
+- [x] Test script for verification
+
+**Exit criteria met:**
+- ✅ Wholesalers can create and manage their shop
+- ✅ Wholesalers can add/edit/delete catalog items with images
+- ✅ Retailers can discover shops by location
+- ✅ Retailers can browse shop catalogs and add items to cart
+- ✅ Admin can verify/reject shop registrations
+- ✅ All shop/item operations are validated and role-gated
+- ✅ Geospatial queries work efficiently
+- ✅ Image uploads work for shop photos and product images
+- ✅ Testing infrastructure is in place
+
+**Known limitations (by design):**
+- Cart functionality is UI-only (no persistence) - Phase 3 adds checkout
+- No order placement yet - Phase 3
+- No payment integration yet - Phase 3
+- Shop ratings/reviews not implemented - Future phase
+
+**Files created/modified in Phase 2:**
+```
+backend/
+├── src/
+│   ├── middleware/validate.ts (NEW)
+│   ├── routes/shops.routes.ts (IMPLEMENTED)
+│   ├── routes/items.routes.ts (IMPLEMENTED)
+│   ├── routes/upload.routes.ts (ENHANCED - multi-file)
+│   ├── services/credential-mailer.ts (ENHANCED - Brevo integration)
+│   ├── types/index.ts (ENHANCED - added shop types)
+│   └── tests/
+│       ├── shops.test.ts (NEW)
+│       └── items.test.ts (NEW)
+├── .env (UPDATED - added Brevo credentials)
+├── .env.example (UPDATED - added Brevo variables)
+├── package.json (UPDATED - added @getbrevo/brevo)
+└── test-brevo.ts (NEW - email testing script)
+
+frontend/
+├── types/shop.ts (UPDATED - aligned with backend)
+├── app/(wholesaler)/wholesaler/
+│   ├── shop-setup/page.tsx (ENHANCED - photo upload)
+│   └── catalog/page.tsx (COMPLETE)
+├── app/(retailer)/retailer/
+│   ├── shops/page.tsx (COMPLETE)
+│   └── shops/[shopId]/page.tsx (COMPLETE - with cart)
+└── app/(admin)/admin/page.tsx (ENHANCED - shops tab)
+
+infrastructure/
+├── firestore.indexes.json (CONFIGURED)
+└── reference-docs/
+    ├── phase-2-implementation.md (NEW)
+    ├── phase-2-testing-checklist.md (NEW)
+    ├── PHASE-2-COMPLETE.md (NEW)
+    ├── ADMIN-ACCOUNT-CREATION-FIX.md (UPDATED - Brevo solution)
+    └── BREVO-INTEGRATION-COMPLETE.md (NEW)
+```
 
 ---
 

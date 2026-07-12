@@ -22,16 +22,20 @@ import { API_BASE_URL } from "@/lib/firebase/config";
 type FormState = "idle" | "loading" | "error" | "success";
 
 const CATEGORIES = [
-  "Groceries & Staples",
-  "Dairy & Eggs",
-  "Beverages",
-  "Snacks & Confectionery",
-  "Personal Care",
-  "Household Supplies",
-  "Stationery & Packaging",
-  "Bakery & Bakery Goods",
-  "Frozen & Chilled",
-  "Other",
+  { value: "groceries", label: "Groceries & Staples" },
+  { value: "vegetables", label: "Fresh Vegetables & Fruits" },
+  { value: "dairy", label: "Dairy & Eggs" },
+  { value: "bakery", label: "Bakery & Bakery Goods" },
+  { value: "meat_seafood", label: "Meat & Seafood" },
+  { value: "beverages", label: "Beverages" },
+  { value: "snacks", label: "Snacks & Confectionery" },
+  { value: "household", label: "Household Supplies" },
+  { value: "pharmacy", label: "Pharmacy & Healthcare" },
+  { value: "electronics", label: "Electronics & Appliances" },
+  { value: "clothing", label: "Clothing & Textiles" },
+  { value: "hardware", label: "Hardware & Tools" },
+  { value: "stationery", label: "Stationery & Packaging" },
+  { value: "other", label: "Other" },
 ] as const;
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
@@ -50,11 +54,13 @@ export default function ShopSetupPage() {
   const [lng, setLng] = useState("");
   const [category, setCategory] = useState("");
   const [moqThreshold, setMoqThreshold] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [openTime, setOpenTime] = useState("09:00");
   const [closeTime, setCloseTime] = useState("18:00");
   const [selectedDays, setSelectedDays] = useState<Set<string>>(
     new Set(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"])
   );
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   function toggleDay(day: string) {
     setSelectedDays((prev) => {
@@ -66,6 +72,52 @@ export default function ShopSetupPage() {
       }
       return next;
     });
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg("Image must be smaller than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("Please select a valid image file");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setErrorMsg("");
+
+    try {
+      const idToken = await user.getIdToken();
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "shop_photos");
+
+      const res = await fetch(`${API_BASE_URL}/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const data = await res.json();
+      setPhotoUrl(data.url);
+    } catch (err) {
+      setErrorMsg("Failed to upload photo. Please try again.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   }
 
   async function handleDetectLocation() {
@@ -131,6 +183,7 @@ export default function ShopSetupPage() {
             close: closeTime,
           },
           moqThreshold: moqNum,
+          ...(photoUrl ? { photoUrl } : {}),
         }),
       });
 
@@ -148,7 +201,7 @@ export default function ShopSetupPage() {
     }
   }
 
-  const isLoading = formState === "loading" || formState === "success";
+  const isLoading = formState === "loading" || formState === "success" || isUploadingPhoto;
   const canSubmit = name && address && lat && lng && category && moqThreshold && !isLoading;
 
   return (
@@ -211,9 +264,61 @@ export default function ShopSetupPage() {
               >
                 <option value="">Select a category…</option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="setup-field">
+              <label htmlFor="setup-photo" className="setup-label">
+                Shop photo <span className="setup-label-hint">(optional)</span>
+              </label>
+              <div className="setup-photo-wrapper">
+                {photoUrl ? (
+                  <div className="setup-photo-preview">
+                    <img src={photoUrl} alt="Shop" className="setup-photo-img" />
+                    <button
+                      type="button"
+                      className="setup-photo-remove tap-target"
+                      onClick={() => setPhotoUrl("")}
+                      disabled={isLoading}
+                      aria-label="Remove photo"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label htmlFor="setup-photo" className="setup-photo-upload tap-target">
+                    {isUploadingPhoto ? (
+                      <>
+                        <span className="setup-spinner" aria-label="Uploading…" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span>Click to upload shop photo</span>
+                        <span className="setup-photo-hint">Max 5MB • JPG, PNG</span>
+                      </>
+                    )}
+                  </label>
+                )}
+                <input
+                  id="setup-photo"
+                  type="file"
+                  accept="image/*"
+                  className="setup-photo-input"
+                  onChange={handlePhotoUpload}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             <div className="setup-field">
@@ -411,6 +516,15 @@ export default function ShopSetupPage() {
         .setup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .setup-spinner { display: block; width: 1.25rem; height: 1.25rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: sspin 0.7s linear infinite; }
         @keyframes sspin { to { transform: rotate(360deg); } }
+        .setup-photo-wrapper { position: relative; }
+        .setup-photo-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+        .setup-photo-upload { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; min-height: 140px; border: 2px dashed rgba(255,255,255,0.15); border-radius: var(--radius-md); background: rgba(255,255,255,0.02); color: #94A3B8; font-size: var(--text-sm); cursor: pointer; transition: all 0.2s; }
+        .setup-photo-upload:hover:not(:disabled) { border-color: rgba(167,139,250,0.4); background: rgba(255,255,255,0.04); }
+        .setup-photo-hint { font-size: 0.75rem; color: #64748B; }
+        .setup-photo-preview { position: relative; width: 100%; max-width: 240px; aspect-ratio: 16/9; border-radius: var(--radius-md); overflow: hidden; }
+        .setup-photo-img { width: 100%; height: 100%; object-fit: cover; }
+        .setup-photo-remove { position: absolute; top: 0.5rem; right: 0.5rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); border: none; border-radius: 50%; color: #FCA5A5; cursor: pointer; transition: all 0.2s; }
+        .setup-photo-remove:hover:not(:disabled) { background: rgba(239,68,68,0.9); color: #fff; transform: scale(1.1); }
       `}</style>
     </main>
   );

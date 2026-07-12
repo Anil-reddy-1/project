@@ -5,21 +5,10 @@
 
 import type { GeoPoint } from "firebase/firestore";
 
-/** Shop verification status — recommended values per open question resolution */
-export type VerificationStatus = "unverified" | "pending" | "verified";
+/** Shop verification status — aligned with backend */
+export type VerificationStatus = "pending" | "verified" | "rejected";
 
-/**
- * Operating hours for a single day.
- * Times in 24-hour "HH:mm" format (e.g., "09:00", "18:30").
- * Recommended structure per open question resolution.
- */
-export interface DayHours {
-  open: string;
-  close: string;
-  isClosed: boolean;
-}
-
-/** Days of the week — used as keys for operating hours */
+/** Days of the week */
 export type DayOfWeek =
   | "monday"
   | "tuesday"
@@ -29,8 +18,16 @@ export type DayOfWeek =
   | "saturday"
   | "sunday";
 
-/** Operating hours map — day of week to hours */
-export type OperatingHours = Record<DayOfWeek, DayHours>;
+/**
+ * Operating hours structure.
+ * Contains days open and time range.
+ * Aligned with backend validation.
+ */
+export interface OperatingHours {
+  days: DayOfWeek[];
+  open: string;  // "HH:MM" format
+  close: string; // "HH:MM" format
+}
 
 /** Shop document shape — Firestore `shops/{shopId}` */
 export interface Shop {
@@ -55,24 +52,25 @@ export interface Shop {
   /** Geohash computed via geofire-common — used for radius queries */
   geohash: string;
 
-  /** Shop category (e.g., "grocery", "electronics", "textiles") */
+  /** Shop category (e.g., "groceries", "dairy", "bakery") */
   category: string;
 
-  /** Weekly operating hours — see DayHours */
+  /** Weekly operating hours */
   operatingHours: OperatingHours;
 
   /** Verification status */
   verificationStatus: VerificationStatus;
 
   /**
-   * Minimum order value/qty threshold per shop-order.
+   * Minimum order value threshold per shop-order.
    * MOQ is enforced per shop-order as a whole, not per line item (rules.md §3).
    */
   moqThreshold: number;
 
-  /** Shop photo URL — Firebase Storage */
-  photoUrl?: string;
+  /** Shop photo URL — Cloudinary */
+  photoUrl?: string | null;
 
   createdAt: Date;
   updatedAt: Date;
 }
+

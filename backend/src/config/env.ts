@@ -54,6 +54,11 @@ export const env = {
   // ─── Firebase Cloud Messaging (Phase 1+) ───────────────────────────────────
   FCM_SERVER_KEY: optionalEnv("FCM_SERVER_KEY"),
 
+  // ─── Brevo (Email Service) ─────────────────────────────────────────────────
+  BREVO_API_KEY: optionalEnv("BREVO_API_KEY"),
+  BREVO_FROM_EMAIL: optionalEnv("BREVO_FROM_EMAIL", "noreply@wholesalehub.com"),
+  BREVO_FROM_NAME: optionalEnv("BREVO_FROM_NAME", "WholesaleHub"),
+
   // ─── Admin Seed (one-time setup script only) ─────────────────────────────
   // Used by scripts/seed-admin.ts. Never read by the running server.
   ADMIN_EMAIL: optionalEnv("ADMIN_EMAIL"),

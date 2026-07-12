@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import { validateShopCreation, validateShopUpdate } from "../middleware/validate";
 import { adminDb } from "../config/firebase";
 import { FieldValue, GeoPoint } from "firebase-admin/firestore";
 import * as geofire from "geofire-common";
@@ -18,6 +19,7 @@ router.post(
   "/",
   verifyFirebaseToken,
   requireRole("wholesaler"),
+  validateShopCreation,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { uid, status } = req.user!;
@@ -35,26 +37,17 @@ router.post(
       }
 
       const { name, address, lat, lng, category, operatingHours, moqThreshold, photoUrl } = req.body as {
-        name?: string;
-        address?: string;
-        lat?: number;
-        lng?: number;
-        category?: string;
-        operatingHours?: { days: string[]; open: string; close: string };
-        moqThreshold?: number;
+        name: string;
+        address: string;
+        lat: number;
+        lng: number;
+        category: string;
+        operatingHours: { days: string[]; open: string; close: string };
+        moqThreshold: number;
         photoUrl?: string;
       };
 
-      if (!name || !address || lat === undefined || lng === undefined || !category || !operatingHours || moqThreshold === undefined) {
-        res.status(400).json({ error: "Bad Request", message: "name, address, lat, lng, category, operatingHours and moqThreshold are required." });
-        return;
-      }
-
-      if (typeof lat !== "number" || typeof lng !== "number" || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        res.status(400).json({ error: "Bad Request", message: "lat must be -90 to 90, lng must be -180 to 180." });
-        return;
-      }
-
+      // Validation already done by middleware - these fields are guaranteed to exist and be valid
       const geohash = geofire.geohashForLocation([lat, lng]);
       const geopoint = new GeoPoint(lat, lng);
 
@@ -220,6 +213,7 @@ router.patch(
   "/:shopId",
   verifyFirebaseToken,
   requireRole("wholesaler", "admin"),
+  validateShopUpdate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { shopId } = req.params;
@@ -239,6 +233,7 @@ router.patch(
       const body = req.body as Record<string, unknown>;
       const allowedUpdates: Record<string, unknown> = {};
 
+      // Validation middleware has already validated all fields
       const mutableFields = ["name", "address", "category", "operatingHours", "moqThreshold", "photoUrl"] as const;
       for (const field of mutableFields) {
         if (body[field] !== undefined) allowedUpdates[field] = body[field];
@@ -252,13 +247,8 @@ router.patch(
         allowedUpdates.geohash = geofire.geohashForLocation([lat, lng]);
       }
 
-      // Only admin can verify / reject a shop
-      const VALID_VERIFICATION_STATUSES = ["pending", "verified", "rejected"];
+      // Only admin can verify / reject a shop (validation middleware already checked format)
       if (role === "admin" && body.verificationStatus !== undefined) {
-        if (!VALID_VERIFICATION_STATUSES.includes(body.verificationStatus as string)) {
-          res.status(400).json({ error: "Bad Request", message: `Invalid verificationStatus. Must be one of: ${VALID_VERIFICATION_STATUSES.join(", ")}` });
-          return;
-        }
         allowedUpdates.verificationStatus = body.verificationStatus;
       }
 

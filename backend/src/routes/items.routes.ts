@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import { validateItemCreation, validateItemUpdate } from "../middleware/validate";
 import { adminDb } from "../config/firebase";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -13,6 +14,7 @@ router.post(
   "/",
   verifyFirebaseToken,
   requireRole("wholesaler"),
+  validateItemCreation,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { shopId } = req.params;
@@ -34,27 +36,15 @@ router.post(
       }
 
       const { name, price, stockQty, unit, isAvailable, images } = req.body as {
-        name?: string;
-        price?: number;
-        stockQty?: number;
-        unit?: string;
+        name: string;
+        price: number;
+        stockQty: number;
+        unit: string;
         isAvailable?: boolean;
         images?: Array<{ url: string; publicId: string }>;
       };
 
-      if (!name || price === undefined || stockQty === undefined || !unit) {
-        res.status(400).json({ error: "Bad Request", message: "name, price, stockQty and unit are required." });
-        return;
-      }
-
-      if (typeof price !== "number" || price < 0) {
-        res.status(400).json({ error: "Bad Request", message: "price must be a non-negative number." });
-        return;
-      }
-      if (typeof stockQty !== "number" || stockQty < 0 || !Number.isInteger(stockQty)) {
-        res.status(400).json({ error: "Bad Request", message: "stockQty must be a non-negative integer." });
-        return;
-      }
+      // Validation already done by middleware - fields are guaranteed to be valid
 
       const itemRef = adminDb().collection("shops").doc(shopId).collection("products").doc();
       const itemId = itemRef.id;
@@ -123,6 +113,7 @@ router.patch(
   "/:itemId",
   verifyFirebaseToken,
   requireRole("wholesaler", "admin"),
+  validateItemUpdate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { shopId, itemId } = req.params;
@@ -149,6 +140,7 @@ router.patch(
       const updates = req.body;
       const allowedUpdates: Record<string, unknown> = {};
 
+      // Validation middleware has already validated all provided fields
       if (updates.name !== undefined) allowedUpdates.name = String(updates.name);
       if (updates.price !== undefined) allowedUpdates.price = Number(updates.price);
       if (updates.stockQty !== undefined) allowedUpdates.stockQty = Number(updates.stockQty);

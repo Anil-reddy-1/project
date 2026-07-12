@@ -56,6 +56,18 @@ export type DisputeStatus =
   | "RESOLVED"
   | "CLOSED_NO_ACTION";
 
+// ─── Shops ────────────────────────────────────────────────────────────────────
+
+export type VerificationStatus = "pending" | "verified" | "rejected";
+
+export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+
+export interface OperatingHours {
+  days: DayOfWeek[];
+  open: string;  // "HH:MM" format
+  close: string; // "HH:MM" format
+}
+
 // ─── Uploads ──────────────────────────────────────────────────────────────────
 
 /** Cloudinary folder targets for different upload contexts */
