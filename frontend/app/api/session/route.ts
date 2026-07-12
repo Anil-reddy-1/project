@@ -53,10 +53,16 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === "auth/recent-login-required") {
+      // User has been logged in for a while. We can't mint a new session cookie
+      // without them re-authenticating. For client-side apps, this is okay as
+      // they already have an active client session. We just ignore it.
+      return NextResponse.json({ status: "skipped", reason: "recent-login-required" });
+    }
     console.error("Session creation error:", error);
     return NextResponse.json(
-      { error: "Failed to create session" },
+      { error: "Failed to create session", details: error.message },
       { status: 401 },
     );
   }

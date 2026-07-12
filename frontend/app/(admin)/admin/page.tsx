@@ -35,16 +35,29 @@ interface UserRecord {
   createdAt?: { seconds: number } | string;
 }
 
+interface ShopRecord {
+  shopId: string;
+  name: string;
+  category: string;
+  address: string;
+  verificationStatus: "pending" | "verified" | "rejected";
+  ownerUid: string;
+  moqThreshold: number;
+  operatingHours: { days: string[]; open: string; close: string };
+  createdAt?: { seconds: number } | string;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AdminHomePage() {
   const router = useRouter();
   const { logout, user } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<"retailers" | "wholesalers" | "delivery">(
+  const [activeTab, setActiveTab] = useState<"retailers" | "wholesalers" | "delivery" | "shops">(
     "wholesalers",
   );
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [shops, setShops] = useState<ShopRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{type: "success" | "error", text: string} | null>(null);
 
@@ -61,10 +74,11 @@ export default function AdminHomePage() {
     retailers: "retailer",
     wholesalers: "wholesaler",
     delivery: "delivery_partner",
+    shops: "", // shops don't have a role filter
   };
 
   const fetchUsers = useCallback(async () => {
-    if (!user) return; // Wait for Firebase Auth to initialize
+    if (!user || activeTab === "shops") return; // Don't fetch users for shops tab
 
     setLoading(true);
     setActionMsg(null);
@@ -85,11 +99,41 @@ export default function AdminHomePage() {
     }
   }, [activeTab, user]); // Re-run when tab changes or user authenticates
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  const fetchShops = useCallback(async () => {
+    if (!user || activeTab !== "shops") return; // Only fetch shops for shops tab
+
+    setLoading(true);
+    setActionMsg(null);
+    try {
+      const token = await user.getIdToken();
+      // Fetch all shops for admin (includes pending, verified, rejected)
+      const res = await fetch(
+        `${API_URL}/shops/all`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) throw new Error("Failed to fetch shops");
+      const data = await res.json();
+      setShops(data.shops ?? []);
+    } catch (err) {
+      setActionMsg({ type: "error", text: "Failed to load shops. Check console." });
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, user]);
+
+  useEffect(() => { 
+    if (activeTab === "shops") {
+      fetchShops();
+    } else {
+      fetchUsers();
+    }
+  }, [fetchUsers, fetchShops, activeTab]);
 
   async function handleSuspend(uid: string) {
+    if (!user) return;
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const res = await fetch(`${API_URL}/auth/suspend`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -105,8 +149,9 @@ export default function AdminHomePage() {
   }
 
   async function handleReactivate(uid: string) {
+    if (!user) return;
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const res = await fetch(`${API_URL}/auth/reactivate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -122,8 +167,9 @@ export default function AdminHomePage() {
   }
 
   async function handleApprove(uid: string) {
+    if (!user) return;
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const res = await fetch(`${API_URL}/auth/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -138,12 +184,32 @@ export default function AdminHomePage() {
     }
   }
 
+  async function handleReject(uid: string) {
+    if (!confirm("Are you sure you want to reject this request? The account will be deleted and the wholesaler will need to re-apply.")) return;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${API_URL}/auth/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid }),
+      });
+      if (!res.ok) throw new Error("Reject failed");
+      setActionMsg({ type: "success", text: "Account rejected. The user has been removed and can re-apply." });
+      fetchUsers();
+    } catch (err) {
+      setActionMsg({ type: "error", text: "Reject failed. Check console." });
+      console.error(err);
+    }
+  }
+
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) return;
     setModalLoading(true);
     setModalError("");
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const res = await fetch(`${API_URL}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -159,6 +225,43 @@ export default function AdminHomePage() {
       setModalError((err as Error).message ?? "Something went wrong.");
     } finally {
       setModalLoading(false);
+    }
+  }
+
+  async function handleVerifyShop(shopId: string) {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${API_URL}/shops/${shopId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ verificationStatus: "verified" }),
+      });
+      if (!res.ok) throw new Error("Verification failed");
+      setActionMsg({ type: "success", text: "Shop verified successfully. It will now be discoverable by retailers." });
+      fetchShops();
+    } catch (err) {
+      setActionMsg({ type: "error", text: "Verification failed. Check console." });
+      console.error(err);
+    }
+  }
+
+  async function handleRejectShop(shopId: string) {
+    if (!confirm("Are you sure you want to reject this shop? The wholesaler will need to update their shop details and resubmit for verification.")) return;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${API_URL}/shops/${shopId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ verificationStatus: "rejected" }),
+      });
+      if (!res.ok) throw new Error("Rejection failed");
+      setActionMsg({ type: "success", text: "Shop rejected. The wholesaler has been notified." });
+      fetchShops();
+    } catch (err) {
+      setActionMsg({ type: "error", text: "Rejection failed. Check console." });
+      console.error(err);
     }
   }
 
@@ -189,30 +292,34 @@ export default function AdminHomePage() {
         <div className="admin-page-header">
           <div className="admin-page-header-row">
             <div>
-              <h1 className="admin-page-title">Users</h1>
+              <h1 className="admin-page-title">{activeTab === "shops" ? "Shops" : "Users"}</h1>
               <p className="admin-page-sub">
-                Manage all platform accounts. Wholesaler and delivery partner accounts
-                are created by Admin only.
+                {activeTab === "shops" 
+                  ? "Manage shop verifications. Verified shops are discoverable by retailers."
+                  : "Manage all platform accounts. Wholesaler and delivery partner accounts are created by Admin only."
+                }
               </p>
             </div>
-            <button
-              id="admin-create-account"
-              className="admin-btn admin-btn--primary"
-              onClick={() => setShowModal(true)}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Create Account
-            </button>
+            {activeTab !== "shops" && (
+              <button
+                id="admin-create-account"
+                className="admin-btn admin-btn--primary"
+                onClick={() => setShowModal(true)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Create Account
+              </button>
+            )}
           </div>
         </div>
 
         {/* Tab bar */}
         <div className="admin-tabs-container">
           <div className="admin-tabs" role="tablist">
-            {(["wholesalers", "retailers", "delivery"] as const).map((tab) => (
+            {(["wholesalers", "retailers", "delivery", "shops"] as const).map((tab) => (
               <button
                 key={tab}
                 id={`admin-tab-${tab}`}
@@ -221,7 +328,9 @@ export default function AdminHomePage() {
                 className={`admin-tab ${activeTab === tab ? "admin-tab--active" : ""}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === "delivery" ? "Delivery Partners" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === "delivery" ? "Delivery Partners" : 
+                 tab === "shops" ? "Shops" :
+                 tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -252,13 +361,97 @@ export default function AdminHomePage() {
           </div>
         )}
 
-        {/* User table */}
+        {/* User/Shop table */}
         <div className="admin-card">
           {loading ? (
             <div className="admin-loading">
               <span className="admin-spinner" />
-              <span>Loading users…</span>
+              <span>Loading {activeTab === "shops" ? "shops" : "users"}…</span>
             </div>
+          ) : activeTab === "shops" ? (
+            shops.length === 0 ? (
+              <div className="admin-empty">
+                <div className="admin-empty-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                  </svg>
+                </div>
+                <p>No shops found.</p>
+              </div>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Shop</th>
+                      <th>Category & Location</th>
+                      <th>Status</th>
+                      <th className="admin-table-actions">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shops.map((shop) => (
+                      <tr key={shop.shopId}>
+                        <td className="admin-cell-user">
+                          <div className="admin-user-avatar">
+                            {shop.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="admin-user-info">
+                            <span className="admin-user-name">{shop.name}</span>
+                            <span className="admin-user-id font-data">MOQ: ₹{shop.moqThreshold.toLocaleString("en-IN")}</span>
+                          </div>
+                        </td>
+                        <td className="admin-cell-contact">
+                          <span className="admin-contact-item">{shop.category}</span>
+                          <span className="admin-contact-item font-data">{shop.address}</span>
+                        </td>
+                        <td>
+                          <span className={`admin-badge admin-badge--${shop.verificationStatus === "verified" ? "active" : shop.verificationStatus === "pending" ? "pending_approval" : "suspended"}`}>
+                            {shop.verificationStatus}
+                          </span>
+                        </td>
+                        <td className="admin-table-actions">
+                          {shop.verificationStatus === "pending" ? (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button
+                                id={`admin-verify-${shop.shopId}`}
+                                className="admin-btn admin-btn--approve"
+                                onClick={() => handleVerifyShop(shop.shopId)}
+                              >
+                                Verify
+                              </button>
+                              <button
+                                id={`admin-reject-shop-${shop.shopId}`}
+                                className="admin-btn admin-btn--danger"
+                                onClick={() => handleRejectShop(shop.shopId)}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : shop.verificationStatus === "rejected" ? (
+                            <button
+                              id={`admin-verify-${shop.shopId}`}
+                              className="admin-btn admin-btn--approve"
+                              onClick={() => handleVerifyShop(shop.shopId)}
+                            >
+                              Verify
+                            </button>
+                          ) : (
+                            <button
+                              id={`admin-reject-shop-${shop.shopId}`}
+                              className="admin-btn admin-btn--danger"
+                              onClick={() => handleRejectShop(shop.shopId)}
+                            >
+                              Reject
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           ) : users.length === 0 ? (
             <div className="admin-empty">
               <div className="admin-empty-icon">
@@ -321,13 +514,22 @@ export default function AdminHomePage() {
                             Reactivate
                           </button>
                         ) : u.status === "pending_approval" ? (
-                          <button
-                            id={`admin-approve-${u.uid}`}
-                            className="admin-btn admin-btn--approve"
-                            onClick={() => handleApprove(u.uid)}
-                          >
-                            Approve
-                          </button>
+                          <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button
+                              id={`admin-approve-${u.uid}`}
+                              className="admin-btn admin-btn--approve"
+                              onClick={() => handleApprove(u.uid)}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              id={`admin-reject-${u.uid}`}
+                              className="admin-btn admin-btn--danger"
+                              onClick={() => handleReject(u.uid)}
+                            >
+                              Reject
+                            </button>
+                          </div>
                         ) : (
                           <span className="admin-no-actions">—</span>
                         )}

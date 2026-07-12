@@ -62,4 +62,5 @@ export type DisputeStatus =
 export type UploadFolder =
   | "shop_photos"
   | "verification_images"
-  | "dispute_attachments";
+  | "dispute_attachments"
+  | "product_images";

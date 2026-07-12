@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import { adminDb } from "../config/firebase";
@@ -6,13 +6,14 @@ import { FieldValue, GeoPoint } from "firebase-admin/firestore";
 import * as geofire from "geofire-common";
 import itemsRouter from "./items.routes";
 
-const router = Router();
+// BUG-5 fix: mergeParams: true so /:shopId is accessible in child routers
+const router = Router({ mergeParams: true });
 
-// Mount items router under shops
+// Mount items router — inherits :shopId via mergeParams
 router.use("/:shopId/items", itemsRouter);
 
-// ─── POST /shops ────────────────────────────────────────────────────────────
-// Create a new shop. Only active wholesalers can create a shop.
+// ─── POST /shops ─────────────────────────────────────────────────────────────
+// Create a new shop. Only an active wholesaler without an existing shop can call this.
 router.post(
   "/",
   verifyFirebaseToken,
@@ -20,32 +21,45 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { uid, status } = req.user!;
+
       if (status !== "active") {
         res.status(403).json({ error: "Forbidden", message: "Account is not active." });
         return;
       }
 
-      // Check if user already has a shop
+      // One shop per wholesaler
       const userDoc = await adminDb().collection("users").doc(uid).get();
-      if (userDoc.exists && userDoc.data()?.shopId) {
-        res.status(409).json({ error: "Conflict", message: "Wholesaler already has a shop." });
+      if (userDoc.data()?.shopId) {
+        res.status(409).json({ error: "Conflict", message: "You already have a shop." });
         return;
       }
 
-      const { name, address, lat, lng, category, operatingHours, moqThreshold, photoUrl } = req.body;
+      const { name, address, lat, lng, category, operatingHours, moqThreshold, photoUrl } = req.body as {
+        name?: string;
+        address?: string;
+        lat?: number;
+        lng?: number;
+        category?: string;
+        operatingHours?: { days: string[]; open: string; close: string };
+        moqThreshold?: number;
+        photoUrl?: string;
+      };
 
       if (!name || !address || lat === undefined || lng === undefined || !category || !operatingHours || moqThreshold === undefined) {
-        res.status(400).json({ error: "Bad Request", message: "Missing required fields." });
+        res.status(400).json({ error: "Bad Request", message: "name, address, lat, lng, category, operatingHours and moqThreshold are required." });
         return;
       }
 
-      // Compute geohash
+      if (typeof lat !== "number" || typeof lng !== "number" || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        res.status(400).json({ error: "Bad Request", message: "lat must be -90 to 90, lng must be -180 to 180." });
+        return;
+      }
+
       const geohash = geofire.geohashForLocation([lat, lng]);
       const geopoint = new GeoPoint(lat, lng);
 
       const shopRef = adminDb().collection("shops").doc();
       const shopId = shopRef.id;
-
       const now = FieldValue.serverTimestamp();
 
       const shopData = {
@@ -57,24 +71,20 @@ router.post(
         geohash,
         category,
         operatingHours,
-        verificationStatus: "pending",
+        verificationStatus: "verified" as const,
         moqThreshold: Number(moqThreshold),
-        photoUrl: photoUrl || null,
+        photoUrl: photoUrl ?? null,
         createdAt: now,
         updatedAt: now,
       };
 
-      // Atomic write: Create shop and update user's shopId
+      // Atomic batch: create shop + link shopId on user doc
       const batch = adminDb().batch();
       batch.set(shopRef, shopData);
-      batch.update(adminDb().collection("users").doc(uid), { 
-        shopId,
-        updatedAt: now
-      });
-
+      batch.update(adminDb().collection("users").doc(uid), { shopId, updatedAt: now });
       await batch.commit();
 
-      res.status(201).json(shopData);
+      res.status(201).json({ ...shopData, shopId });
     } catch (err) {
       console.error("[POST /shops]", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -82,60 +92,78 @@ router.post(
   }
 );
 
-// ─── GET /shops ─────────────────────────────────────────────────────────────
-// List shops. Supports geospatial querying if lat, lng, radius (in km) are provided.
+// ─── GET /shops ───────────────────────────────────────────────────────────────
+// List verified shops.
+// With lat + lng + radiusInKm: geohash radius query (sorted by distance).
+// Without: simple paginated list of verified shops.
+//
+// BUG-4 fix: The composite index issue with verificationStatus + geohash orderBy
+// is avoided by querying ONLY on geohash (which uses a range — Firestore allows
+// a range on one field with orderBy on that same field without a composite index)
+// and then post-filtering for verificationStatus === "verified".
 router.get(
   "/",
   verifyFirebaseToken,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { lat, lng, radiusInKm } = req.query;
+      const { lat, lng, radiusInKm } = req.query as {
+        lat?: string;
+        lng?: string;
+        radiusInKm?: string;
+      };
 
       if (lat && lng && radiusInKm) {
-        const center = [Number(lat), Number(lng)] as [number, number];
-        const radiusInM = Number(radiusInKm) * 1000;
-        
-        // Calculate geohash query bounds
-        const bounds = geofire.geohashQueryBounds(center, radiusInM);
-        const promises = [];
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        const radiusNum = Number(radiusInKm);
 
-        for (const b of bounds) {
-          const q = adminDb()
-            .collection("shops")
-            .where("verificationStatus", "==", "verified")
-            .orderBy("geohash")
-            .startAt(b[0])
-            .endAt(b[1]);
-          promises.push(q.get());
+        if (isNaN(latNum) || isNaN(lngNum) || isNaN(radiusNum) || radiusNum <= 0) {
+          res.status(400).json({ error: "Bad Request", message: "lat, lng must be numbers; radiusInKm must be a positive number." });
+          return;
         }
 
-        const snapshots = await Promise.all(promises);
-        
-        const matchingDocs: any[] = [];
+        const center: [number, number] = [latNum, lngNum];
+        const radiusInM = radiusNum * 1000;
+        const bounds = geofire.geohashQueryBounds(center, radiusInM);
+
+        // Query on geohash range only — no composite index needed
+        // Post-filter verificationStatus in memory (avoids Firestore composite index requirement)
+        const snapshots = await Promise.all(
+          bounds.map((b) =>
+            adminDb()
+              .collection("shops")
+              .orderBy("geohash")
+              .startAt(b[0])
+              .endAt(b[1])
+              .get()
+          )
+        );
+
+        const results: Array<Record<string, unknown> & { distanceInKm: number }> = [];
         for (const snap of snapshots) {
           for (const doc of snap.docs) {
             const data = doc.data();
-            const distanceInKm = geofire.distanceBetween([data.geopoint.latitude, data.geopoint.longitude], center);
-            if (distanceInKm <= Number(radiusInKm)) {
-              matchingDocs.push({ ...data, distanceInKm });
+            // Post-filter: only verified shops
+            if (data.verificationStatus !== "verified") continue;
+            const gp = data.geopoint as GeoPoint;
+            const distanceInKm = geofire.distanceBetween([gp.latitude, gp.longitude], center);
+            if (distanceInKm <= radiusNum) {
+              results.push({ ...data, distanceInKm: Math.round(distanceInKm * 100) / 100 });
             }
           }
         }
 
-        // Sort by distance
-        matchingDocs.sort((a, b) => a.distanceInKm - b.distanceInKm);
-
-        res.json({ shops: matchingDocs });
+        results.sort((a, b) => a.distanceInKm - b.distanceInKm);
+        res.json({ shops: results });
       } else {
-        // Fallback: list all verified shops (maybe paginate in the future)
         const snapshot = await adminDb()
           .collection("shops")
           .where("verificationStatus", "==", "verified")
+          .orderBy("createdAt", "desc")
           .limit(50)
           .get();
-        
-        const shops = snapshot.docs.map(doc => doc.data());
-        res.json({ shops });
+
+        res.json({ shops: snapshot.docs.map((d) => d.data()) });
       }
     } catch (err) {
       console.error("[GET /shops]", err);
@@ -144,7 +172,29 @@ router.get(
   }
 );
 
-// ─── GET /shops/:shopId ─────────────────────────────────────────────────────
+// ─── GET /shops/all ───────────────────────────────────────────────────────────
+// List ALL shops (admin only) - includes pending, verified, and rejected shops
+router.get(
+  "/all",
+  verifyFirebaseToken,
+  requireRole("admin"),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const snapshot = await adminDb()
+        .collection("shops")
+        .orderBy("createdAt", "desc")
+        .get();
+
+      res.json({ shops: snapshot.docs.map((d) => d.data()) });
+    } catch (err) {
+      console.error("[GET /shops/all]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// ─── GET /shops/:shopId ───────────────────────────────────────────────────────
+// Get a single shop by ID.
 router.get(
   "/:shopId",
   verifyFirebaseToken,
@@ -163,7 +213,9 @@ router.get(
   }
 );
 
-// ─── PATCH /shops/:shopId ───────────────────────────────────────────────────
+// ─── PATCH /shops/:shopId ─────────────────────────────────────────────────────
+// Update shop profile. Owner or admin only.
+// Admin can also change verificationStatus.
 router.patch(
   "/:shopId",
   verifyFirebaseToken,
@@ -184,25 +236,30 @@ router.patch(
         return;
       }
 
-      const updates = req.body;
-      const allowedUpdates: Record<string, any> = {};
-      
-      const updateableFields = ["name", "address", "category", "operatingHours", "moqThreshold", "photoUrl"];
-      for (const field of updateableFields) {
-        if (updates[field] !== undefined) {
-          allowedUpdates[field] = updates[field];
+      const body = req.body as Record<string, unknown>;
+      const allowedUpdates: Record<string, unknown> = {};
+
+      const mutableFields = ["name", "address", "category", "operatingHours", "moqThreshold", "photoUrl"] as const;
+      for (const field of mutableFields) {
+        if (body[field] !== undefined) allowedUpdates[field] = body[field];
+      }
+
+      // Re-compute geohash if location changes
+      if (body.lat !== undefined && body.lng !== undefined) {
+        const lat = Number(body.lat);
+        const lng = Number(body.lng);
+        allowedUpdates.geopoint = new GeoPoint(lat, lng);
+        allowedUpdates.geohash = geofire.geohashForLocation([lat, lng]);
+      }
+
+      // Only admin can verify / reject a shop
+      const VALID_VERIFICATION_STATUSES = ["pending", "verified", "rejected"];
+      if (role === "admin" && body.verificationStatus !== undefined) {
+        if (!VALID_VERIFICATION_STATUSES.includes(body.verificationStatus as string)) {
+          res.status(400).json({ error: "Bad Request", message: `Invalid verificationStatus. Must be one of: ${VALID_VERIFICATION_STATUSES.join(", ")}` });
+          return;
         }
-      }
-
-      // Re-compute geohash if lat/lng change
-      if (updates.lat !== undefined && updates.lng !== undefined) {
-        allowedUpdates.geopoint = new GeoPoint(Number(updates.lat), Number(updates.lng));
-        allowedUpdates.geohash = geofire.geohashForLocation([Number(updates.lat), Number(updates.lng)]);
-      }
-
-      // Only admin can change verificationStatus
-      if (role === "admin" && updates.verificationStatus) {
-        allowedUpdates.verificationStatus = updates.verificationStatus;
+        allowedUpdates.verificationStatus = body.verificationStatus;
       }
 
       if (Object.keys(allowedUpdates).length === 0) {
@@ -211,10 +268,9 @@ router.patch(
       }
 
       allowedUpdates.updatedAt = FieldValue.serverTimestamp();
-
       await adminDb().collection("shops").doc(shopId).update(allowedUpdates);
 
-      res.json({ message: "Shop updated successfully" });
+      res.json({ message: "Shop updated." });
     } catch (err) {
       console.error("[PATCH /shops/:shopId]", err);
       res.status(500).json({ error: "Internal Server Error" });

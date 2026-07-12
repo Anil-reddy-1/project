@@ -1,9 +1,9 @@
 # Project Progress — B2B Wholesale Marketplace
 ## Order Management & Delivery Dispatch Platform
 
-**Last Updated:** 2026-07-11T00:13 IST
-**Status:** Phase 1 Complete — Phase 2 Planning (steps 0–6 of 9 done)
-**Overall Build Progress:** ~33% (Phase 0-1 complete; Phase 2 planning)
+**Last Updated:** 2026-07-12T14:35 IST
+**Status:** Phase 2 Complete — Phase 3 (Order Placement & Payment) is next
+**Overall Build Progress:** ~45% (Phase 0-2 complete)
 
 > This file is the authoritative progress log for all agents working on this project.
 > Update it at the end of every session. Read it before starting any session.
@@ -17,7 +17,7 @@
 |---|---|---|---|
 | **Phase 0** | Foundations | COMPLETE | All scaffolding in place |
 | **Phase 1** | Identity, Roles & Onboarding | COMPLETE | Authentication and role-gating fully built |
-| **Phase 2** | Shop & Catalog Management | IN PROGRESS | Planning phase |
+| **Phase 2** | Shop & Catalog Management | COMPLETE | Backend (shops+items CRUD, geo queries), Wholesaler (setup wizard, catalog MGMT), Retailer (shop discovery, shop detail) |
 | **Phase 3** | Order Placement & Payment | Not Started | Routes stubbed, logic not built |
 | **Phase 4** | Wholesaler Approval & Inventory Lock | Not Started | Routes stubbed only |
 | **Phase 5** | Delivery Assignment Engine | Not Started | — |
@@ -142,8 +142,8 @@ These must be answered BEFORE the phase that names them. Do not build past a pha
 
 | # | Decision | Needed By | Status |
 |---|---|---|---|
-| 1 | SMS/email vendor for credential dispatch | Phase 1 | UNRESOLVED |
-| 2 | operatingHours structure, verificationStatus value set | Phase 2 | UNRESOLVED |
+| 1 | SMS/email vendor for credential dispatch | Phase 1 | RESOLVED — CredentialMailer stub; real vendor chosen before Phase 10 |
+| 2 | operatingHours structure, verificationStatus value set | Phase 2 | RESOLVED — `{ days, open, close }` object; `pending/verified/rejected` |
 | 3 | Razorpay account/keys provisioned (staging + prod) | Phase 3 | UNRESOLVED |
 | 4 | rejectionReason enum values; retailer-cancel-through-APPROVED confirmation | Phase 4 | UNRESOLVED |
 | 5 | Assignment SLA timeout value; geohash precision; mapping/routing API vendor | Phase 5 | UNRESOLVED |

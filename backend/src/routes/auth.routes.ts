@@ -15,9 +15,10 @@
  */
 
 import { Router, type Request, type Response } from "express";
+import { FieldValue } from "firebase-admin/firestore";
 import { verifyFirebaseToken, verifyFirebaseTokenNoRole } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
-import { adminAuth, adminDb, getFieldValue } from "../config/firebase";
+import { adminAuth, adminDb } from "../config/firebase";
 import type { UserRole, UserStatus } from "../types";
 
 const router = Router();
@@ -89,7 +90,7 @@ router.post(
       await adminAuth().setCustomUserClaims(uid, { role, status });
 
       // Create Firestore users/{uid} document (schema.md §1)
-      const now = getFieldValue().serverTimestamp();
+      const now = FieldValue.serverTimestamp();
       await adminDb().collection("users").doc(uid).set({
         uid,
         role,
@@ -351,6 +352,59 @@ router.post(
         return;
       }
       console.error("[POST /auth/approve]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  },
+);
+
+// ─── POST /auth/reject ───────────────────────────────────────────────────────
+//
+// Admin rejects a pending wholesaler self-registration.
+// - Deletes the Firebase Auth account
+// - Deletes the Firestore users/{uid} document
+// This frees up the email so the user can apply again later.
+//
+// Body: { uid: string }
+
+router.post(
+  "/reject",
+  verifyFirebaseToken,
+  requireRole("admin"),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid } = req.body as { uid?: string };
+
+      if (!targetUid) {
+        res.status(400).json({ error: "Bad Request", message: "uid is required." });
+        return;
+      }
+
+      const firebaseUser = await adminAuth().getUser(targetUid);
+      const currentStatus = firebaseUser.customClaims?.status as UserStatus;
+
+      // Only pending_approval accounts can be rejected (deleted)
+      if (currentStatus !== "pending_approval") {
+        res.status(400).json({
+          error: "Bad Request",
+          message: `Account status is '${currentStatus}', not 'pending_approval'. Only pending accounts can be rejected.`,
+        });
+        return;
+      }
+
+      // Delete Firebase Auth account
+      await adminAuth().deleteUser(targetUid);
+
+      // Delete Firestore document
+      await adminDb().collection("users").doc(targetUid).delete();
+
+      res.status(200).json({ uid: targetUid, message: "User rejected and deleted." });
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/user-not-found") {
+        res.status(404).json({ error: "Not Found", message: "User not found." });
+        return;
+      }
+      console.error("[POST /auth/reject]", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
