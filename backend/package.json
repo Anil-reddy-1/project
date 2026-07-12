@@ -5,7 +5,7 @@
   "description": "Express API — B2B Wholesale Marketplace",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "nodemon -e ts -w src -x \"ts-node --transpile-only src/index.ts\"",
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
@@ -18,12 +18,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
     "firebase-admin": "^12.3.0",
     "geofire-common": "^6.0.0",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
-    "nodemon": "^3.1.14",
     "razorpay": "^2.9.5",
     "uuid": "^11.0.0"
   },
@@ -35,6 +35,8 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^20.14.0",
     "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   }

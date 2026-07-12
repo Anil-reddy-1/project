@@ -45,7 +45,7 @@ export function initializeFirebase(): admin.app.App {
       project_id: FIREBASE_PROJECT_ID,
       private_key: FIREBASE_PRIVATE_KEY,
       client_email: FIREBASE_CLIENT_EMAIL,
-    };
+    } as admin.ServiceAccount;
 
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),

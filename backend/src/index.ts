@@ -14,6 +14,7 @@
 // ─── Load environment variables first ────────────────────────────────────────
 import "dotenv/config";
 import { env } from "./config/env";
+import "express-async-errors";
 
 import express from "express";
 import cors from "cors";
