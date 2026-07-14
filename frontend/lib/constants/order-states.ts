@@ -10,7 +10,7 @@ import type { OrderState, UserRole } from "@/types";
 
 /** All valid order states */
 export const ORDER_STATES: readonly OrderState[] = [
-  "PLACED",
+  "PENDING_APPROVAL",
   "APPROVED",
   "REJECTED",
   "PACKED",
@@ -36,7 +36,7 @@ export const TERMINAL_STATES: readonly OrderState[] = [
  * Once READY_FOR_PICKUP or later, cancellation is blocked.
  */
 export const CANCELLABLE_STATES: readonly OrderState[] = [
-  "PLACED",
+  "PENDING_APPROVAL",
   "APPROVED",
   "PACKED",
 ] as const;
@@ -45,7 +45,7 @@ export const CANCELLABLE_STATES: readonly OrderState[] = [
  * States where order edits are permitted (rules.md §2).
  * Only while state === PLACED.
  */
-export const EDITABLE_STATES: readonly OrderState[] = ["PLACED"] as const;
+export const EDITABLE_STATES: readonly OrderState[] = ["PENDING_APPROVAL"] as const;
 
 /**
  * States where live delivery tracking is shown to the retailer.
@@ -72,7 +72,7 @@ export const STATE_TRANSITIONS: Record<
     allowedRoles: UserRole[];
   }>
 > = {
-  PLACED: [
+  PENDING_APPROVAL: [
     { action: "approve", nextState: "APPROVED", allowedRoles: ["wholesaler", "admin"] },
     { action: "reject", nextState: "REJECTED", allowedRoles: ["wholesaler", "admin"] },
     { action: "cancel", nextState: "CANCELLED", allowedRoles: ["retailer", "admin"] },
@@ -112,7 +112,7 @@ export const STATE_TRANSITIONS: Record<
  * Must always pair with semantic color — never color alone (design-doc.md §7).
  */
 export const ORDER_STATE_LABELS: Record<OrderState, string> = {
-  PLACED: "Order Placed",
+  PENDING_APPROVAL: "Pending Approval",
   APPROVED: "Approved",
   REJECTED: "Rejected",
   PACKED: "Packed",
@@ -132,7 +132,7 @@ export const ORDER_STATE_LABELS: Record<OrderState, string> = {
  * These are the ONLY colors used for order state — never decoratively (design-doc.md §2.1).
  */
 export const ORDER_STATE_COLORS: Record<OrderState, string> = {
-  PLACED: "amber",
+  PENDING_APPROVAL: "amber",
   APPROVED: "signal",
   REJECTED: "red",
   PACKED: "signal",
@@ -151,7 +151,7 @@ export const ORDER_STATE_COLORS: Record<OrderState, string> = {
  * This is the visual progression shown to all roles (design-doc.md §3).
  */
 export const TIMELINE_STATES: readonly OrderState[] = [
-  "PLACED",
+  "PENDING_APPROVAL",
   "APPROVED",
   "PACKED",
   "PICKED_UP",

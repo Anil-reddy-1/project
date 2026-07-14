@@ -20,7 +20,7 @@ export type UserStatus = "active" | "suspended" | "pending_approval";
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export type OrderState =
-  | "PLACED"
+  | "PENDING_APPROVAL"
   | "APPROVED"
   | "REJECTED"
   | "PACKED"
@@ -33,13 +33,16 @@ export type OrderState =
   | "DISPUTED"
   | "PAYMENT_SETTLED";
 
-export type PaymentMethod = "prepaid" | "cod";
+export type PaymentMethod = "PHONEPE" | "COD";
 
 export type PaymentStatus =
-  | "pending"
-  | "paid"
-  | "failed"
-  | "refunded";
+  | "PENDING"
+  | "INITIATED"
+  | "SUCCESS"
+  | "FAILED"
+  | "PENDING_COD"
+  | "CANCELLED"
+  | "EXPIRED";
 
 // ─── Ledger ───────────────────────────────────────────────────────────────────
 
@@ -76,3 +79,149 @@ export type UploadFolder =
   | "verification_images"
   | "dispute_attachments"
   | "product_images";
+
+// ─── Orders & Payments (Phase 3) ─────────────────────────────────────────────
+
+export interface OrderItem {
+  itemId: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  moq: number;
+  totalPrice: number;
+  imageUrl?: string;
+}
+
+export interface DeliveryAddress {
+  addressId: string;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
+  isDefault?: boolean;
+}
+
+export interface Order {
+  orderId: string;
+  orderNumber: string;
+  
+  // Retailer information
+  retailerId: string;
+  retailerName: string;
+  retailerEmail: string;
+  retailerPhone: string;
+  
+  // Shop information (single shop)
+  shopId: string;
+  shopName: string;
+  
+  // Order items
+  items: OrderItem[];
+  
+  // Pricing breakdown
+  subtotal: number;
+  deliveryCharges: number;
+  tax: number;
+  discount: number;
+  grandTotal: number;
+  
+  // Delivery information
+  deliveryAddress: DeliveryAddress;
+  
+  // Payment information
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paymentId?: string;
+  paymentDetails?: any;
+  
+  // Order status
+  orderState: OrderState;
+  
+  // Timestamps
+  createdAt: any; // Firestore Timestamp
+  updatedAt: any; // Firestore Timestamp
+  
+  // Audit
+  createdBy: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface Payment {
+  paymentId: string;
+  orderId: string;
+  
+  // Payment gateway details
+  gateway: "PHONEPE";
+  merchantTransactionId: string;
+  gatewayTransactionId?: string;
+  
+  // Amount
+  amount: number;
+  currency: "INR";
+  
+  // Status tracking
+  status: PaymentStatus;
+  
+  // PhonePe specific
+  phonePeResponse?: any;
+  checksum?: string;
+  
+  // Retry tracking
+  retryCount: number;
+  maxRetries: number;
+  
+  // Timestamps
+  initiatedAt: any; // Firestore Timestamp
+  completedAt?: any; // Firestore Timestamp
+  expiresAt: any; // Firestore Timestamp
+  
+  // Audit
+  retailerId: string;
+  ipAddress?: string;
+  webhookReceived: boolean;
+  webhookData?: any;
+}
+
+export interface OrderAuditLog {
+  orderId: string;
+  timestamp: any; // Firestore Timestamp
+  action: string;
+  performedBy: string;
+  performedByRole: UserRole;
+  oldState?: string;
+  newState: string;
+  metadata?: any;
+  ipAddress?: string;
+}
+
+export interface CartValidationResult {
+  valid: boolean;
+  errors: string[];
+  items?: OrderItem[];
+  subtotal?: number;
+  grandTotal?: number;
+}
+
+export interface PaymentInitiationRequest {
+  orderId: string;
+  amount: number;
+  retailerId: string;
+  retailerName: string;
+  retailerEmail: string;
+  retailerPhone: string;
+}
+
+export interface PaymentVerificationResult {
+  success: boolean;
+  status: PaymentStatus;
+  orderId?: string;
+  orderNumber?: string;
+  transactionId?: string;
+  message?: string;
+}

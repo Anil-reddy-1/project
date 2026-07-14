@@ -12,6 +12,12 @@
 import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import { orderService } from "../services/order.service";
+import { adminDb } from "../config/firebase";
+import {
+  sendCODConfirmation,
+  sendNewOrderAlertToWholesaler,
+} from "../services/notification.service";
 
 const router = Router();
 
@@ -25,8 +31,37 @@ const router = Router();
  *  - delivery_partner: orders assigned to them
  *  - admin: all orders (with filters)
  */
-router.get("/", verifyFirebaseToken, async (_req: Request, res: Response) => {
-  res.status(501).json({ message: "Phase 3 — not yet implemented" });
+router.get("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.uid;
+    const userRole = req.user!.role as any;
+
+    // Parse query parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const state = req.query.state as any;
+    const paymentStatus = req.query.paymentStatus as string;
+
+    // Get orders with role-based filtering
+    const result = await orderService.getOrdersForUser(userId, userRole, {
+      page,
+      limit,
+      state,
+      paymentStatus,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result.orders,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    console.error('[Orders] List orders error:', error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to fetch orders',
+    });
+  }
 });
 
 /**
@@ -36,25 +71,175 @@ router.get("/", verifyFirebaseToken, async (_req: Request, res: Response) => {
 router.get(
   "/:orderId",
   verifyFirebaseToken,
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 3 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.uid;
+      const userRole = req.user!.role as any;
+      const { orderId } = req.params;
+
+      const order = await orderService.getOrderById(orderId, userId, userRole);
+
+      // Fetch audit log
+      const auditLog = await orderService.getOrderAuditLog(orderId);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...order,
+          auditLog,
+        },
+      });
+    } catch (error: any) {
+      console.error('[Orders] Get order error:', error);
+      
+      if (error.message === 'Order not found') {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found',
+        });
+      }
+
+      if (error.message === 'Unauthorized access to order') {
+        return res.status(403).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to fetch order',
+      });
+    }
   },
 );
 
 /**
  * POST /orders
  * Place a new order (Retailer only).
- * Body: { shopId, items: [{itemId, qty}], paymentMethod }
+ * Body: { items: [{itemId, quantity}], deliveryAddress, paymentMethod, saveAddress }
  *
- * For prepaid: returns { orderId, razorpayOrderId } → frontend opens Razorpay checkout.
- * For COD: returns { orderId } directly with state PLACED.
+ * For prepaid: returns { orderId, orderNumber, paymentId, phonepeRedirectUrl }
+ * For COD: returns { orderId, orderNumber, state, grandTotal }
  */
 router.post(
   "/",
   verifyFirebaseToken,
   requireRole("retailer"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 3 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.uid;
+      const { items, deliveryAddress, paymentMethod, saveAddress } = req.body;
+
+      // Validate request body
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cart items are required',
+        });
+      }
+
+      if (!deliveryAddress) {
+        return res.status(400).json({
+          success: false,
+          message: 'Delivery address is required',
+        });
+      }
+
+      if (!paymentMethod || !['prepaid', 'cod'].includes(paymentMethod)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid payment method is required (prepaid or cod)',
+        });
+      }
+
+      // Create order
+      const order = await orderService.createOrder(
+        userId,
+        items,
+        deliveryAddress,
+        paymentMethod
+      );
+
+      // Save address to user profile if requested
+      if (saveAddress) {
+        const db = adminDb();
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.data();
+        
+        const addresses = userData?.deliveryAddresses || [];
+        addresses.push({
+          id: `addr_${Date.now()}`,
+          ...deliveryAddress,
+          isDefault: addresses.length === 0,
+          createdAt: new Date(),
+        });
+
+        await userRef.update({ deliveryAddresses: addresses });
+      }
+
+      // Send notifications
+      if (paymentMethod === 'prepaid') {
+        // For prepaid, notifications will be sent after payment verification
+        return res.status(200).json({
+          success: true,
+          message: 'Order created, redirecting to payment',
+          data: {
+            orderId: order.orderId,
+            orderNumber: order.orderNumber,
+            paymentId: order.paymentId,
+            phonepeRedirectUrl: (order as any).redirectUrl,
+            amount: order.grandTotal,
+          },
+        });
+      } else {
+        // Send COD confirmation
+        await sendCODConfirmation({
+          orderId: order.orderId,
+          orderNumber: order.orderNumber,
+          retailerName: order.retailerSnapshot.name,
+          retailerEmail: order.retailerSnapshot.email,
+          wholesalerEmail: '', // Will be fetched in notification service
+          grandTotal: order.grandTotal,
+          itemCount: order.items.length,
+          paymentMethod: 'cod',
+          paymentStatus: 'pending',
+          createdAt: order.createdAt,
+        });
+
+        // Send new order alert to wholesaler
+        await sendNewOrderAlertToWholesaler({
+          orderId: order.orderId,
+          orderNumber: order.orderNumber,
+          retailerName: order.retailerSnapshot.name,
+          retailerEmail: order.retailerSnapshot.email,
+          wholesalerEmail: '', // Will be fetched in notification service
+          grandTotal: order.grandTotal,
+          itemCount: order.items.length,
+          paymentMethod: 'cod',
+          paymentStatus: 'pending',
+          createdAt: order.createdAt,
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Order placed successfully',
+          data: {
+            orderId: order.orderId,
+            orderNumber: order.orderNumber,
+            state: order.state,
+            grandTotal: order.grandTotal,
+          },
+        });
+      }
+    } catch (error: any) {
+      console.error('[Orders] Create order error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to create order',
+      });
+    }
   },
 );
 
@@ -106,8 +291,48 @@ router.post(
   "/:orderId/cancel",
   verifyFirebaseToken,
   requireRole("retailer", "admin"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 4 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.uid;
+      const { orderId } = req.params;
+      const { reason } = req.body;
+
+      if (!reason || typeof reason !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Cancellation reason is required',
+        });
+      }
+
+      const order = await orderService.cancelOrder(orderId, userId, reason);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order cancelled successfully',
+        data: order,
+      });
+    } catch (error: any) {
+      console.error('[Orders] Cancel order error:', error);
+
+      if (error.message === 'Order not found') {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found',
+        });
+      }
+
+      if (error.message === 'Order cannot be cancelled in current state') {
+        return res.status(400).json({
+          success: false,
+          message: 'Order cannot be cancelled in current state',
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to cancel order',
+      });
+    }
   },
 );
 

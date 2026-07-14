@@ -32,7 +32,7 @@ export interface CredentialDispatch {
 }
 
 export class CredentialMailer {
-  private apiInstance: brevo.TransactionalEmailsApi;
+  private client: brevo.BrevoClient | undefined;
   private isConfigured: boolean;
 
   constructor() {
@@ -40,9 +40,7 @@ export class CredentialMailer {
     
     if (this.isConfigured) {
       // Configure Brevo API client
-      const apiKey = brevo.ApiClient.instance.authentications['apiKey'];
-      apiKey.apiKey = env.BREVO_API_KEY;
-      this.apiInstance = new brevo.TransactionalEmailsApi();
+      this.client = new brevo.BrevoClient({ apiKey: env.BREVO_API_KEY as string });
       
       console.log('✅ Brevo email service configured');
     } else {
@@ -64,20 +62,19 @@ export class CredentialMailer {
     }
 
     try {
-      const sendSmtpEmail = new brevo.SendSmtpEmail();
-      sendSmtpEmail.to = [{
-        email: dispatch.to.email,
-        name: dispatch.to.name,
-      }];
-      sendSmtpEmail.sender = {
-        email: env.BREVO_FROM_EMAIL,
-        name: env.BREVO_FROM_NAME,
-      };
-      sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = htmlContent;
-      sendSmtpEmail.textContent = textContent;
-
-      await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      await this.client!.transactionalEmails.sendTransacEmail({
+        to: [{
+          email: dispatch.to.email,
+          name: dispatch.to.name,
+        }],
+        sender: {
+          email: env.BREVO_FROM_EMAIL,
+          name: env.BREVO_FROM_NAME,
+        },
+        subject: subject,
+        htmlContent: htmlContent,
+        textContent: textContent,
+      });
       
       console.log(`✅ Email sent to ${dispatch.to.email} (${dispatch.type})`);
     } catch (error) {

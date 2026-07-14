@@ -11,6 +11,7 @@ import authRouter from "./auth.routes";
 import usersRouter from "./users.routes";
 import shopsRouter from "./shops.routes";
 import ordersRouter from "./orders.routes";
+import paymentsRouter from "./payments.routes";
 
 const router = Router();
 
@@ -20,10 +21,11 @@ router.get("/health", (_req, res) => {
 });
 
 // ─── Feature routers ──────────────────────────────────────────────────────────
-router.use("/upload", uploadRouter);   // File uploads → Cloudinary
-router.use("/auth", authRouter);       // Role/claim management (Phase 1)
-router.use("/users", usersRouter);     // User CRUD (Phase 1)
-router.use("/shops", shopsRouter);     // Shop + item CRUD (Phase 2)
-router.use("/orders", ordersRouter);   // Order state machine (Phase 3+)
+router.use("/upload", uploadRouter);     // File uploads → Cloudinary
+router.use("/auth", authRouter);         // Role/claim management (Phase 1)
+router.use("/users", usersRouter);       // User CRUD (Phase 1)
+router.use("/shops", shopsRouter);       // Shop + item CRUD (Phase 2)
+router.use("/orders", ordersRouter);     // Order state machine (Phase 3+)
+router.use("/payments", paymentsRouter); // Payment handling (Phase 3)
 
 export default router;

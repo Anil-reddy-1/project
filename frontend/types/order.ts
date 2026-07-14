@@ -8,7 +8,7 @@
 
 /** All possible order states — schema.md §4 */
 export type OrderState =
-  | "PLACED"
+  | "PENDING_APPROVAL"
   | "APPROVED"
   | "REJECTED"
   | "PACKED"

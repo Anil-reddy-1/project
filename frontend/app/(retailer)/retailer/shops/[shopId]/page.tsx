@@ -89,6 +89,7 @@ export default function ShopDetailPage() {
     if (!user || !shopId) return;
 
     async function load() {
+      if (!user) return;
       setLoading(true);
       try {
         const token = await user.getIdToken();

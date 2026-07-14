@@ -285,4 +285,264 @@ router.patch(
   },
 );
 
+// ─── Address Management (Phase 3) ─────────────────────────────────────────────
+
+/**
+ * GET /users/:uid/addresses
+ * Get user's delivery addresses
+ */
+router.get(
+  "/:uid/addresses",
+  verifyFirebaseToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid } = req.params;
+      const { uid: callerUid, role: callerRole } = req.user!;
+
+      // Non-admin can only read their own addresses
+      if (callerRole !== "admin" && callerUid !== targetUid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const doc = await adminDb().collection("users").doc(targetUid).get();
+
+      if (!doc.exists) {
+        res.status(404).json({ error: "Not Found" });
+        return;
+      }
+
+      const addresses = doc.data()?.deliveryAddresses || [];
+      res.status(200).json({ addresses });
+    } catch (err) {
+      console.error("[GET /users/:uid/addresses]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
+ * POST /users/:uid/addresses
+ * Add a new delivery address
+ */
+router.post(
+  "/:uid/addresses",
+  verifyFirebaseToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid } = req.params;
+      const { uid: callerUid, role: callerRole } = req.user!;
+
+      // Non-admin can only add to their own addresses
+      if (callerRole !== "admin" && callerUid !== targetUid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const address = req.body;
+
+      // Validate required fields
+      const required = ['line1', 'city', 'state', 'pincode', 'phone'];
+      for (const field of required) {
+        if (!address[field]) {
+          res.status(400).json({
+            error: "Bad Request",
+            message: `${field} is required`,
+          });
+          return;
+        }
+      }
+
+      const docRef = adminDb().collection("users").doc(targetUid);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        res.status(404).json({ error: "Not Found" });
+        return;
+      }
+
+      const addresses = doc.data()?.deliveryAddresses || [];
+      
+      const newAddress = {
+        id: `addr_${Date.now()}`,
+        ...address,
+        isDefault: addresses.length === 0, // First address is default
+        createdAt: new Date(),
+      };
+
+      addresses.push(newAddress);
+
+      await docRef.update({
+        deliveryAddresses: addresses,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      res.status(201).json({ address: newAddress });
+    } catch (err) {
+      console.error("[POST /users/:uid/addresses]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
+ * PATCH /users/:uid/addresses/:addressId
+ * Update an existing delivery address
+ */
+router.patch(
+  "/:uid/addresses/:addressId",
+  verifyFirebaseToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid, addressId } = req.params;
+      const { uid: callerUid, role: callerRole } = req.user!;
+
+      if (callerRole !== "admin" && callerUid !== targetUid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const docRef = adminDb().collection("users").doc(targetUid);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        res.status(404).json({ error: "Not Found" });
+        return;
+      }
+
+      const addresses = doc.data()?.deliveryAddresses || [];
+      const addressIndex = addresses.findIndex((a: any) => a.id === addressId);
+
+      if (addressIndex === -1) {
+        res.status(404).json({ error: "Address not found" });
+        return;
+      }
+
+      // Update address fields
+      addresses[addressIndex] = {
+        ...addresses[addressIndex],
+        ...req.body,
+        id: addressId, // Preserve ID
+        updatedAt: new Date(),
+      };
+
+      await docRef.update({
+        deliveryAddresses: addresses,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      res.status(200).json({ address: addresses[addressIndex] });
+    } catch (err) {
+      console.error("[PATCH /users/:uid/addresses/:addressId]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
+ * DELETE /users/:uid/addresses/:addressId
+ * Delete a delivery address
+ */
+router.delete(
+  "/:uid/addresses/:addressId",
+  verifyFirebaseToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid, addressId } = req.params;
+      const { uid: callerUid, role: callerRole } = req.user!;
+
+      if (callerRole !== "admin" && callerUid !== targetUid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const docRef = adminDb().collection("users").doc(targetUid);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        res.status(404).json({ error: "Not Found" });
+        return;
+      }
+
+      let addresses = doc.data()?.deliveryAddresses || [];
+      const addressIndex = addresses.findIndex((a: any) => a.id === addressId);
+
+      if (addressIndex === -1) {
+        res.status(404).json({ error: "Address not found" });
+        return;
+      }
+
+      const wasDefault = addresses[addressIndex].isDefault;
+      addresses = addresses.filter((_: any, i: number) => i !== addressIndex);
+
+      // If deleted address was default, make first remaining address default
+      if (wasDefault && addresses.length > 0) {
+        addresses[0].isDefault = true;
+      }
+
+      await docRef.update({
+        deliveryAddresses: addresses,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      res.status(200).json({ message: "Address deleted" });
+    } catch (err) {
+      console.error("[DELETE /users/:uid/addresses/:addressId]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
+ * PUT /users/:uid/addresses/:addressId/set-default
+ * Set an address as default
+ */
+router.put(
+  "/:uid/addresses/:addressId/set-default",
+  verifyFirebaseToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { uid: targetUid, addressId } = req.params;
+      const { uid: callerUid, role: callerRole } = req.user!;
+
+      if (callerRole !== "admin" && callerUid !== targetUid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const docRef = adminDb().collection("users").doc(targetUid);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        res.status(404).json({ error: "Not Found" });
+        return;
+      }
+
+      const addresses = doc.data()?.deliveryAddresses || [];
+      const addressIndex = addresses.findIndex((a: any) => a.id === addressId);
+
+      if (addressIndex === -1) {
+        res.status(404).json({ error: "Address not found" });
+        return;
+      }
+
+      // Set all addresses to not default
+      addresses.forEach((a: any) => { a.isDefault = false; });
+      
+      // Set target address as default
+      addresses[addressIndex].isDefault = true;
+
+      await docRef.update({
+        deliveryAddresses: addresses,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      res.status(200).json({ address: addresses[addressIndex] });
+    } catch (err) {
+      console.error("[PUT /users/:uid/addresses/:addressId/set-default]", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
 export default router;

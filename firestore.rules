@@ -74,18 +74,53 @@ service cloud.firestore {
 
     // ─── orders/{orderId} ────────────────────────────────────────────────────
     //
-    // Read: retailerUid, assignedPartnerUid, shop's ownerUid, or Admin.
-    //   Note: shopOwnerUid lookup uses get() — one extra Firestore read per
-    //   security rule evaluation. Acceptable at this scale.
+    // Read: retailer who placed it, wholesaler who manages it, or Admin.
     // Write: BLOCKED for clients — all state transitions via Express (rules.md §2).
 
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (
         isAdmin() ||
-        request.auth.uid == resource.data.retailerUid ||
-        request.auth.uid == resource.data.assignedPartnerUid ||
-        request.auth.uid == get(/databases/$(database)/documents/shops/$(resource.data.shopId)).data.ownerUid
+        request.auth.uid == resource.data.retailerId ||
+        request.auth.uid == resource.data.wholesalerId ||
+        request.auth.uid == resource.data.assignedPartnerId
       );
+      allow write: if false;
+    }
+
+    // ─── payments/{paymentId} ────────────────────────────────────────────────
+    //
+    // Read/Write: BLOCKED for clients — all payment operations via Express.
+    // Payment data is sensitive and must only be accessed server-side.
+
+    match /payments/{paymentId} {
+      allow read, write: if false;
+    }
+
+    // ─── order_audit_log/{logId} ─────────────────────────────────────────────
+    //
+    // Read/Write: BLOCKED for clients — audit logs are server-only.
+    // Prevents tampering with order history.
+
+    match /order_audit_log/{logId} {
+      allow read, write: if false;
+    }
+
+    // ─── counters/{counterId} ────────────────────────────────────────────────
+    //
+    // Read/Write: BLOCKED for clients — order number generation is server-only.
+
+    match /counters/{counterId} {
+      allow read, write: if false;
+    }
+
+    // ─── notifications/{notificationId} ──────────────────────────────────────
+    //
+    // Read: user can read their own notifications.
+    // Write: BLOCKED for clients — notifications created server-side only.
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
       allow write: if false;
     }
 

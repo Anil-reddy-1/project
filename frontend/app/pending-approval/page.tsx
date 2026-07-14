@@ -3,7 +3,7 @@
 /**
  * Pending Approval page.
  * URL: /pending-approval
- * Derived from: app-flow.md §2.1 (Path B), tech-spec.md §3.1
+ * Derived from: app-flow.md Section 2.1 (Path B), tech-spec.md Section 3.1
  *
  * Shown when a wholesaler self-registration is awaiting Admin approval.
  * The middleware redirects pending_approval users here instead of their dashboard.
