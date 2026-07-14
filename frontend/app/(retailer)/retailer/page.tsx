@@ -49,32 +49,12 @@ export default function RetailerHomePage() {
           </div>
           <h1 className="dashboard-title">Welcome back</h1>
           <p className="dashboard-subtitle">
-            Discover wholesale shops and browse their catalogs below.
+            Browse our complete wholesale catalog with verified products and best prices.
           </p>
         </div>
 
-        {/* Quick Stats Section */}
-        <div className="rdash-stats">
-          <div className="rdash-stat-card">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <div className="rdash-stat-content">
-              <span className="rdash-stat-value">12+</span>
-              <span className="rdash-stat-label">Verified Shops</span>
-            </div>
-          </div>
-          <div className="rdash-stat-card">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <div className="rdash-stat-content">
-              <span className="rdash-stat-value">5km</span>
-              <span className="rdash-stat-label">Nearby Radius</span>
-            </div>
-          </div>
+        {/* Quick Stats - Hidden for single shop */}
+        <div className="rdash-stats" style={{ display: 'none' }}>
           <div className="rdash-stat-card">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -92,7 +72,7 @@ export default function RetailerHomePage() {
         <div className="rdash-actions">
           <button
             className="rdash-action-card rdash-action-card--featured tap-target"
-            onClick={() => router.push("/retailer/shops")}
+            onClick={() => router.push("/retailer/catalog")}
           >
             <div className="rdash-action-icon rdash-action-icon--featured">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,11 +81,11 @@ export default function RetailerHomePage() {
               </svg>
             </div>
             <div className="rdash-action-body">
-              <h2 className="rdash-action-title">Browse Shops</h2>
-              <p className="rdash-action-desc">Discover verified wholesalers near you with quality products</p>
+              <h2 className="rdash-action-title">Browse Catalog</h2>
+              <p className="rdash-action-desc">View our complete product catalog with quality wholesale items</p>
               <div className="rdash-action-features">
-                <span className="rdash-feature-chip">✓ Location-based search</span>
-                <span className="rdash-feature-chip">✓ Product catalogs</span>
+                <span className="rdash-feature-chip">✓ Verified products</span>
+                <span className="rdash-feature-chip">✓ Best prices</span>
               </div>
             </div>
             <svg className="rdash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -185,9 +165,9 @@ export default function RetailerHomePage() {
             <div className="rdash-tips-content">
               <h4 className="rdash-tips-title">💡 Getting Started Tips</h4>
               <ul className="rdash-tips-list">
-                <li>Use location search to find nearby wholesale suppliers</li>
-                <li>Check MOQ (Minimum Order Quantity) before browsing catalogs</li>
-                <li>Look for verified shops for quality assurance</li>
+                <li>Browse our complete product catalog with verified items</li>
+                <li>Check MOQ (Minimum Order Quantity) before adding to cart</li>
+                <li>Minimum order value: Check shop info for details</li>
               </ul>
             </div>
           </div>
@@ -323,10 +303,6 @@ export default function RetailerHomePage() {
           font-size: 0.75rem;
           color: var(--color-ink-muted);
           font-weight: 500;
-        }
-        
-        .role-badge-wrap {
-          margin-bottom: 1.25rem;
         }
         
         .dashboard-role-badge { 

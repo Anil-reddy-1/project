@@ -18,6 +18,7 @@ import { Router, type Request, type Response } from "express";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyFirebaseToken, verifyFirebaseTokenNoRole } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import { preventMultipleWholesalers } from "../middleware/single-shop-validation";
 import { adminAuth, adminDb } from "../config/firebase";
 import type { UserRole, UserStatus } from "../types";
 
@@ -65,26 +66,19 @@ router.post(
         return;
       }
 
-      // Validate requestedRole — only retailer and wholesaler are allowed for self-signup.
-      // Delivery partners and admins are always provisioned by admin (tech-spec.md §3.1).
-      const allowedSelfSignupRoles = ["retailer", "wholesaler"];
-      const role: UserRole = (requestedRole === "wholesaler") ? "wholesaler" : "retailer";
-
-      if (requestedRole && !allowedSelfSignupRoles.includes(requestedRole)) {
-        res.status(400).json({
-          error: "Bad Request",
-          message: "Only 'retailer' or 'wholesaler' self-signup is allowed.",
+      // PHASE 2.5: Wholesaler self-signup is now DISABLED for single-shop architecture.
+      // Wholesalers are created by admin only via /auth/set-role.
+      // Only retailer self-signup is allowed.
+      if (requestedRole === "wholesaler") {
+        res.status(403).json({
+          error: "Forbidden",
+          message: "Wholesaler accounts must be created by an administrator. Only retailer self-signup is allowed.",
         });
         return;
       }
 
-      // Wholesaler self-signups start in pending_approval and their Firebase Auth
-      // account is disabled so they cannot log in until an Admin approves them.
-      const status: UserStatus = role === "wholesaler" ? "pending_approval" : "active";
-
-      if (role === "wholesaler") {
-        await adminAuth().updateUser(uid, { disabled: true });
-      }
+      const role: UserRole = "retailer";
+      const status: UserStatus = "active";
 
       // Set custom claims server-side (never client-side — rules.md §1)
       await adminAuth().setCustomUserClaims(uid, { role, status });
@@ -115,6 +109,7 @@ router.post(
 //
 // Admin sets custom role + status claims on an existing Firebase Auth user.
 // Also updates the Firestore users/{uid} document.
+// PHASE 2.5: Prevents creation of multiple wholesaler accounts.
 //
 // Body: { uid: string, role: UserRole, status: UserStatus }
 
@@ -122,6 +117,7 @@ router.post(
   "/set-role",
   verifyFirebaseToken,
   requireRole("admin"),
+  preventMultipleWholesalers,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { uid: targetUid, role, status } = req.body as {

@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import { validateShopCreation, validateShopUpdate } from "../middleware/validate";
+import { preventMultipleShops, preventShopOwnerChange } from "../middleware/single-shop-validation";
 import { adminDb } from "../config/firebase";
 import { FieldValue, GeoPoint } from "firebase-admin/firestore";
 import * as geofire from "geofire-common";
@@ -15,11 +16,13 @@ router.use("/:shopId/items", itemsRouter);
 
 // ─── POST /shops ─────────────────────────────────────────────────────────────
 // Create a new shop. Only an active wholesaler without an existing shop can call this.
+// PHASE 2.5: Single-shop validation prevents multiple shops from being created.
 router.post(
   "/",
   verifyFirebaseToken,
   requireRole("wholesaler"),
   validateShopCreation,
+  preventMultipleShops,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { uid, status } = req.user!;
@@ -209,11 +212,13 @@ router.get(
 // ─── PATCH /shops/:shopId ─────────────────────────────────────────────────────
 // Update shop profile. Owner or admin only.
 // Admin can also change verificationStatus.
+// PHASE 2.5: Prevents changing shop ownership.
 router.patch(
   "/:shopId",
   verifyFirebaseToken,
   requireRole("wholesaler", "admin"),
   validateShopUpdate,
+  preventShopOwnerChange,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { shopId } = req.params;
