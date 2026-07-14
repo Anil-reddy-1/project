@@ -1,129 +1,100 @@
 /**
  * usePayment Hook
- * Derived from: Phase 3 Implementation Plan §9.5.3
+ * Task #20: State management hooks
  * 
- * Handles payment retry and status checking:
- * - Check payment status
- * - Retry failed payments
- * - Poll for payment updates
+ * Payment status checking and retry logic
  */
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  getPaymentStatus,
-  retryPayment,
-  type Payment,
-} from '@/lib/api/payments';
+import { useState, useCallback, useEffect } from 'react';
+import { paymentsApi } from '@/lib/api';
+import type { Payment, PaymentStatus } from '@/lib/types';
 
 export function usePayment(paymentId: string | null) {
-  const router = useRouter();
-  
   const [payment, setPayment] = useState<Payment | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check payment status
   const checkStatus = useCallback(async () => {
     if (!paymentId) return;
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const response = await getPaymentStatus(paymentId);
+      setIsLoading(true);
+      setError(null);
 
-      if (!response.success) {
-        throw new Error('Failed to get payment status');
-      }
-
+      const response = await paymentsApi.checkPaymentStatus(paymentId);
       setPayment(response.data);
+      
+      return response.data;
     } catch (err: any) {
-      console.error('[usePayment] Status check error:', err);
-      setError(err.message || 'Failed to check payment status');
+      console.error('Failed to check payment status:', err);
+      setError(
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Failed to check payment status'
+      );
+      throw err;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [paymentId]);
 
   // Retry payment
-  const retry = useCallback(async () => {
+  const retryPayment = useCallback(async () => {
     if (!paymentId) return;
 
-    setIsRetrying(true);
-    setError(null);
-
     try {
-      const response = await retryPayment(paymentId);
+      setIsRetrying(true);
+      setError(null);
 
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to retry payment');
+      const response = await paymentsApi.retryPayment(paymentId);
+      
+      // Redirect to PhonePe if URL provided
+      if (response.data.phonepeRedirectUrl) {
+        window.location.href = response.data.phonepeRedirectUrl;
       }
 
-      // Redirect to PhonePe payment page
-      if (response.data.redirectUrl) {
-        window.location.href = response.data.redirectUrl;
-      }
+      return response.data;
     } catch (err: any) {
-      console.error('[usePayment] Retry error:', err);
-      setError(err.message || 'Failed to retry payment');
+      console.error('Failed to retry payment:', err);
+      setError(
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Failed to retry payment'
+      );
+      throw err;
+    } finally {
       setIsRetrying(false);
     }
   }, [paymentId]);
 
-  // Poll for payment status updates (useful for pending payments)
-  const startPolling = useCallback((intervalMs: number = 5000, maxAttempts: number = 24) => {
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts++;
-
-      if (attempts >= maxAttempts) {
-        clearInterval(interval);
-        return;
-      }
-
-      try {
-        if (!paymentId) {
-          clearInterval(interval);
-          return;
-        }
-
-        const response = await getPaymentStatus(paymentId);
-
-        if (response.success) {
-          setPayment(response.data);
-
-          // Stop polling if payment is in terminal state
-          if (response.data.status === 'paid' || response.data.status === 'failed') {
-            clearInterval(interval);
-          }
-        }
-      } catch (err) {
-        console.error('[usePayment] Polling error:', err);
-        // Continue polling despite errors
-      }
-    }, intervalMs);
-
-    return () => clearInterval(interval);
-  }, [paymentId]);
-
-  // Fetch payment status on mount
+  // Auto-fetch on mount
   useEffect(() => {
     if (paymentId) {
       checkStatus();
     }
   }, [paymentId, checkStatus]);
 
+  // Poll for payment status (for pending payments)
+  useEffect(() => {
+    if (!payment || payment.status !== 'PENDING') return;
+
+    const interval = setInterval(() => {
+      checkStatus();
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [payment?.status, checkStatus]);
+
   return {
     payment,
-    loading,
-    error,
+    isLoading,
     isRetrying,
+    error,
     checkStatus,
-    retry,
-    startPolling,
+    retryPayment,
   };
 }

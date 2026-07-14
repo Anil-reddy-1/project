@@ -1,50 +1,79 @@
 /**
  * Payment Callback Page
- * Handles PhonePe redirect after payment
+ * Task #17: Payment flow pages
+ * 
+ * Handles PhonePe redirect after payment attempt
  */
 
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { verifyPaymentCallback } from '@/lib/api/payments';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { paymentsApi } from '@/lib/api';
+import { PaymentProcessingSkeleton } from '@/components/ui';
 
 export default function PaymentCallbackPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
+  const router = useRouter();
+  const [status, setStatus] = useState<'processing' | 'success' | 'failed'>('processing');
   const [message, setMessage] = useState('Verifying your payment...');
 
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        // Get parameters from URL
+        // Get payment ID from URL
+        const paymentId = searchParams.get('paymentId');
         const merchantTransactionId = searchParams.get('merchantTransactionId');
-        const transactionId = searchParams.get('transactionId');
-        
-        if (!merchantTransactionId) {
-          setStatus('failed');
-          setMessage('Invalid payment callback');
-          setTimeout(() => router.push('/retailer/orders'), 3000);
-          return;
+
+        if (!paymentId && !merchantTransactionId) {
+          throw new Error('Payment information missing');
         }
 
-        // Verify payment with backend
-        const result = await verifyPaymentCallback(merchantTransactionId);
+        // Small delay for better UX
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        if (result.data.status === 'paid') {
+        // Verify payment status
+        const response = await paymentsApi.checkPaymentStatus(
+          paymentId || merchantTransactionId!
+        );
+
+        const payment = response.data;
+
+        if (payment.status === 'SUCCESS') {
           setStatus('success');
           setMessage('Payment successful! Redirecting...');
-          setTimeout(() => router.push(`/retailer/orders/${result.data.orderId}`), 2000);
-        } else {
+          
+          // Redirect to order details with success message
+          setTimeout(() => {
+            router.push(`/retailer/orders/${payment.orderId}?success=true`);
+          }, 2000);
+        } else if (payment.status === 'FAILED') {
           setStatus('failed');
-          setMessage(result.data.errorMessage || 'Payment failed');
-          setTimeout(() => router.push('/retailer/payment/failure'), 3000);
+          setMessage('Payment failed. Redirecting...');
+          
+          // Redirect to failure page
+          setTimeout(() => {
+            router.push(
+              `/retailer/payment/failure?paymentId=${payment.id}&orderId=${payment.orderId}`
+            );
+          }, 2000);
+        } else {
+          // Still pending
+          setMessage('Payment is being processed. Please wait...');
+          
+          // Poll again after 3 seconds
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
         }
       } catch (error: any) {
+        console.error('Payment verification error:', error);
         setStatus('failed');
-        setMessage(error.message || 'Payment verification failed');
-        setTimeout(() => router.push('/retailer/payment/failure'), 3000);
+        setMessage('Failed to verify payment. Redirecting...');
+        
+        setTimeout(() => {
+          router.push('/retailer/payment/failure');
+        }, 2000);
       }
     };
 
@@ -52,36 +81,62 @@ export default function PaymentCallbackPage() {
   }, [searchParams, router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-        {status === 'verifying' && (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        {status === 'processing' && (
           <>
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Verifying Payment</h2>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Processing Payment
+            </h2>
             <p className="text-gray-600">{message}</p>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <div className="mx-auto mb-4 flex justify-center">
+              <svg
+                className="w-16 h-16 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Successful!</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Payment Successful!
+            </h2>
             <p className="text-gray-600">{message}</p>
           </>
         )}
 
         {status === 'failed' && (
           <>
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <div className="mx-auto mb-4 flex justify-center">
+              <svg
+                className="w-16 h-16 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Failed</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Payment Failed
+            </h2>
             <p className="text-gray-600">{message}</p>
           </>
         )}

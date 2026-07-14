@@ -4,6 +4,8 @@
  * Phase 3 hooks:
  * - useCheckout — Checkout state and order placement logic
  * - useOrders — Fetch and manage order list with filters
+ * - useOrderDetails — Fetch single order details
+ * - useAddresses — Manage delivery addresses
  * - usePayment — Payment status checking and retry logic
  *
  * Future hooks:
@@ -16,4 +18,6 @@
 
 export { useCheckout } from './useCheckout';
 export { useOrders } from './useOrders';
+export { useOrderDetails } from './useOrderDetails';
+export { useAddresses } from './useAddresses';
 export { usePayment } from './usePayment';
