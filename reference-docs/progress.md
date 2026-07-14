@@ -37,7 +37,7 @@
 |---|---|---|---|
 | **Phase 0** | Foundations | COMPLETE | All scaffolding in place |
 | **Phase 1** | Identity, Roles & Onboarding | COMPLETE | Authentication and role-gating fully built |
-| **Phase 2** | Shop & Catalog Management | **MIGRATION IN PROGRESS** | Backend + Frontend complete but built as MARKETPLACE. Phase 2.5 migration started: validation middleware created ✅, seed script created ✅, catalog page created ✅, retailer home updated ✅. Remaining: Remove shop discovery pages, update admin dashboard, apply middleware to routes. See PHASE-2.5-MIGRATION-PROGRESS.md |
+| **Phase 2** | Shop & Catalog Management | **PHASE 2.5 COMPLETE** | Core migration to single-shop complete ✅ Backend validation applied, old pages removed, catalog created, Firestore rules updated. Remaining: Admin dashboard update, runtime testing. See PHASE-2.5-COMPLETED.md |
 | **Phase 3** | Order Placement & Payment | **COMPLETE** | Backend + Frontend COMPLETE (PhonePe integration, checkout flow, payment pages, order management, wholesaler views), Testing pending |
 | **Phase 4** | Wholesaler Approval & Inventory Lock | Not Started | Routes stubbed only |
 | **Phase 5** | Delivery Assignment Engine | Not Started | — |

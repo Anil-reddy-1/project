@@ -53,8 +53,8 @@ export default function AdminHomePage() {
   const router = useRouter();
   const { logout, user } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<"retailers" | "wholesalers" | "delivery" | "shops">(
-    "wholesalers",
+  const [activeTab, setActiveTab] = useState<"retailers" | "wholesaler" | "delivery" | "shop">(
+    "shop",
   );
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [shops, setShops] = useState<ShopRecord[]>([]);
@@ -72,13 +72,13 @@ export default function AdminHomePage() {
 
   const TAB_ROLE: Record<typeof activeTab, string> = {
     retailers: "retailer",
-    wholesalers: "wholesaler",
+    wholesaler: "wholesaler",  // Changed from wholesalers
     delivery: "delivery_partner",
-    shops: "", // shops don't have a role filter
+    shop: "", // shop tab doesn't have a role filter
   };
 
   const fetchUsers = useCallback(async () => {
-    if (!user || activeTab === "shops") return; // Don't fetch users for shops tab
+    if (!user || activeTab === "shop") return; // Don't fetch users for shop tab
 
     setLoading(true);
     setActionMsg(null);
@@ -100,22 +100,22 @@ export default function AdminHomePage() {
   }, [activeTab, user]); // Re-run when tab changes or user authenticates
 
   const fetchShops = useCallback(async () => {
-    if (!user || activeTab !== "shops") return; // Only fetch shops for shops tab
+    if (!user || activeTab !== "shop") return; // Only fetch shop for shop tab
 
     setLoading(true);
     setActionMsg(null);
     try {
       const token = await user.getIdToken();
-      // Fetch all shops for admin (includes pending, verified, rejected)
+      // Fetch THE single shop
       const res = await fetch(
-        `${API_URL}/shops/all`,
+        `${API_URL}/shops`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (!res.ok) throw new Error("Failed to fetch shops");
+      if (!res.ok) throw new Error("Failed to fetch shop");
       const data = await res.json();
       setShops(data.shops ?? []);
     } catch (err) {
-      setActionMsg({ type: "error", text: "Failed to load shops. Check console." });
+      setActionMsg({ type: "error", text: "Failed to load shop. Check console." });
       console.error(err);
     } finally {
       setLoading(false);

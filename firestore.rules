@@ -45,21 +45,31 @@ service cloud.firestore {
     // Read: a user can read their own doc; Admin can read all.
     // Write: BLOCKED for clients — all writes via Express Admin SDK.
     //   (role, status changes are server-authoritative per rules.md §1)
+    // PHASE 2.5: Single wholesaler constraint enforced by backend middleware.
 
     match /users/{uid} {
       allow read: if isAuthenticated() &&
         (request.auth.uid == uid || isAdmin());
       allow write: if false;
+      
+      // Note: Wholesaler creation prevention is enforced by backend middleware
+      // (preventMultipleWholesalers), not by these rules. Only one wholesaler
+      // can exist in the system.
     }
 
     // ─── shops/{shopId} ──────────────────────────────────────────────────────
     //
     // Read: any authenticated user (retailers need to browse shops).
     // Write: BLOCKED for clients — wholesaler shop updates go through Express.
+    // PHASE 2.5: Single-shop architecture - only one shop can exist.
 
     match /shops/{shopId} {
       allow read: if isAuthenticated();
       allow write: if false;
+      
+      // Note: Shop creation prevention is enforced by backend middleware
+      // (preventMultipleShops), not by these rules. Rules here block all
+      // client writes; server-side Admin SDK bypasses these rules.
     }
 
     // ─── items/{shopId}/products/{itemId} ────────────────────────────────────

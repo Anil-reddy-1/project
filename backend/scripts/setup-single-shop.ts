@@ -9,15 +9,33 @@
  *   npx ts-node scripts/setup-single-shop.ts
  */
 
+import 'dotenv/config';
 import * as admin from 'firebase-admin';
 import * as bcrypt from 'bcryptjs';
 import { geofire } from 'geofire-common';
 
-// Initialize Firebase Admin
+// Initialize Firebase Admin using environment variables (same as main app)
 if (!admin.apps.length) {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  
+  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
+    console.error('❌ Missing Firebase environment variables.');
+    console.error('Please ensure .env file has:');
+    console.error('  - FIREBASE_PROJECT_ID');
+    console.error('  - FIREBASE_CLIENT_EMAIL');
+    console.error('  - FIREBASE_PRIVATE_KEY');
+    process.exit(1);
+  }
+
   admin.initializeApp({
-    credential: admin.credential.cert(require('../serviceAccountKey.json')),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: privateKey,
+    }),
   });
+  
+  console.log('✅ Firebase Admin initialized with environment credentials');
 }
 
 const db = admin.firestore();

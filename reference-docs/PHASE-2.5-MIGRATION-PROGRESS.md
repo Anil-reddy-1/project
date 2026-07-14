@@ -29,9 +29,13 @@
   - No shop selection logic
 
 #### Routes & API
-- ⏳ Need to add middleware to shop creation routes
-- ⏳ Need to add middleware to user creation routes (wholesaler)
-- ⏳ Verify all order-related routes use helpers
+- ✅ Applied middleware to shop creation routes (`backend/src/routes/shops.routes.ts`):
+  - `POST /shops` - now includes `preventMultipleShops` middleware
+  - `PATCH /shops/:shopId` - now includes `preventShopOwnerChange` middleware
+
+- ✅ Applied middleware to user creation routes (`backend/src/routes/auth.routes.ts`):
+  - `POST /auth/register` - blocked wholesaler self-signup
+  - `POST /auth/set-role` - now includes `preventMultipleWholesalers` middleware
 
 #### Database Setup
 - ✅ Created seed script (`backend/scripts/setup-single-shop.ts`):
@@ -44,12 +48,12 @@
 
 ---
 
-### 🚧 Frontend Changes
+### ✅ Frontend Changes
 
-#### Pages to Remove
-- ⏳ `frontend/app/(retailer)/retailer/shops/page.tsx` - Shop discovery page
-- ⏳ `frontend/app/(retailer)/retailer/shops/[shopId]/page.tsx` - Shop detail page
-- ⏳ `frontend/app/(wholesaler)/wholesaler/signup/page.tsx` - Wholesaler signup page
+#### Pages Removed
+- ✅ `frontend/app/(retailer)/retailer/shops/page.tsx` - Shop discovery page (deleted)
+- ✅ `frontend/app/(retailer)/retailer/shops/[shopId]/page.tsx` - Shop detail page (deleted)
+- ✅ `frontend/app/(wholesaler)/wholesaler/signup/page.tsx` - Wholesaler signup page (deleted)
 
 #### Pages Created
 - ✅ `frontend/app/(retailer)/retailer/catalog/page.tsx` - Direct catalog access
@@ -154,9 +158,9 @@ match /users/{userId} {
 ## Remaining Tasks
 
 ### High Priority
-1. ⏳ Apply validation middleware to routes
-2. ⏳ Remove shop discovery pages
-3. ⏳ Remove wholesaler signup page
+1. ✅ Apply validation middleware to routes
+2. ✅ Remove shop discovery pages
+3. ✅ Remove wholesaler signup page
 4. ⏳ Update admin dashboard
 5. ⏳ Run seed script
 6. ⏳ Update Firestore rules
@@ -192,14 +196,15 @@ Before marking Phase 2.5 complete, verify:
 2. ✅ Validation middleware created
 3. ✅ Seed script created
 4. ✅ Retailer catalog page works
-5. ⏳ Only one shop can be created
-6. ⏳ Only one wholesaler can be created
-7. ⏳ Orders auto-assign shop/wholesaler
-8. ⏳ No shop discovery UI accessible
-9. ⏳ No wholesaler signup UI accessible
-10. ⏳ Admin dashboard reflects single-shop
-11. ⏳ All tests pass
-12. ⏳ Documentation updated
+5. ✅ Middleware applied to routes
+6. ✅ Shop discovery pages removed
+7. ✅ Wholesaler signup blocked
+8. ⏳ Only one shop can be created (test needed)
+9. ⏳ Only one wholesaler can be created (test needed)
+10. ⏳ Orders auto-assign shop/wholesaler (test needed)
+11. ⏳ Admin dashboard reflects single-shop
+12. ⏳ All tests pass
+13. ⏳ Documentation updated
 
 ---
 
