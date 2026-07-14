@@ -1,21 +1,45 @@
 # implementation-plan.md — Build Plan
-## B2B Wholesale Marketplace, Order Management & Delivery Dispatch Platform
+## Single-Shop B2B Wholesale Order Management & Delivery Platform
 
-**Owner:** Product & Engineering
-**Status:** Draft — Pre-Build
-**Reads alongside:** PRD.md, requirements.md, design-doc.md, app-flow.md, tech-spec.md, schema.md, rules.md
+**Owner:** Product & Engineering  
+**Version:** 2.0  
+**Architecture:** Single Wholesaler, Single Shop (NOT Marketplace)  
+**Status:** Updated for Single-Shop Model  
+**Reads alongside:** PRD.md, requirements.md, design-doc.md, app-flow.md, tech-spec.md, schema.md, rules.md  
 **Purpose:** Sequence the build so each phase only depends on what's already shipped, surface the decisions that must be made *before* a phase starts (not discovered mid-phase), and give every phase a concrete "done" bar tied back to the PRD's success metrics.
+
+---
+
+## ⚠️ CRITICAL ARCHITECTURAL UPDATE
+
+**This system is NO LONGER a marketplace.** Architecture changed to:
+- **ONE Admin**
+- **ONE Wholesaler** (fixed business owner)
+- **ONE Shop** (the wholesale business)
+- **Multiple Retailers** (customers)
+- **Multiple Delivery Partners**
+
+**REMOVED FEATURES:**
+- Shop discovery/search
+- Wholesaler registration/onboarding
+- Shop verification workflow
+- Multi-tenant architecture
+
+**Phase 2 requires refactoring** to remove marketplace features before continuing to Phase 3.
 
 ---
 
 ## 0. Sequencing Logic (why this order)
 
-This system has one real dependency spine: **you cannot dispatch a delivery for an order that can't yet be placed, approved, or paid for.** So the build follows the order's own lifecycle, not the four personas in parallel:
+This system has one real dependency spine: **you cannot dispatch a delivery for an order that can't yet be placed, approved, or paid for.** So the build follows the order's own lifecycle:
 
 ```
-Identity & roles → Catalog → Order placement/payment → Approval & inventory →
-Delivery assignment → OTP handoffs → COD ledger → Disputes → Admin oversight/config → Hardening
+Identity & roles → Single Shop Setup → Catalog → Order placement/payment (PENDING_APPROVAL) → 
+Approval & inventory → Delivery assignment → OTP handoffs → COD ledger → Disputes → 
+Admin oversight/config → Hardening
 ```
+
+**Key Change:** Orders now enter **PENDING_APPROVAL** state (not PLACED) and await wholesaler action before inventory locking.
 
 Building Admin-heavy features (disputes, overrides, analytics) before the order engine exists would mean building screens with nothing real to show. Building delivery assignment before the approval gate exists would mean dispatching orders that were never actually confirmed. Each phase below unlocks the next; nothing is built ahead of what it depends on.
 
@@ -42,63 +66,219 @@ Building Admin-heavy features (disputes, overrides, analytics) before the order 
 
 ## Phase 1 — Identity, Roles & Onboarding
 
-**Goal:** All four onboarding paths work end to end, exactly as specified in PRD.md §2.1 / tech-spec.md §3.
+**Status:** ✅ COMPLETE
 
-- Retailer self-signup (phone OTP or email/password via Firebase Auth).
-- Wholesaler: (a) Admin-provisioned creation flow, (b) self-registration form creating a disabled account pending Admin approval.
-- Delivery partner: Admin-provisioned only — confirm the frontend genuinely has zero public registration route for this role, not just a hidden one.
-- Admin: Users tab — approve/reject wholesaler self-registrations, create wholesaler/delivery-partner accounts, suspend/reactivate any account.
-- Custom claims (`role`, `status`) set server-side on every account creation/status change.
-- Forced password reset on first login for admin-provisioned accounts.
+**Goal:** All onboarding paths work end to end.
 
-**Decisions required before this phase starts:** none blocking. Confirm SMS/email delivery vendor for credential dispatch (tech-spec.md §16 lists this as unresolved — Twilio vs. MSG91 vs. other) since Phase 1 is the first phase that actually sends credentials.
+- ✅ Retailer self-signup (phone OTP or email/password via Firebase Auth)
+- ✅ Admin-provisioned wholesaler/delivery-partner creation
+- ✅ Custom claims (`role`, `status`) set server-side
+- ✅ Role-gated routes with middleware
 
-**Exit criteria:** all four roles can reach their respective dashboard home via their real onboarding path; role-gated routes correctly block cross-role access (verified server-side, not just hidden in the UI).
+**REMOVED in v2.0:**
+- ❌ Wholesaler self-registration (no wholesaler onboarding)
+- ❌ Pending approval workflow for wholesalers
 
----
-
-## Phase 2 — Shop & Catalog Management
-
-**Goal:** Wholesalers can stand up a real, browsable shop.
-
-- Shop profile CRUD (name, address, geolocation, geohash computation, category, operating hours, MOQ threshold).
-- Item CRUD (name, price, stock qty, unit, availability toggle).
-- Retailer-facing shop discovery: search/filter by category, distance, rating; shop profile page showing catalog, price, stock, MOQ threshold upfront.
-
-**Decisions required before this phase starts:**
-- `shops.operatingHours` structure (schema.md §2/§10 — not finalized).
-- `shops.verificationStatus` value set and what "verified" actually requires (schema.md §2/§10).
-- Whether MOQ is purely shop-order-total (current documented decision, rules.md §3) — confirm this is locked before building the checkout gate in Phase 3, since it's referenced there.
-
-**Exit criteria:** a retailer can find a shop, view real stock/price/MOQ, and this data is the same data the wholesaler is managing — no mock data anywhere by end of this phase.
+**Exit criteria:** All four roles can reach their respective dashboard home via their real onboarding path; role-gated routes correctly block cross-role access.
 
 ---
 
-## Phase 3 — Order Placement & Payment (PLACED)
+## Phase 2 — Single Shop Setup & Catalog Management
 
-**Goal:** A retailer can build a single-shop cart and successfully create a real order, prepaid or COD.
+**Status:** ⚠️ NEEDS REFACTORING (built as marketplace, must convert to single-shop)
 
-- Single-shop-scoped cart with the "start new order? current cart will be cleared" confirmation modal (app-flow.md §1.2).
-- Shop-order MOQ enforcement, client-side gate **and** server-side re-validation in Express (rules.md §3 — never trust client-only).
-- Prepaid path: Razorpay order creation (Express) → Checkout modal (frontend) → webhook confirmation (Express) → order enters `PLACED` only on confirmed success.
-- COD path: order enters `PLACED` directly.
-- Order confirmation screen + initial order-tracking screen shell (status timeline can render just "Placed" for now — full timeline comes with later phases as states become reachable).
+**Original Goal (Marketplace):** Wholesalers can stand up multiple discoverable shops.
 
-**Decisions required before this phase starts:** none new beyond Phase 2's carryover. Confirm Razorpay account/keys are provisioned (staging + prod) before building the payment path, not discovered mid-sprint.
+**New Goal (Single-Shop):** THE single shop is configured, and its catalog can be managed.
 
-**Exit criteria:** a real order document exists in Firestore with correct schema (schema.md §4), correct `paymentStatus`, and a `stateHistory` entry for `PLACED` with the real `actorUid`.
+**What Was Built (Phase 2):**
+- ✅ Shop profile CRUD
+- ✅ Item CRUD
+- ✅ Retailer shop discovery/search ← **MUST REMOVE**
+- ✅ Shop verification workflow ← **MUST REMOVE**
+- ✅ Wholesaler registration ← **MUST REMOVE**
+
+**Phase 2.5 — Migration to Single-Shop Model (REQUIRED):**
+
+### Backend Changes:
+1. Add backend validation:
+   - Prevent creation of multiple shops
+   - Prevent creation of multiple wholesaler users
+   - Enforce single-shop constraints in Firestore rules
+
+2. Create helper functions (backend/src/utils/snapshot.ts):
+   - `getSingleShopId()` - retrieve THE shop ID
+   - `getSingleWholesalerId()` - retrieve THE wholesaler UID
+
+3. Update order service:
+   - Auto-assign `shopId` via `getSingleShopId()`
+   - Auto-assign `wholesalerId` via `getSingleWholesalerId()`
+   - Remove shop selection logic
+
+### Frontend Changes:
+1. **REMOVE:**
+   - `frontend/app/(retailer)/retailer/shops/page.tsx` (shop discovery)
+   - `frontend/app/(wholesaler)/wholesaler/signup/page.tsx` (wholesaler signup)
+   - Shop search/filter components
+   - Shop selection during cart/checkout
+
+2. **CREATE:**
+   - `frontend/app/(retailer)/retailer/catalog/page.tsx` (direct catalog access)
+   - Updated retailer navigation (Home → Catalog, no shop discovery)
+
+3. **UPDATE:**
+   - Admin dashboard: Remove wholesaler approval tab
+   - Admin dashboard: Single shop management (not multi-shop)
+   - Cart logic: Remove multi-shop cart clearing modal
+
+### Database:
+1. Create seed script (`backend/scripts/setup-single-shop.ts`):
+   - Creates THE admin account
+   - Creates THE wholesaler account
+   - Creates THE shop document
+   - Links wholesaler to shop
+   - Idempotent (can run multiple times safely)
+
+**Exit criteria for Phase 2.5:**
+- Only one shop exists and can exist
+- Only one wholesaler exists and can exist
+- Retailer directly browses THE shop's catalog (no discovery)
+- All orders automatically assigned to THE shop and THE wholesaler
+- Seed script successfully initializes system
+- Phase 2 marketplace features fully removed
+
+**Decisions required before Phase 2.5 starts:**
+- Confirm shop details for seed script (name, address, category, MOQ)
+- Confirm wholesaler account details (email, phone, initial password)
+
+---
+
+## Phase 3 — Order Placement & Payment (PENDING_APPROVAL)
+
+**Status:** 🚧 IN PROGRESS (66% complete - backend done, frontend UI remaining)
+
+**Goal:** A retailer can build a cart and successfully create a real order with PhonePe payment or COD, entering **PENDING_APPROVAL** state.
+
+**Key Changes from Marketplace Version:**
+- Orders automatically assigned to THE single shop (no shop selection)
+- Orders automatically assigned to THE single wholesaler
+- Initial state is **PENDING_APPROVAL** (not PLACED)
+- PhonePe Business gateway (NOT Razorpay)
+- Inventory validation only (NOT reduced until Phase 4 approval)
+
+### Completed (Backend):
+- ✅ Delivery address management (CRUD + default address)
+- ✅ PhonePe payment integration (initiation, verification, webhooks)
+- ✅ Order creation service with validation
+- ✅ Payment status tracking
+- ✅ COD support
+- ✅ Email notifications (Brevo integration)
+- ✅ Cart validation (MOQ, stock, pricing)
+- ✅ Order snapshot creation
+- ✅ Audit trail logging
+- ✅ Security: signature verification, idempotency
+- ✅ Helper functions for single-shop assignment
+
+### Remaining (Frontend):
+- ⏳ Checkout page UI
+- ⏳ Payment flow pages (processing, success, failure)
+- ⏳ Order history and detail pages
+- ⏳ Address management UI
+- ⏳ Loading/error state handling
+- ⏳ Wholesaler: pending orders view
+
+### Features:
+- Single-shop cart (no multi-shop logic)
+- Shop-order MOQ enforcement (client + server validation)
+- PhonePe payment path:
+  - Order creation (Express) → PhonePe checkout → webhook confirmation → PENDING_APPROVAL
+- COD path: Order → PENDING_APPROVAL directly
+- Order confirmation screen
+- Order tracking screen (initial state: PENDING_APPROVAL)
+
+**Decisions required before Phase 3 completes:**
+- ✅ PhonePe merchant account configured (sandbox + prod)
+- ⏳ Delivery charges calculation method (flat rate vs distance-based)
+- ⏳ GST/tax configuration (if applicable)
+
+**Exit criteria:**
+- A real order document exists in Firestore with:
+  - Correct schema (schema.md §4)
+  - State: **PENDING_APPROVAL**
+  - Auto-assigned `shopId` from `getSingleShopId()`
+  - Auto-assigned `wholesalerId` from `getSingleWholesalerId()`
+  - Correct `paymentStatus`
+  - `stateHistory` entry for `PENDING_APPROVAL` with real `actorUid`
+- Inventory validated but NOT reduced
+- Wholesaler receives notification of new order
+- Retailer can view order in history with "Awaiting Approval" status
+
+---
+
+## Phase 3.9 — UI/UX Enhancement (Premium E-commerce Experience)
+
+**Status:** 📋 PLANNED (starts after Phase 3 completes)
+
+**Goal:** Transform retailer-facing UI into a premium Flipkart/Amazon-quality e-commerce experience WITHOUT changing any business logic or backend APIs.
+
+**Scope:**
+- Pure frontend redesign
+- No backend changes
+- No business logic changes
+- No API contract changes
+- No database schema changes
+
+**Features:**
+- Premium product catalog with advanced filtering
+- Enhanced product detail pages
+- Smooth animations and transitions
+- Professional checkout flow
+- Improved order tracking visualization
+- Mobile-responsive design
+- Loading states and skeleton screens
+- Empty states with CTAs
+- Error handling with recovery options
+- Consistent design system
+- Performance optimizations
+
+**Exit criteria:**
+- All Phase 3 functionality preserved
+- Production-ready UI/UX quality
+- Mobile and desktop responsive
+- Accessibility compliant (WCAG 2.1 AA target)
+- Performance optimized (Lighthouse score >90)
+- User testing feedback incorporated
 
 ---
 
 ## Phase 4 — Wholesaler Approval & Inventory Lock
 
-**Goal:** The approval gate that the entire trust model depends on (PRD.md §3.2's "why we don't decrement at PLACED").
+**Status:** 📋 PLANNED (starts after Phase 3 completes)
 
-- Wholesaler incoming-orders queue (PLACED orders for their shop only), with new-order animate-in.
-- Approve action: atomic transaction — state → `APPROVED` **and** inventory decrement in the same write (rules.md §2 — this pairing must never be split into two writes).
-- Reject action: reason selector (stock unavailable / MOQ unmet / suspicious / other) → state → `REJECTED`, retailer notified.
-- Retailer-side: cancel/edit order, only while state ∈ {PLACED, APPROVED, PACKED} (rules.md §2).
-- Mark Packed → Mark Ready for Pickup actions, generating the pickup OTP on the `READY_FOR_PICKUP` transition.
+**Goal:** The approval gate that the entire trust model depends on. Wholesaler reviews and approves/rejects pending orders.
+
+**Key Change:** Orders start in **PENDING_APPROVAL** (from Phase 3), not PLACED.
+
+### Features:
+- Wholesaler incoming-orders queue (PENDING_APPROVAL orders only)
+- New order notifications with animation
+- Approve action: atomic transaction
+  - State → **APPROVED**
+  - Inventory decrement (rules.md §2 — must be atomic)
+  - Notification to retailer
+- Reject action:
+  - Reason selector (stock unavailable / MOQ unmet / suspicious / other)
+  - State → **REJECTED**
+  - Notification to retailer
+  - Inventory remains unchanged
+- Retailer-side: Cancel order (only while PENDING_APPROVAL)
+- Mark Packed → Mark Ready for Pickup actions
+- Pickup OTP generation on READY_FOR_PICKUP transition
+
+**Single-Shop Simplifications:**
+- No shop filtering (only one shop)
+- All orders are for THE shop
+- Queue shows all pending orders (no shop-scoped views needed)
 
 **Decisions required before this phase starts:**
 - Finalize `rejectionReason` enum values (schema.md §10).

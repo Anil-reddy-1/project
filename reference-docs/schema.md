@@ -13,15 +13,21 @@
 |---|---|---|---|
 | `uid` | string (doc id) | yes | Firebase Auth UID |
 | `role` | enum string | yes | `"retailer"` \| `"wholesaler"` \| `"delivery_partner"` \| `"admin"` |
-| `status` | enum string | yes | `"active"` \| `"suspended"` \| `"pending_approval"` (wholesaler self-reg only) |
+| `status` | enum string | yes | `"active"` \| `"suspended"` \| ~~`"pending_approval"`~~ (removed - no wholesaler self-reg) |
 | `name` | string | yes | |
 | `phone` | string | yes | E.164 format recommended |
 | `email` | string | no | required for email/password auth path |
-| `shopId` | string (ref → `shops`) | conditional | present only if `role == "wholesaler"` |
-| `exclusiveShopIds` | array\<string\> (refs → `shops`) | conditional | present only if `role == "delivery_partner"` and partner is exclusive; empty array = open-pool |
+| `shopId` | string (ref → `shops`) | conditional | present only if `role == "wholesaler"` — references THE single shop |
+| `exclusiveShopIds` | array\<string\> (refs → `shops`) | conditional | present only if `role == "delivery_partner"` and partner is exclusive to THE shop; empty array = open-pool. **NOTE:** Since only one shop exists, this is effectively a boolean (has THE shop ID or empty) |
 | `createdBy` | string (uid) | conditional | admin uid, present if account was admin-provisioned |
 | `createdAt` | timestamp | yes | |
 | `updatedAt` | timestamp | yes | |
+
+**CRITICAL CONSTRAINTS:**
+- **Exactly ONE user** with `role == "wholesaler"` must exist in the system
+- Use `getSingleWholesalerId()` (backend/src/utils/snapshot.ts) to retrieve the wholesaler UID
+- Wholesaler account is created via admin seed script, never through registration flow
+- `status == "pending_approval"` is deprecated (no wholesaler self-registration)
 
 **Auth custom claims (not a Firestore field, set via Firebase Admin SDK):**
 ```json
@@ -30,23 +36,29 @@
 
 ---
 
-## 2. `shops/{shopId}`
+## 2. `shops/{shopId}` ⚠️ SINGLE SHOP ONLY
+
+**CRITICAL CONSTRAINT:** The `shops` collection contains **EXACTLY ONE document** representing the single wholesale business.
+
+**Helper Function:** Use `getSingleShopId()` (backend/src/utils/snapshot.ts) to retrieve the shop ID. Never hardcode shop IDs.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `shopId` | string (doc id) | yes | |
-| `ownerUid` | string (ref → `users`) | yes | must be a `wholesaler`-role user |
-| `name` | string | yes | |
-| `address` | string | yes | |
-| `geopoint` | GeoPoint {lat, lng} | yes | |
-| `geohash` | string | yes | computed via `geofire-common`, used for radius queries |
-| `category` | string | yes | |
+| `shopId` | string (doc id) | yes | The ONE shop ID |
+| `ownerUid` | string (ref → `users`) | yes | must be THE `wholesaler`-role user (exactly one exists) |
+| `name` | string | yes | Business name |
+| `address` | string | yes | Business address |
+| `geopoint` | GeoPoint {lat, lng} | yes | Shop location (for delivery assignment) |
+| `geohash` | string | yes | computed via `geofire-common`, used for delivery partner radius queries |
+| `category` | string | yes | Business category |
 | `operatingHours` | object | yes | `{ days: string[], open: string, close: string }` |
-| `verificationStatus` | enum string | yes | `"pending"` \| `"verified"` \| `"rejected"` |
-| `moqThreshold` | number | yes | minimum order value/qty per shop-order (see rules.md §3) |
+| `verificationStatus` | enum string | yes | Always `"verified"` for the single shop (no verification workflow) |
+| `moqThreshold` | number | yes | minimum order value for the shop |
 | `photoUrl` | string | no | shop photo, Firebase Storage URL |
 | `createdAt` | timestamp | yes | |
 | `updatedAt` | timestamp | yes | |
+
+**Firestore Rules:** Must prevent creation of multiple shop documents. Only admins can create/update the shop.
 
 ---
 
@@ -70,7 +82,8 @@
 |---|---|---|---|
 | `orderId` | string (doc id) | yes | |
 | `retailerUid` | string (ref → `users`) | yes | |
-| `shopId` | string (ref → `shops`) | yes | single-shop scoped — never multi-shop |
+| `shopId` | string (ref → `shops`) | yes | **Always references THE single shop** — automatically determined via `getSingleShopId()` |
+| `wholesalerId` | string (ref → `users`) | yes | **Always references THE single wholesaler** — automatically determined via `getSingleWholesalerId()` |
 | `items` | array\<{itemId, qty, price}\> | yes | price is snapshotted at order time, not live-referenced |
 | `totalValue` | number | yes | |
 | `paymentMethod` | enum string | yes | `"prepaid"` \| `"cod"` |

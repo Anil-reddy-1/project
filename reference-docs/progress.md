@@ -654,3 +654,43 @@ e:\Project\
     ├── implementation-plan.md          <- Phase-by-phase build plan
     └── progress.md                     <- THIS FILE
 ```
+
+
+---
+
+## Documentation Updates (Single-Shop Architecture Migration)
+
+**Status:** ✅ COMPLETE
+
+All reference documentation has been updated to reflect the Single Wholesaler, Single Shop architecture:
+
+### Completed Updates:
+1. ✅ **PRD.md** - Executive summary, personas, architecture constraints, PhonePe gateway
+2. ✅ **schema.md** - Users collection (one wholesaler), shops collection (one shop), orders collection (auto-assignment)
+3. ✅ **progress.md** - Critical architectural note, Phase 2 marked for refactoring, context updated
+4. ✅ **app-flow.md** - Removed shop discovery, updated all user flows, added PENDING_APPROVAL state, PhonePe integration
+5. ✅ **implementation-plan.md** - Phase 2.5 migration plan, Phase 3.9 UI/UX enhancement, updated all phase goals
+
+### Documentation Artifacts Created:
+- ✅ **SINGLE-SHOP-ARCHITECTURE.md** - Migration guide and checklist
+- ✅ **DOCS-UPDATED-SINGLE-SHOP.md** - Change tracking document
+
+### Remaining Documentation (Lower Priority):
+- ⏳ **rules.md** - Add single-shop architectural constraints
+- ⏳ **tech-spec.md** - Update architecture diagrams, remove multi-tenant sections
+
+### Next Steps:
+- **Phase 2.5:** Code refactoring to remove marketplace features (see implementation-plan.md)
+- **Phase 3:** Continue with remaining frontend UI tasks
+- **Phase 3.9:** UI/UX enhancement phase (after Phase 3 completes)
+
+---
+
+## Change Log
+
+### 2026-07-14 - Documentation Migration Complete
+- Updated all core reference docs for single-shop architecture
+- Created migration guide (SINGLE-SHOP-ARCHITECTURE.md)
+- Defined Phase 2.5 refactoring plan
+- Added Phase 3.9 UI/UX enhancement phase
+- Marked Phase 2 as "NEEDS REFACTORING"
