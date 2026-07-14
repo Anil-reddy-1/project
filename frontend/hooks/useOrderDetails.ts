@@ -1,14 +1,14 @@
 /**
  * useOrderDetails Hook
  * Task #20: State management hooks
- * 
+ *
  * Fetch and manage single order details
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ordersApi } from '@/lib/api';
+import { getOrderById } from '@/lib/api';
 import type { Order } from '@/lib/types';
 
 export function useOrderDetails(orderId: string | null) {
@@ -23,14 +23,15 @@ export function useOrderDetails(orderId: string | null) {
       setIsLoading(true);
       setError(null);
 
-      const response = await ordersApi.getOrderById(orderId);
-      setOrder(response.data);
+      const response = await getOrderById(orderId);
+      // API returns { success, data: Order }
+      setOrder((response as any).data ?? null);
     } catch (err: any) {
       console.error('Failed to fetch order:', err);
       setError(
         err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to load order details'
+          err.message ||
+          'Failed to load order details'
       );
     } finally {
       setIsLoading(false);

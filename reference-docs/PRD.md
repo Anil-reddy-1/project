@@ -1,71 +1,101 @@
 # Product Requirements Document (PRD)
-## B2B Wholesale Marketplace, Order Management & Delivery Dispatch Platform
+## B2B Wholesale Order Management & Delivery Dispatch Platform
+## Single Wholesaler, Single Shop Architecture
 
-**Version:** 1.0
-**Status:** Draft — Pre-Build
-**Owner:** Product & Engineering
-**Last Updated:** July 2026
+**Version:** 2.0 (Single-Shop Architecture)  
+**Status:** Active Development  
+**Owner:** Product & Engineering  
+**Last Updated:** July 14, 2026  
+**Architecture Change:** Migrated from marketplace to single-shop platform
 
 ---
 
 ## 1. Executive Summary
 
-This platform is a B2B wholesale marketplace connecting **Retailers** (buyers) with **Wholesalers/Shop Owners** (sellers), fulfilled through a dedicated **Delivery Partner** network, and governed by an **Admin** control layer. The model mirrors the operational shape of food-delivery platforms (e.g., Zomato/Swiggy) but applied to wholesale trade — orders are placed per-shop, go through a seller approval gate before fulfillment, and are dispatched via geolocation-based delivery assignment.
+This platform is a **single-wholesaler B2B order management and delivery system** connecting **multiple Retailers** (buyers) with **ONE Wholesaler/Shop Owner** (seller), fulfilled through a dedicated **Delivery Partner** network, and governed by an **Admin** control layer.
 
-The system is deliberately architected to require **no machine learning models** — all logic is rule-based: state machines, geospatial radius queries, workflow engines, and standard CRUD/microservices. This keeps the system deterministic, auditable, and fast to build.
+**Key Architectural Change:** This is NOT a marketplace. The platform serves a single wholesale business managing orders from multiple retail customers. Think "Costco B2B" not "Amazon Marketplace."
+
+The system is deliberately architected to require **no machine learning models** — all logic is rule-based: state machines, workflow engines, and standard CRUD/microservices. This keeps the system deterministic, auditable, and fast to build.
 
 ### 1.1 Problem Statement
-Wholesale trade between retailers and wholesalers today is largely informal — phone/WhatsApp orders, no inventory visibility, no delivery accountability, and no digital payment reconciliation for cash transactions. This creates friction, disputes, and lost sales for wholesalers, and unreliable fulfillment for retailers.
+A single wholesale business managing orders from multiple retail customers faces operational challenges: phone/WhatsApp orders, no inventory visibility, no delivery accountability, and no digital payment reconciliation for cash transactions. This creates fulfillment errors, disputes, and lost efficiency.
 
 ### 1.2 Solution
 A unified platform where:
-- Retailers discover shops, browse live inventory, and place orders digitally.
-- Wholesalers control approval, packing, and stock exposure — protecting them from overcommitting inventory.
-- Delivery is dispatched automatically to the nearest available partner, with a two-sided OTP-verified handoff.
-- Cash-on-delivery is tracked as a debt ledger until reconciled, closing the digital-to-cash accountability gap.
-- Admin has full audit visibility and dispute resolution control.
+- **One wholesaler** manages their shop, inventory, and fulfillment digitally.
+- **Multiple retailers** access the catalog, place orders, and track delivery.
+- **Delivery is dispatched automatically** to the nearest available partner.
+- **Cash-on-delivery is tracked** as a debt ledger until reconciled.
+- **Admin** has full audit visibility and dispute resolution control.
 
 ### 1.3 Goals
-- Digitize and standardize the retailer–wholesaler ordering relationship.
-- Provide reliable, trackable last-mile delivery with accountability at both pickup and drop.
-- Give wholesalers control over inventory commitment (approval-gated stock lock).
+- Digitize a single wholesale business's order management.
+- Provide reliable, trackable last-mile delivery with accountability.
+- Give the wholesaler control over inventory commitment (approval-gated stock lock).
 - Provide full financial reconciliation for both prepaid and COD transactions.
-- Enable an auditable, disputable, admin-governed marketplace.
+- Enable an auditable, admin-governed order management system.
 
 ### 1.4 Non-Goals (v1)
-- No dynamic pricing, demand forecasting, or ML-based recommendation engine.
-- No multi-shop cart / cross-shop single checkout.
-- No wholesaler-to-wholesaler or retailer-to-retailer transactions.
-- No in-app chat (support handled via structured tickets, not free-form chat, in v1).
-- No open self-serve onboarding for delivery partners (admin-provisioned only).
+- ❌ No multi-shop marketplace functionality
+- ❌ No shop discovery or selection by retailers
+- ❌ No multiple wholesalers
+- ❌ No wholesaler self-registration or approval workflows
+- ❌ No dynamic pricing, demand forecasting, or ML-based recommendations
+- ❌ No multi-shop cart / cross-shop checkout
+- ❌ No wholesaler-to-wholesaler or retailer-to-retailer transactions
+- ❌ No in-app chat (support handled via structured tickets)
+- ❌ No open self-serve onboarding for delivery partners (admin-provisioned only)
 
 ---
 
 ## 2. Users & Personas
 
-| Persona | Description | Primary Need |
-|---|---|---|
-| **Retailer** | Small shop/store owner buying stock in bulk from wholesalers | Reliable, transparent bulk ordering with delivery tracking |
-| **Wholesaler / Shop Owner** | Bulk goods seller, manages inventory and fulfillment | Control over order approval, inventory accuracy, payment visibility |
-| **Delivery Partner** | Individual or shop-linked courier | Clear assignment, efficient routing, fair payment reconciliation |
-| **Admin** | Platform operations team | Full visibility, control, and dispute authority across the system |
+| Persona | Description | Primary Need | Count |
+|---|---|---|---|
+| **Retailer** | Small shop/store owner buying stock in bulk | Reliable, transparent bulk ordering with delivery tracking | **Multiple** (many customers) |
+| **Wholesaler / Shop Owner** | Bulk goods seller, manages inventory and fulfillment | Control over order approval, inventory accuracy, payment visibility | **ONE** (platform owner) |
+| **Delivery Partner** | Individual or shop-linked courier | Clear assignment, efficient routing, fair payment reconciliation | **Multiple** |
+| **Admin** | Platform operations team | Full visibility, control, and dispute authority | **Multiple** |
 
 ### 2.1 Authentication Model (Mixed Auth)
-| Role | Onboarding Path | Auth Mechanism |
-|---|---|---|
-| Retailer | Open self-signup | Standard credential/OTP login |
-| Wholesaler | Admin-provisioned **or** self-register pending admin approval | Pre-issued credentials — no open signup flow |
-| Delivery Partner | Admin-provisioned only | Pre-issued credentials — no signup flow at all |
-| Admin | Internal seeding | Secure internal auth (elevated privileges) |
+| Role | Onboarding Path | Auth Mechanism | Count |
+|---|---|---|---|---|
+| Retailer | Open self-signup | Standard credential/OTP login | Many |
+| Wholesaler | **Admin-seeded (ONE account)** | Pre-issued credentials | **EXACTLY ONE** |
+| Delivery Partner | Admin-provisioned only | Pre-issued credentials | Many |
+| Admin | Internal seeding | Secure internal auth (elevated privileges) | Few |
 
-This mixed model exists because wholesalers and delivery partners represent trust-sensitive, revenue-bearing identities that the platform needs to vet before granting access — unlike retailers, who are low-risk demand-side users.
+**Critical Constraint:** There is **exactly ONE wholesaler account** in the system. This represents the business owner who operates the single shop. The wholesaler account is created during platform setup, not through any registration flow.
 
 ---
 
 ## 3. Core Concepts & Domain Model
 
-### 3.1 Order Scope
-Orders are **single-shop scoped** (Zomato-style) — a retailer cannot check out a cart spanning multiple wholesalers in one order. Switching shops mid-cart requires clearing or saving the current cart.
+### 3.1 Single-Shop Architecture (CRITICAL)
+
+**The platform operates with:**
+- **ONE Wholesaler:** The business owner
+- **ONE Shop:** The wholesale business location
+- **MANY Retailers:** Customers who order from the shop
+- **MANY Delivery Partners:** Fulfill deliveries
+
+**Implications:**
+- ✅ Retailers access catalog directly (no shop selection)
+- ✅ All orders automatically reference the single shop
+- ✅ No shop discovery or search functionality
+- ✅ No wholesaler registration or approval workflows
+- ✅ Shop creation happens during platform setup only
+
+**Code Implementation:**
+```typescript
+// Backend utilities enforce single-shop constraint
+getSingleShopId()      // Returns the ONE shop ID
+getSingleWholesalerId() // Returns the ONE wholesaler user ID
+```
+
+### 3.2 Order Scope
+Orders are **single-shop scoped** (inherently, since only one shop exists). Cart is always for the same shop — no shop-switching logic needed.
 
 ### 3.2 Order State Machine
 ```
@@ -78,18 +108,22 @@ DELIVERED → DISPUTED (admin-managed resolution branch)
 
 **Key design decision — Inventory Locking:** Stock is decremented only at the **APPROVED** transition, not at PLACED. This intentionally gives the wholesaler a buffer window — they may reject an order if the item is actually out of stock, sourced from elsewhere, or damaged, without the system having falsely reserved inventory.
 
-### 3.3 Payments Model
+### 3.3 Payments Model (UPDATED - PhonePe)
 | Method | Flow |
 |---|---|
-| **Prepaid** | Razorpay checkout at order placement → webhook confirms payment → order enters PLACED only after payment success |
-| **COD** | Order enters PLACED directly. At delivery, delivery partner collects cash → this creates a **debt ledger entry** against the partner → cleared only when the wholesaler confirms "cash received" → if unconfirmed past SLA, auto-escalates to Admin |
+| **Prepaid (PhonePe)** | PhonePe Business checkout at order placement → webhook confirms payment → order enters PENDING_APPROVAL only after payment success |
+| **COD** | Order enters PENDING_APPROVAL directly. At delivery, delivery partner collects cash → this creates a **debt ledger entry** against the partner → cleared only when the wholesaler confirms "cash received" → if unconfirmed past SLA, auto-escalates to Admin |
+
+**Note:** Razorpay was originally planned but replaced with PhonePe Business in Phase 3.
 
 ### 3.4 Delivery Assignment Model
-- **Shop-exclusive partners**: linked to one or more specific shops; receive *only* that shop's orders.
-- **Open-pool partners**: eligible for any shop's orders.
-- **Assignment logic**: nearest-available-partner-first, via PostGIS radius query, restricted first to eligible partner pool (exclusive-to-shop matches before falling back to open pool, if applicable).
-- **Batching**: a partner may hold multiple active orders concurrently if pickup/drop points are geographically clustered; route is optimized across all held orders, not per-order.
+- **Shop-exclusive partners**: All delivery partners can be marked as exclusive to THE shop (since only one shop exists).
+- **Open-pool partners**: Available for delivery assignments.
+- **Assignment logic**: nearest-available-partner-first, via geohash/PostGIS radius query.
+- **Batching**: a partner may hold multiple active orders concurrently if pickup/drop points are geographically clustered.
 - **Timeout handling**: unaccepted assignment reassigns to next-nearest partner after SLA window expires.
+
+**Since there's only one shop, the "exclusive-to-shop" vs "open-pool" distinction is simplified — all partners serve the same shop.**
 
 ### 3.5 OTP Verification (Two-Leg Model)
 | Leg | Trigger | Verified By |

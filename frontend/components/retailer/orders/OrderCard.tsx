@@ -1,18 +1,22 @@
 /**
- * Order Card Component - Display order in list view
+ * Order Card Component
+ * Task #18: Order management pages
+ * 
+ * Display order summary in list view
  */
 
 'use client';
 
-type OrderState = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'PACKED' | 'READY_FOR_PICKUP' | 'ASSIGNED' | 'PICKED_UP' | 'ON_THE_WAY' | 'DELIVERED' | 'DISPUTED' | 'PAYMENT_SETTLED';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import type { OrderState, PaymentMethod } from '@/lib/types';
 
 interface OrderCardProps {
   orderNumber: string;
   state: OrderState;
-  createdAt: string | Date;
+  createdAt: string;
   grandTotal: number;
   itemCount: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   onClick: () => void;
 }
 
@@ -25,39 +29,62 @@ export function OrderCard({
   paymentMethod,
   onClick,
 }: OrderCardProps) {
-  const date = typeof createdAt === 'string' ? new Date(createdAt) : createdAt;
-  
-  const getStateColor = (state: OrderState) => {
-    const colors: Record<string, string> = {
-      PENDING_APPROVAL: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      CANCELLED: 'bg-gray-100 text-gray-800',
-      DELIVERED: 'bg-blue-100 text-blue-800',
-    };
-    return colors[state] || 'bg-gray-100 text-gray-800';
-  };
-
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+      className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition cursor-pointer border border-gray-200 hover:border-blue-300"
     >
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <p className="font-semibold text-gray-900">{orderNumber}</p>
-          <p className="text-sm text-gray-500">{date.toLocaleDateString()}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            Order {orderNumber}
+          </h3>
+          <p className="text-sm text-gray-600">
+            {new Date(createdAt).toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStateColor(state)}`}>
-          {state.replace(/_/g, ' ')}
-        </span>
+        <OrderStatusBadge status={state} />
       </div>
 
-      <div className="space-y-1 text-sm">
-        <p className="text-gray-600">
-          {itemCount} {itemCount === 1 ? 'item' : 'items'} • {paymentMethod === 'prepaid' ? 'Prepaid' : 'COD'}
-        </p>
-        <p className="text-lg font-bold text-gray-900">₹{grandTotal.toFixed(2)}</p>
+      <div className="space-y-2 mb-4">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Items</span>
+          <span className="text-gray-900 font-medium">{itemCount}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Payment</span>
+          <span className="text-gray-900 font-medium">
+            {paymentMethod === 'PHONEPE' ? 'PhonePe' : 'Cash on Delivery'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+        <span className="text-sm text-gray-600">Total Amount</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xl font-bold text-gray-900">
+            ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </span>
+          <svg
+            className="w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </div>
       </div>
     </div>
   );

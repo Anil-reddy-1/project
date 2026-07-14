@@ -1,14 +1,20 @@
 /**
  * useAddresses Hook
  * Task #20: State management hooks
- * 
+ *
  * Manage delivery addresses
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { addressesApi } from '@/lib/api';
+import {
+  getAddresses,
+  createAddress as apiCreateAddress,
+  updateAddress as apiUpdateAddress,
+  deleteAddress as apiDeleteAddress,
+  setDefaultAddress as apiSetDefaultAddress,
+} from '@/lib/api';
 import type { DeliveryAddress } from '@/lib/types';
 
 export function useAddresses(userId: string | null, autoFetch: boolean = true) {
@@ -23,14 +29,15 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
       setIsLoading(true);
       setError(null);
 
-      const response = await addressesApi.getAddresses(userId);
-      setAddresses(response.data);
+      const response = await getAddresses(userId);
+      // API returns { addresses: [...] }
+      setAddresses((response as any).addresses ?? (response as any).data ?? []);
     } catch (err: any) {
       console.error('Failed to fetch addresses:', err);
       setError(
         err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to load addresses'
+          err.message ||
+          'Failed to load addresses'
       );
     } finally {
       setIsLoading(false);
@@ -49,15 +56,16 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
 
       try {
         setError(null);
-        const response = await addressesApi.createAddress(userId, data);
-        setAddresses((prev) => [...prev, response.data]);
-        return response.data;
+        const response = await apiCreateAddress(userId, data as any);
+        const created: DeliveryAddress = (response as any).address ?? (response as any).data;
+        setAddresses((prev) => [...prev, created]);
+        return created;
       } catch (err: any) {
         console.error('Failed to create address:', err);
         setError(
           err.response?.data?.error?.message ||
-          err.message ||
-          'Failed to create address'
+            err.message ||
+            'Failed to create address'
         );
         throw err;
       }
@@ -71,17 +79,18 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
 
       try {
         setError(null);
-        const response = await addressesApi.updateAddress(userId, addressId, data);
+        const response = await apiUpdateAddress(userId, addressId, data as any);
+        const updated: DeliveryAddress = (response as any).address ?? (response as any).data;
         setAddresses((prev) =>
-          prev.map((addr) => (addr.id === addressId ? response.data : addr))
+          prev.map((addr) => (addr.id === addressId ? updated : addr))
         );
-        return response.data;
+        return updated;
       } catch (err: any) {
         console.error('Failed to update address:', err);
         setError(
           err.response?.data?.error?.message ||
-          err.message ||
-          'Failed to update address'
+            err.message ||
+            'Failed to update address'
         );
         throw err;
       }
@@ -95,14 +104,14 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
 
       try {
         setError(null);
-        await addressesApi.deleteAddress(userId, addressId);
+        await apiDeleteAddress(userId, addressId);
         setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
       } catch (err: any) {
         console.error('Failed to delete address:', err);
         setError(
           err.response?.data?.error?.message ||
-          err.message ||
-          'Failed to delete address'
+            err.message ||
+            'Failed to delete address'
         );
         throw err;
       }
@@ -116,7 +125,7 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
 
       try {
         setError(null);
-        await addressesApi.setDefaultAddress(userId, addressId);
+        await apiSetDefaultAddress(userId, addressId);
         setAddresses((prev) =>
           prev.map((addr) => ({
             ...addr,
@@ -127,8 +136,8 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
         console.error('Failed to set default address:', err);
         setError(
           err.response?.data?.error?.message ||
-          err.message ||
-          'Failed to set default address'
+            err.message ||
+            'Failed to set default address'
         );
         throw err;
       }

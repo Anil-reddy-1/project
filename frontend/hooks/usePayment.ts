@@ -1,15 +1,15 @@
 /**
  * usePayment Hook
  * Task #20: State management hooks
- * 
+ *
  * Payment status checking and retry logic
  */
 
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { paymentsApi } from '@/lib/api';
-import type { Payment, PaymentStatus } from '@/lib/types';
+import { getPaymentStatus, retryPayment as apiRetryPayment } from '@/lib/api';
+import type { Payment } from '@/lib/types';
 
 export function usePayment(paymentId: string | null) {
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -17,7 +17,6 @@ export function usePayment(paymentId: string | null) {
   const [isRetrying, setIsRetrying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check payment status
   const checkStatus = useCallback(async () => {
     if (!paymentId) return;
 
@@ -25,16 +24,17 @@ export function usePayment(paymentId: string | null) {
       setIsLoading(true);
       setError(null);
 
-      const response = await paymentsApi.checkPaymentStatus(paymentId);
-      setPayment(response.data);
-      
-      return response.data;
+      const response = await getPaymentStatus(paymentId);
+      // API returns { success, data: Payment }
+      const p = (response as any).data ?? null;
+      setPayment(p);
+      return p;
     } catch (err: any) {
       console.error('Failed to check payment status:', err);
       setError(
         err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to check payment status'
+          err.message ||
+          'Failed to check payment status'
       );
       throw err;
     } finally {
@@ -42,7 +42,6 @@ export function usePayment(paymentId: string | null) {
     }
   }, [paymentId]);
 
-  // Retry payment
   const retryPayment = useCallback(async () => {
     if (!paymentId) return;
 
@@ -50,20 +49,21 @@ export function usePayment(paymentId: string | null) {
       setIsRetrying(true);
       setError(null);
 
-      const response = await paymentsApi.retryPayment(paymentId);
-      
+      const response = await apiRetryPayment(paymentId);
       // Redirect to PhonePe if URL provided
-      if (response.data.phonepeRedirectUrl) {
-        window.location.href = response.data.phonepeRedirectUrl;
+      const redirectUrl =
+        (response as any).data?.redirectUrl ??
+        (response as any).data?.phonepeRedirectUrl;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
       }
-
-      return response.data;
+      return response;
     } catch (err: any) {
       console.error('Failed to retry payment:', err);
       setError(
         err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to retry payment'
+          err.message ||
+          'Failed to retry payment'
       );
       throw err;
     } finally {
@@ -78,16 +78,16 @@ export function usePayment(paymentId: string | null) {
     }
   }, [paymentId, checkStatus]);
 
-  // Poll for payment status (for pending payments)
+  // Poll every 5 s while payment is pending
   useEffect(() => {
-    if (!payment || payment.status !== 'PENDING') return;
+    if (!payment || (payment as any).status !== 'PENDING') return;
 
     const interval = setInterval(() => {
       checkStatus();
-    }, 5000); // Check every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [payment?.status, checkStatus]);
+  }, [(payment as any)?.status, checkStatus]);
 
   return {
     payment,

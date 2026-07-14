@@ -1,14 +1,14 @@
 /**
  * useOrders Hook
  * Task #20: State management hooks
- * 
+ *
  * Fetch and manage order list with filters
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ordersApi } from '@/lib/api';
+import { getOrders } from '@/lib/api';
 import type { Order, OrderState } from '@/lib/types';
 
 interface UseOrdersOptions {
@@ -29,29 +29,29 @@ export function useOrders(options: UseOrdersOptions = {}) {
       setIsLoading(true);
       setError(null);
 
-      const response = await ordersApi.getOrders({ status });
-      setOrders(response.data);
+      // getOrders accepts { state } filter matching OrderFilters in orders.ts
+      const response = await getOrders(status ? { state: status } : undefined);
+      // API returns { success, data: [...], pagination }
+      setOrders((response as any).data ?? []);
       setLastFetch(new Date());
     } catch (err: any) {
       console.error('Failed to fetch orders:', err);
       setError(
         err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to load orders'
+          err.message ||
+          'Failed to load orders'
       );
     } finally {
       setIsLoading(false);
     }
   }, [status]);
 
-  // Auto-fetch on mount
   useEffect(() => {
     if (autoFetch) {
       fetchOrders();
     }
   }, [autoFetch, fetchOrders]);
 
-  // Refresh orders
   const refresh = useCallback(() => {
     return fetchOrders();
   }, [fetchOrders]);

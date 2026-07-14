@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { paymentsApi } from '@/lib/api';
+import { getPaymentStatus } from '@/lib/api';
 import { PaymentProcessingSkeleton } from '@/components/ui';
 
 export default function PaymentCallbackPage() {
@@ -33,11 +33,12 @@ export default function PaymentCallbackPage() {
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         // Verify payment status
-        const response = await paymentsApi.checkPaymentStatus(
+        const response = await getPaymentStatus(
           paymentId || merchantTransactionId!
         );
 
-        const payment = response.data;
+        // API returns { success, data: Payment }
+        const payment = (response as any).data;
 
         if (payment.status === 'SUCCESS') {
           setStatus('success');
