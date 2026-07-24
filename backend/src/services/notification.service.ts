@@ -521,3 +521,218 @@ export async function createInAppNotification(
     // Don't throw - notification failure shouldn't break order flow
   }
 }
+
+// ─── Phase 4: Order Approval Notifications ────────────────────────────────────
+
+interface ApprovalNotificationData {
+  orderId: string;
+  orderNumber: string;
+  retailerName: string;
+  retailerEmail: string;
+  grandTotal: number;
+}
+
+/**
+ * Send order approved notification to retailer
+ */
+export async function sendOrderApprovedNotification(
+  data: ApprovalNotificationData
+): Promise<void> {
+  const subject = `Order Approved - ${data.orderNumber}`;
+
+  const textContent = [
+    `Hi ${data.retailerName},`,
+    ``,
+    `Great news! Your order ${data.orderNumber} has been approved by the wholesaler.`,
+    ``,
+    `Order Total: ₹${data.grandTotal.toFixed(2)}`,
+    `Status: Approved — Being Prepared`,
+    ``,
+    `The wholesaler is now preparing your items for pickup.`,
+    `You will be notified when your order is packed and ready.`,
+    ``,
+    `Thank you for your patience!`,
+    `WholesaleHub Team`,
+  ].join('\n');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #10B981;">Order Approved! ✅</h2>
+      <p>Hi ${data.retailerName},</p>
+      <p>Great news! Your order has been approved by the wholesaler.</p>
+      <div style="background: #F0FDF4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
+        <h3 style="margin-top: 0; color: #166534;">Order Details</h3>
+        <p style="margin: 5px 0;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+        <p style="margin: 5px 0;"><strong>Total Amount:</strong> <span style="font-size: 18px; color: #10B981;">₹${data.grandTotal.toFixed(2)}</span></p>
+        <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">Approved — Being Prepared</span></p>
+      </div>
+      <p>The wholesaler is now preparing your items. You'll be notified when they're packed and ready for pickup.</p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+      <p style="color: #64748B; font-size: 14px;">Thank you for your patience!<br>WholesaleHub Team</p>
+    </div>
+  `;
+
+  await sendEmail(
+    { name: data.retailerName, email: data.retailerEmail },
+    subject,
+    htmlContent,
+    textContent
+  );
+}
+
+interface RejectionNotificationData {
+  orderId: string;
+  orderNumber: string;
+  retailerName: string;
+  retailerEmail: string;
+  grandTotal: number;
+  reason: string;
+}
+
+/**
+ * Send order rejected notification to retailer
+ */
+export async function sendOrderRejectedNotification(
+  data: RejectionNotificationData
+): Promise<void> {
+  const subject = `Order Update - ${data.orderNumber}`;
+
+  const textContent = [
+    `Hi ${data.retailerName},`,
+    ``,
+    `We're sorry, but your order ${data.orderNumber} could not be fulfilled.`,
+    ``,
+    `Reason: ${data.reason}`,
+    `Order Total: ₹${data.grandTotal.toFixed(2)}`,
+    ``,
+    `If you paid online, your refund will be processed automatically.`,
+    `You can place a new order anytime.`,
+    ``,
+    `We apologize for the inconvenience.`,
+    `WholesaleHub Team`,
+  ].join('\n');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #EF4444;">Order Could Not Be Fulfilled</h2>
+      <p>Hi ${data.retailerName},</p>
+      <p>We're sorry, but your order could not be fulfilled at this time.</p>
+      <div style="background: #FEF2F2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EF4444;">
+        <h3 style="margin-top: 0; color: #991B1B;">Order Details</h3>
+        <p style="margin: 5px 0;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+        <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${data.grandTotal.toFixed(2)}</p>
+        <p style="margin: 5px 0;"><strong>Reason:</strong> ${data.reason}</p>
+      </div>
+      <p>If you paid online, your refund will be processed automatically within 5-7 business days.</p>
+      <p>You can place a new order anytime from our catalog.</p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+      <p style="color: #64748B; font-size: 14px;">We apologize for the inconvenience.<br>WholesaleHub Team</p>
+    </div>
+  `;
+
+  await sendEmail(
+    { name: data.retailerName, email: data.retailerEmail },
+    subject,
+    htmlContent,
+    textContent
+  );
+}
+
+interface PackedNotificationData {
+  orderId: string;
+  orderNumber: string;
+  retailerName: string;
+  retailerEmail: string;
+}
+
+/**
+ * Send order packed notification to retailer
+ */
+export async function sendOrderPackedNotification(
+  data: PackedNotificationData
+): Promise<void> {
+  const subject = `Order Packed - ${data.orderNumber}`;
+
+  const textContent = [
+    `Hi ${data.retailerName},`,
+    ``,
+    `Your order ${data.orderNumber} has been packed! 📦`,
+    `It will be ready for pickup shortly.`,
+    ``,
+    `WholesaleHub Team`,
+  ].join('\n');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #3B82F6;">Order Packed! 📦</h2>
+      <p>Hi ${data.retailerName},</p>
+      <p>Your order <strong>${data.orderNumber}</strong> has been packed and will be ready for pickup shortly.</p>
+      <div style="background: #EFF6FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3B82F6;">
+        <p style="margin: 0; color: #1D4ED8;"><strong>Status:</strong> Packed — Preparing for Pickup</p>
+      </div>
+      <p>You'll receive another notification once a delivery partner is assigned.</p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+      <p style="color: #64748B; font-size: 14px;">WholesaleHub Team</p>
+    </div>
+  `;
+
+  await sendEmail(
+    { name: data.retailerName, email: data.retailerEmail },
+    subject,
+    htmlContent,
+    textContent
+  );
+}
+
+interface ReadyForPickupNotificationData {
+  orderId: string;
+  orderNumber: string;
+  retailerName: string;
+  retailerEmail: string;
+  pickupOTP: string;
+}
+
+/**
+ * Send ready for pickup notification to retailer with OTP
+ */
+export async function sendReadyForPickupNotification(
+  data: ReadyForPickupNotificationData
+): Promise<void> {
+  const subject = `Order Ready for Pickup - ${data.orderNumber}`;
+
+  const textContent = [
+    `Hi ${data.retailerName},`,
+    ``,
+    `Your order ${data.orderNumber} is ready for pickup! 🚚`,
+    ``,
+    `Pickup OTP: ${data.pickupOTP}`,
+    ``,
+    `A delivery partner will be assigned shortly to collect your order.`,
+    `The pickup OTP will be used to verify the handoff.`,
+    ``,
+    `WholesaleHub Team`,
+  ].join('\n');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #7C3AED;">Order Ready for Pickup! 🚚</h2>
+      <p>Hi ${data.retailerName},</p>
+      <p>Your order <strong>${data.orderNumber}</strong> is packed and ready for pickup!</p>
+      <div style="background: #F5F3FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #7C3AED; text-align: center;">
+        <p style="margin: 0 0 8px; color: #6D28D9; font-weight: 600;">Pickup OTP</p>
+        <p style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #4C1D95; font-family: monospace;">${data.pickupOTP}</p>
+        <p style="margin: 8px 0 0; color: #7C3AED; font-size: 13px;">Share this OTP only with the delivery partner</p>
+      </div>
+      <p>A delivery partner will be assigned shortly to collect your order from the wholesaler.</p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+      <p style="color: #64748B; font-size: 14px;">WholesaleHub Team</p>
+    </div>
+  `;
+
+  await sendEmail(
+    { name: data.retailerName, email: data.retailerEmail },
+    subject,
+    htmlContent,
+    textContent
+  );
+}

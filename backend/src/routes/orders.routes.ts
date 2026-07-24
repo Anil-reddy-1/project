@@ -13,7 +13,9 @@ import { Router, type Request, type Response } from "express";
 import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import { orderService } from "../services/order.service";
+import { orderApprovalService } from "../services/order-approval.service";
 import { adminDb } from "../config/firebase";
+import type { OrderRejectionReason } from "../types";
 import {
   sendCODConfirmation,
   sendNewOrderAlertToWholesaler,
@@ -246,23 +248,81 @@ router.post(
 // ─── State machine actions ─────────────────────────────────────────────────────
 // Each action is a named POST, not a PATCH to state directly.
 
-/** POST /orders/:orderId/approve — Wholesaler approves (PLACED → APPROVED + inventory decrement) */
+/** POST /orders/:orderId/approve — Wholesaler approves (PENDING_APPROVAL → APPROVED + inventory decrement) */
 router.post(
   "/:orderId/approve",
   verifyFirebaseToken,
   requireRole("wholesaler"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 4 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const wholesalerUid = req.user!.uid;
+      const { orderId } = req.params;
+
+      const order = await orderApprovalService.approveOrder(orderId, wholesalerUid);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order approved successfully',
+        data: order,
+      });
+    } catch (error: any) {
+      console.error('[Orders] Approve order error:', error);
+
+      if (error.message === 'Order not found') {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      if (error.message.includes('Cannot approve') || error.message.includes('Insufficient stock')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+      if (error.message.includes('Unauthorized')) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+
+      return res.status(500).json({ success: false, message: error.message || 'Failed to approve order' });
+    }
   },
 );
 
-/** POST /orders/:orderId/reject — Wholesaler rejects (PLACED → REJECTED) */
+/** POST /orders/:orderId/reject — Wholesaler rejects (PENDING_APPROVAL → REJECTED) */
 router.post(
   "/:orderId/reject",
   verifyFirebaseToken,
   requireRole("wholesaler"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 4 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const wholesalerUid = req.user!.uid;
+      const { orderId } = req.params;
+      const { reason, notes } = req.body;
+
+      if (!reason || typeof reason !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Rejection reason is required',
+        });
+      }
+
+      const order = await orderApprovalService.rejectOrder(orderId, wholesalerUid, reason as OrderRejectionReason, notes);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order rejected',
+        data: order,
+      });
+    } catch (error: any) {
+      console.error('[Orders] Reject order error:', error);
+
+      if (error.message === 'Order not found') {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      if (error.message.includes('Cannot reject') || error.message.includes('Invalid rejection')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+      if (error.message.includes('Unauthorized')) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+
+      return res.status(500).json({ success: false, message: error.message || 'Failed to reject order' });
+    }
   },
 );
 
@@ -271,8 +331,33 @@ router.post(
   "/:orderId/pack",
   verifyFirebaseToken,
   requireRole("wholesaler"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 4 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const wholesalerUid = req.user!.uid;
+      const { orderId } = req.params;
+
+      const order = await orderApprovalService.markPacked(orderId, wholesalerUid);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order marked as packed',
+        data: order,
+      });
+    } catch (error: any) {
+      console.error('[Orders] Pack order error:', error);
+
+      if (error.message === 'Order not found') {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      if (error.message.includes('Cannot mark')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+      if (error.message.includes('Unauthorized')) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+
+      return res.status(500).json({ success: false, message: error.message || 'Failed to pack order' });
+    }
   },
 );
 
@@ -281,8 +366,36 @@ router.post(
   "/:orderId/ready",
   verifyFirebaseToken,
   requireRole("wholesaler"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 4 — not yet implemented" });
+  async (req: Request, res: Response) => {
+    try {
+      const wholesalerUid = req.user!.uid;
+      const { orderId } = req.params;
+
+      const { order, pickupOTP } = await orderApprovalService.markReadyForPickup(orderId, wholesalerUid);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order is ready for pickup',
+        data: {
+          ...order,
+          pickupOTP,
+        },
+      });
+    } catch (error: any) {
+      console.error('[Orders] Ready for pickup error:', error);
+
+      if (error.message === 'Order not found') {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      if (error.message.includes('Cannot mark')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+      if (error.message.includes('Unauthorized')) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+
+      return res.status(500).json({ success: false, message: error.message || 'Failed to mark ready' });
+    }
   },
 );
 

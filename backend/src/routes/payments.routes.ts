@@ -22,16 +22,13 @@ import {
 const router = Router();
 
 /**
- * POST /api/payments/phonepe/callback
+ * POST /api/payments/phonepe/verify
  * 
- * PhonePe callback handler - called when user is redirected back from PhonePe
- * This is a public endpoint (no auth) as it's called by PhonePe redirect
- * 
- * Query params: merchantTransactionId, status (from PhonePe)
+ * PhonePe payment verification - called by the frontend after redirect
  */
-router.get('/phonepe/callback', async (req: Request, res: Response) => {
+router.post('/phonepe/verify', async (req: Request, res: Response) => {
   try {
-    const { merchantTransactionId } = req.query;
+    const { merchantTransactionId } = req.body;
 
     if (!merchantTransactionId || typeof merchantTransactionId !== 'string') {
       return res.status(400).json({
@@ -40,7 +37,7 @@ router.get('/phonepe/callback', async (req: Request, res: Response) => {
       });
     }
 
-    console.log('[Payment Callback] Processing:', merchantTransactionId);
+    console.log('[Payment Verify] Processing:', merchantTransactionId);
 
     // Verify payment status with PhonePe
     const payment = await paymentService.verifyPhonePePayment(merchantTransactionId);
@@ -67,10 +64,14 @@ router.get('/phonepe/callback', async (req: Request, res: Response) => {
         transactionId: payment.phonepeTransactionId,
       });
 
-      // Redirect to success page
-      return res.redirect(
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/retailer/payment/success?orderId=${payment.orderId}`
-      );
+      return res.status(200).json({
+        success: true,
+        message: 'Payment verified successfully',
+        data: {
+          orderId: payment.orderId,
+          status: payment.status
+        }
+      });
     } else if (payment.status === 'failed') {
       await orderService.updateOrderPaymentStatus(payment.orderId, 'failed', 'system');
 
@@ -85,21 +86,33 @@ router.get('/phonepe/callback', async (req: Request, res: Response) => {
         errorMessage: payment.errorMessage,
       });
 
-      // Redirect to failure page
-      return res.redirect(
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/retailer/payment/failure?paymentId=${payment.paymentId}`
-      );
+      return res.status(200).json({
+        success: true,
+        message: 'Payment verification failed',
+        data: {
+          orderId: payment.orderId,
+          paymentId: payment.paymentId,
+          status: payment.status
+        }
+      });
     } else {
       // Payment still pending
-      return res.redirect(
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/retailer/payment/pending?orderId=${payment.orderId}`
-      );
+      return res.status(200).json({
+        success: true,
+        message: 'Payment still pending',
+        data: {
+          orderId: payment.orderId,
+          paymentId: payment.paymentId,
+          status: payment.status
+        }
+      });
     }
-  } catch (error) {
-    console.error('[Payment Callback] Error:', error);
-    return res.redirect(
-      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/retailer/payment/error`
-    );
+  } catch (error: any) {
+    console.error('[Payment Verify] Error:', error);
+    return res.status(500).json({
+        success: false,
+        message: error.message || 'Payment verification error'
+    });
   }
 });
 

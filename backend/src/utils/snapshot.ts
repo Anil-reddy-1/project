@@ -43,7 +43,10 @@ export interface ShopSnapshot {
  */
 export async function createProductSnapshot(itemId: string): Promise<ProductSnapshot> {
   const db = adminDb();
-  const itemRef = db.collection('items').doc(itemId);
+  
+  // Get the single shop ID (Phase 2.5: one shop system)
+  const shopId = await getSingleShopId();
+  const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
   const itemDoc = await itemRef.get();
   
   if (!itemDoc.exists) {
@@ -55,7 +58,7 @@ export async function createProductSnapshot(itemId: string): Promise<ProductSnap
   return {
     name: item.name || 'Unknown Product',
     description: item.description || '',
-    imageUrl: item.imageUrl || '',
+    imageUrl: item.imageUrl || item.images?.[0]?.url || '',
     category: item.category || 'Uncategorized',
     sku: item.sku,
     barcode: item.barcode,
@@ -70,7 +73,10 @@ export async function createProductSnapshot(itemId: string): Promise<ProductSnap
  */
 export async function createPriceSnapshot(itemId: string): Promise<PriceSnapshot> {
   const db = adminDb();
-  const itemRef = db.collection('items').doc(itemId);
+  
+  // Get the single shop ID (Phase 2.5: one shop system)
+  const shopId = await getSingleShopId();
+  const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
   const itemDoc = await itemRef.get();
   
   if (!itemDoc.exists) {

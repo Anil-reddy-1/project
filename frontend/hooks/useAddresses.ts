@@ -82,7 +82,7 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
         const response = await apiUpdateAddress(userId, addressId, data as any);
         const updated: DeliveryAddress = (response as any).address ?? (response as any).data;
         setAddresses((prev) =>
-          prev.map((addr) => (addr.id === addressId ? updated : addr))
+          prev.map((addr) => (((addr as any).id || (addr as any).addressId) === addressId ? updated : addr))
         );
         return updated;
       } catch (err: any) {
@@ -105,7 +105,7 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
       try {
         setError(null);
         await apiDeleteAddress(userId, addressId);
-        setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
+        setAddresses((prev) => prev.filter((addr) => ((addr as any).id || (addr as any).addressId) !== addressId));
       } catch (err: any) {
         console.error('Failed to delete address:', err);
         setError(
@@ -129,7 +129,7 @@ export function useAddresses(userId: string | null, autoFetch: boolean = true) {
         setAddresses((prev) =>
           prev.map((addr) => ({
             ...addr,
-            isDefault: addr.id === addressId,
+            isDefault: ((addr as any).id || (addr as any).addressId) === addressId,
           }))
         );
       } catch (err: any) {

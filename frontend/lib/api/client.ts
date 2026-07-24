@@ -29,6 +29,9 @@ export class ApiError extends Error {
  * Returns null if no user is signed in.
  */
 async function getIdToken(): Promise<string | null> {
+  if (auth) {
+    await auth.authStateReady();
+  }
   const user = auth?.currentUser;
   if (!user) return null;
   return user.getIdToken();
@@ -63,6 +66,7 @@ export async function apiClient<T>(
 
   const requestHeaders: Record<string, string> = {
     "Content-Type": "application/json",
+    "Bypass-Tunnel-Reminder": "true", // Bypasses localtunnel's warning page which breaks CORS
     ...headers,
   };
 
@@ -79,9 +83,14 @@ export async function apiClient<T>(
   if (!response.ok) {
     let errorData: unknown;
     try {
-      errorData = await response.json();
+      const text = await response.text();
+      try {
+        errorData = JSON.parse(text);
+      } catch {
+        errorData = text;
+      }
     } catch {
-      errorData = await response.text();
+      errorData = 'Failed to read error response';
     }
     throw new ApiError(
       `API request failed: ${response.status} ${response.statusText}`,

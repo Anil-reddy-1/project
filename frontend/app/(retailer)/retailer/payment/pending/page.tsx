@@ -7,13 +7,13 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePayment } from '@/hooks';
 import { LoadingSpinner, InlineWarning } from '@/components/ui';
 import Link from 'next/link';
 
-export default function PaymentPendingPage() {
+function PaymentPendingContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -142,5 +142,13 @@ export default function PaymentPendingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPendingPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <PaymentPendingContent />
+    </Suspense>
   );
 }

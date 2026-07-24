@@ -15,6 +15,7 @@ import { adminDb } from '../config/firebase';
 import { phonePeService } from './phonepe.service';
 import { phonePeConfig } from '../config/phonepe';
 import { rupeesToPaise } from '../utils/pricing';
+import { generateMerchantTransactionId, verifyWebhookSignature } from '../utils/phonepe.utils';
 import type { PaymentMethod, PaymentStatus } from '../types';
 
 export interface Payment {
@@ -60,7 +61,7 @@ export class PaymentService {
   ): Promise<{ payment: Payment; redirectUrl: string }> {
     try {
       // Generate unique merchant transaction ID
-      const merchantTransactionId = phonePeService.generateMerchantTransactionId(orderId);
+      const merchantTransactionId = generateMerchantTransactionId();
 
       // Generate idempotency key
       const idempotencyKey = `${orderId}_${Date.now()}`;
@@ -71,17 +72,17 @@ export class PaymentService {
         console.log('[Payment] Using existing payment:', existingPayment.paymentId);
         
         // If payment is already paid, return it
-        if (existingPayment.status === 'paid') {
+        if (existingPayment.status === 'SUCCESS' || existingPayment.status === 'paid') {
           throw new Error('Payment already completed for this order');
         }
 
         // If payment is pending, check status
-        if (existingPayment.status === 'pending' && existingPayment.phonepeMerchantTransactionId) {
+        if ((existingPayment.status === 'PENDING' || existingPayment.status === 'pending') && existingPayment.phonepeMerchantTransactionId) {
           const statusResponse = await phonePeService.checkPaymentStatus(
             existingPayment.phonepeMerchantTransactionId
           );
 
-          if (statusResponse.success && statusResponse.data) {
+          if (statusResponse.success && statusResponse.status) {
             // Update payment status based on current state
             await this.updatePaymentFromPhonePeResponse(
               existingPayment.paymentId,
@@ -91,27 +92,15 @@ export class PaymentService {
         }
       }
 
-      // Convert amount to paise
-      const amountInPaise = rupeesToPaise(amount);
-
       // Initiate payment with PhonePe
       const phonePeResponse = await phonePeService.initiatePayment({
-        merchantTransactionId,
-        amount: amountInPaise,
-        merchantUserId: retailerId,
-        redirectUrl: phonePeConfig.redirectUrl,
-        callbackUrl: phonePeConfig.webhookUrl,
+        amount,
+        retailerId,
+        orderId,
       });
 
-      if (!phonePeResponse.success) {
-        throw new Error(phonePeResponse.message || 'Failed to initiate PhonePe payment');
-      }
-
-      // Extract redirect URL
-      const redirectUrl = phonePeResponse.data?.instrumentResponse?.redirectInfo?.url;
-      if (!redirectUrl) {
-        throw new Error('No redirect URL received from PhonePe');
-      }
+      const redirectUrl = phonePeResponse.paymentUrl;
+      const actualMerchantTxId = phonePeResponse.merchantTransactionId || merchantTransactionId;
 
       // Create payment record
       const db = adminDb();
@@ -121,7 +110,7 @@ export class PaymentService {
         orderId,
         gateway: 'phonepe',
         method: 'prepaid',
-        status: 'pending',
+        status: 'PENDING',
         amount,
         currency: 'INR',
         phonepeMerchantTransactionId: merchantTransactionId,
@@ -211,7 +200,7 @@ export class PaymentService {
 
       // Verify signature
       const responseBase64 = Buffer.from(JSON.stringify(payload)).toString('base64');
-      const isValidSignature = phonePeService.verifySignature(responseBase64, signature);
+      const isValidSignature = verifyWebhookSignature(responseBase64, signature);
 
       if (!isValidSignature) {
         console.error('[Payment] Invalid webhook signature');
@@ -280,7 +269,7 @@ export class PaymentService {
         orderId,
         gateway: 'cod',
         method: 'cod',
-        status: 'pending',
+        status: 'PENDING',
         amount,
         currency: 'INR',
         signatureVerified: true, // COD doesn't need signature verification
@@ -356,7 +345,7 @@ export class PaymentService {
       const payment = paymentDoc.data() as Payment;
 
       // Check if payment can be retried
-      if (payment.status === 'paid') {
+      if (payment.status === 'SUCCESS') {
         throw new Error('Payment already completed');
       }
 
@@ -459,7 +448,7 @@ export class PaymentService {
 
       // Update payment instrument
       if (data.paymentInstrument) {
-        updates.phonepePaymentInstrument = phonePeService.extractPaymentInstrument(response);
+        updates.phonepePaymentInstrument = data.paymentInstrument;
       }
 
       // Update status based on state

@@ -69,6 +69,8 @@ export function adminAuth(): admin.auth.Auth {
   return admin.auth();
 }
 
+let firestoreDb: admin.firestore.Firestore | null = null;
+
 /**
  * Firestore instance.
  */
@@ -76,7 +78,15 @@ export function adminDb(): admin.firestore.Firestore {
   if (!firebaseApp) {
     initializeFirebase();
   }
-  return admin.firestore();
+  if (!firestoreDb) {
+    firestoreDb = admin.firestore();
+    try {
+      firestoreDb.settings({ ignoreUndefinedProperties: true });
+    } catch (e) {
+      // Ignored if settings already set
+    }
+  }
+  return firestoreDb;
 }
 
 /**

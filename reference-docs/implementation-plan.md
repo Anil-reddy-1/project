@@ -253,7 +253,7 @@ Building Admin-heavy features (disputes, overrides, analytics) before the order 
 
 ## Phase 4 — Wholesaler Approval & Inventory Lock
 
-**Status:** 📋 PLANNED (starts after Phase 3 completes)
+**Status:** ✅ COMPLETE
 
 **Goal:** The approval gate that the entire trust model depends on. Wholesaler reviews and approves/rejects pending orders.
 
@@ -284,7 +284,7 @@ Building Admin-heavy features (disputes, overrides, analytics) before the order 
 - Finalize `rejectionReason` enum values (schema.md §10).
 - Confirm whether retailer cancellation is genuinely allowed through APPROVED (rules.md §2 documents it as allowed, but flags it as worth re-confirming, per app-flow.md §7 open question #3) — this phase is where that decision becomes real, not theoretical.
 
-**Exit criteria:** an order can travel PLACED → APPROVED (with a real inventory decrement visible in Firestore) → PACKED → READY_FOR_PICKUP, entirely through wholesaler action, with a correct `stateHistory` at every step. No delivery partner exists in the system yet — that's fine, this phase ends at `READY_FOR_PICKUP` with a generated (unused) pickup OTP.
+**Exit criteria (met):** an order can travel PENDING_APPROVAL → APPROVED (with a real inventory decrement visible in Firestore) → PACKED → READY_FOR_PICKUP, entirely through wholesaler action, with a correct `stateHistory` at every step. Pickup OTP generated successfully.
 
 ---
 

@@ -33,7 +33,7 @@ export type OrderState =
   | "DISPUTED"
   | "PAYMENT_SETTLED";
 
-export type PaymentMethod = "PHONEPE" | "COD";
+export type PaymentMethod = "prepaid" | "cod";
 
 export type PaymentStatus =
   | "PENDING"
@@ -42,7 +42,20 @@ export type PaymentStatus =
   | "FAILED"
   | "PENDING_COD"
   | "CANCELLED"
-  | "EXPIRED";
+  | "EXPIRED"
+  | "paid"
+  | "failed"
+  | "pending";
+
+// ─── Order Rejection (Phase 4) ───────────────────────────────────────────────
+
+export type OrderRejectionReason =
+  | "out_of_stock"
+  | "moq_not_met"
+  | "pricing_error"
+  | "suspicious_order"
+  | "wholesaler_unavailable"
+  | "other";
 
 // ─── Ledger ───────────────────────────────────────────────────────────────────
 

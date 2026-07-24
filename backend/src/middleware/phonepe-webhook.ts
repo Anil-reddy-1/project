@@ -7,7 +7,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { verifyPhonePeSignature } from '../config/phonepe';
+import { verifyWebhookSignature } from '../utils/phonepe.utils';
 
 /**
  * Verify PhonePe webhook signature
@@ -36,7 +36,7 @@ export function verifyPhonePeWebhook(
     const responseBase64 = Buffer.from(JSON.stringify(req.body)).toString('base64');
 
     // Verify signature
-    const isValid = verifyPhonePeSignature(responseBase64, signature, '/webhook');
+    const isValid = verifyWebhookSignature(responseBase64, signature);
 
     if (!isValid) {
       console.error('[PhonePe Webhook] Invalid signature');

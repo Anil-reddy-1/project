@@ -12,7 +12,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  moq: number;
+  moq?: number;
   imageUrl?: string;
 }
 
@@ -84,9 +84,9 @@ export function CheckoutSummary({
               {editable && onUpdateQuantity && onRemoveItem && (
                 <div className="mt-2 flex gap-2 justify-end">
                   <button
-                    onClick={() => onUpdateQuantity(item.itemId, Math.max(item.moq, item.quantity - 1))}
+                    onClick={() => onUpdateQuantity(item.itemId, Math.max(item.moq ?? 1, item.quantity - 1))}
                     className="text-xs text-gray-500 hover:text-gray-700"
-                    disabled={item.quantity <= item.moq}
+                    disabled={item.quantity <= (item.moq ?? 1)}
                   >
                     −
                   </button>

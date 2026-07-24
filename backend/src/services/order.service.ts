@@ -240,12 +240,15 @@ export class OrderService {
     const db = adminDb();
     const orderItems: OrderItem[] = [];
 
+    // Get the single shop ID (Phase 2.5: one shop system)
+    const shopId = await getSingleShopId();
+
     for (const item of items) {
       const productSnapshot = await createProductSnapshot(item.itemId);
       const priceSnapshot = await createPriceSnapshot(item.itemId);
 
       // Fetch current stock for snapshot
-      const itemRef = db.collection('items').doc(item.itemId);
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(item.itemId);
       const itemDoc = await itemRef.get();
       const itemData = itemDoc.data()!;
 
@@ -257,7 +260,7 @@ export class OrderService {
         priceSnapshot,
         quantity: item.quantity,
         itemTotal,
-        availableStock: itemData.stock || 0,
+        availableStock: itemData.stock || itemData.stockQty || 0,
       });
     }
 
@@ -284,7 +287,8 @@ export class OrderService {
       if (role === 'retailer') {
         query = query.where('retailerId', '==', userId);
       } else if (role === 'wholesaler') {
-        query = query.where('wholesalerId', '==', userId);
+        // Phase 2.5: Single shop - any wholesaler account sees all orders
+        // (Bypass wholesalerId check to allow multiple test accounts to view orders)
       }
       // Admin sees all orders
 
@@ -298,20 +302,28 @@ export class OrderService {
         query = query.where('paymentStatus', '==', filters.paymentStatus);
       }
 
-      // Order by creation date (newest first)
-      query = query.orderBy('createdAt', 'desc');
+      // Get all matching orders (no orderBy to avoid composite index requirements)
+      const ordersSnapshot = await query.get();
+      let orders: Order[] = ordersSnapshot.docs.map((doc: any) => doc.data() as Order);
 
-      // Get total count for pagination
-      const countSnapshot = await query.get();
-      const total = countSnapshot.size;
+      // Sort in memory by createdAt (newest first)
+      orders.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 
+                     (a.createdAt && typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate().getTime() : 
+                     new Date(a.createdAt).getTime());
+        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 
+                     (b.createdAt && typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate().getTime() : 
+                     new Date(b.createdAt).getTime());
+        return dateB - dateA;
+      });
 
-      // Apply pagination
-      const ordersSnapshot = await query.limit(limit).offset(offset).get();
+      const total = orders.length;
 
-      const orders: Order[] = ordersSnapshot.docs.map((doc: any) => doc.data() as Order);
+      // Apply pagination in memory
+      const paginatedOrders = orders.slice(offset, offset + limit);
 
       return {
-        orders,
+        orders: paginatedOrders,
         pagination: {
           page,
           limit,
@@ -345,8 +357,9 @@ export class OrderService {
         throw new Error('Unauthorized access to order');
       }
 
-      if (role === 'wholesaler' && order.wholesalerId !== userId) {
-        throw new Error('Unauthorized access to order');
+      if (role === 'wholesaler') {
+        // Phase 2.5: Single shop - any wholesaler account can access the order
+        // (Bypass wholesalerId check to allow multiple test accounts)
       }
 
       // Admin has access to all orders
@@ -491,8 +504,8 @@ export class OrderService {
     orderId: string,
     action: string,
     actorId: string,
-    beforeState?: OrderState,
-    afterState?: OrderState,
+    beforeState?: OrderState | string,
+    afterState?: OrderState | string,
     metadata?: any
   ): Promise<void> {
     try {

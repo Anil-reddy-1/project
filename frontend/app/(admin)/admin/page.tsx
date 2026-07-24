@@ -3,16 +3,15 @@
 /**
  * Admin Dashboard — Home.
  * URL: /admin
- * Derived from: app-flow.md §4.1, §4.2 (Users Tab)
- *
- * Phase 1: navigation shell + Users tab placeholder.
- * Full Users tab (approve/reject/suspend/reactivate) is built below.
- *
- * Phase 9 adds: Live Operations, Disputes, Settings tabs.
- *
- * Auth bug fixes applied:
- *   A1 — Replaced duplicate/race-condition sign-out logic with useAuth().logout()
- *   A7 — Removed dead `getAuth` import from firebase/auth
+ * PHASE 2.5: Updated for Single-Shop Architecture
+ * 
+ * Admin has full control over:
+ * - THE single shop (name, details, items)
+ * - THE single wholesaler (view only, can suspend)
+ * - All orders, deliveries, payments
+ * - Platform insights and analytics
+ * 
+ * Tabs: Shop | Orders | Users | Deliveries | Payments | Insights
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -53,11 +52,13 @@ export default function AdminHomePage() {
   const router = useRouter();
   const { logout, user } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<"retailers" | "wholesaler" | "delivery" | "shop">(
+  const [activeTab, setActiveTab] = useState<"shop" | "orders" | "users" | "deliveries" | "payments" | "insights">(
     "shop",
   );
+  const [userSubTab, setUserSubTab] = useState<"retailers" | "wholesaler" | "delivery">("wholesaler");
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [shops, setShops] = useState<ShopRecord[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{type: "success" | "error", text: string} | null>(null);
 
@@ -70,22 +71,21 @@ export default function AdminHomePage() {
   const [modalRole, setModalRole] = useState<"wholesaler" | "delivery_partner">("wholesaler");
   const [modalError, setModalError] = useState("");
 
-  const TAB_ROLE: Record<typeof activeTab, string> = {
+  const TAB_ROLE: Record<string, string> = {
     retailers: "retailer",
-    wholesaler: "wholesaler",  // Changed from wholesalers
+    wholesaler: "wholesaler",
     delivery: "delivery_partner",
-    shop: "", // shop tab doesn't have a role filter
   };
 
   const fetchUsers = useCallback(async () => {
-    if (!user || activeTab === "shop") return; // Don't fetch users for shop tab
+    if (!user || activeTab !== "users") return;
 
     setLoading(true);
     setActionMsg(null);
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `${API_URL}/users?role=${TAB_ROLE[activeTab]}`,
+        `${API_URL}/users?role=${TAB_ROLE[userSubTab]}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!res.ok) throw new Error("Failed to fetch users");
@@ -97,16 +97,15 @@ export default function AdminHomePage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, user]); // Re-run when tab changes or user authenticates
+  }, [activeTab, userSubTab, user]);
 
   const fetchShops = useCallback(async () => {
-    if (!user || activeTab !== "shop") return; // Only fetch shop for shop tab
+    if (!user || activeTab !== "shop") return;
 
     setLoading(true);
     setActionMsg(null);
     try {
       const token = await user.getIdToken();
-      // Fetch THE single shop
       const res = await fetch(
         `${API_URL}/shops`,
         { headers: { Authorization: `Bearer ${token}` } },
@@ -122,13 +121,37 @@ export default function AdminHomePage() {
     }
   }, [activeTab, user]);
 
-  useEffect(() => { 
-    if (activeTab === "shops") {
-      fetchShops();
-    } else {
-      fetchUsers();
+  const fetchOrders = useCallback(async () => {
+    if (!user || activeTab !== "orders") return;
+
+    setLoading(true);
+    setActionMsg(null);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(
+        `${API_URL}/orders`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      const data = await res.json();
+      setOrders(data.data ?? []);
+    } catch (err) {
+      setActionMsg({ type: "error", text: "Failed to load orders. Check console." });
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }, [fetchUsers, fetchShops, activeTab]);
+  }, [activeTab, user]);
+
+  useEffect(() => { 
+    if (activeTab === "shop") {
+      fetchShops();
+    } else if (activeTab === "users") {
+      fetchUsers();
+    } else if (activeTab === "orders") {
+      fetchOrders();
+    }
+  }, [fetchUsers, fetchShops, fetchOrders, activeTab]);
 
   async function handleSuspend(uid: string) {
     if (!user) return;
@@ -292,15 +315,24 @@ export default function AdminHomePage() {
         <div className="admin-page-header">
           <div className="admin-page-header-row">
             <div>
-              <h1 className="admin-page-title">{activeTab === "shops" ? "Shops" : "Users"}</h1>
+              <h1 className="admin-page-title">
+                {activeTab === "shop" && "Shop Management"}
+                {activeTab === "orders" && "Orders"}
+                {activeTab === "users" && "Users"}
+                {activeTab === "deliveries" && "Deliveries"}
+                {activeTab === "payments" && "Payments"}
+                {activeTab === "insights" && "Insights"}
+              </h1>
               <p className="admin-page-sub">
-                {activeTab === "shops" 
-                  ? "Manage shop verifications. Verified shops are discoverable by retailers."
-                  : "Manage all platform accounts. Wholesaler and delivery partner accounts are created by Admin only."
-                }
+                {activeTab === "shop" && "Manage THE shop - name, details, inventory, and settings."}
+                {activeTab === "orders" && "View and manage all orders across the platform."}
+                {activeTab === "users" && "Manage retailers, the wholesaler, and delivery partners."}
+                {activeTab === "deliveries" && "Track active deliveries and delivery partner performance."}
+                {activeTab === "payments" && "Monitor payments, settlements, and financial transactions."}
+                {activeTab === "insights" && "Platform analytics, metrics, and business intelligence."}
               </p>
             </div>
-            {activeTab !== "shops" && (
+            {activeTab === "users" && userSubTab !== "wholesaler" && (
               <button
                 id="admin-create-account"
                 className="admin-btn admin-btn--primary"
@@ -319,7 +351,7 @@ export default function AdminHomePage() {
         {/* Tab bar */}
         <div className="admin-tabs-container">
           <div className="admin-tabs" role="tablist">
-            {(["wholesalers", "retailers", "delivery", "shops"] as const).map((tab) => (
+            {(["shop", "orders", "users", "deliveries", "payments", "insights"] as const).map((tab) => (
               <button
                 key={tab}
                 id={`admin-tab-${tab}`}
@@ -328,9 +360,7 @@ export default function AdminHomePage() {
                 className={`admin-tab ${activeTab === tab ? "admin-tab--active" : ""}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === "delivery" ? "Delivery Partners" : 
-                 tab === "shops" ? "Shops" :
-                 tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -361,90 +391,113 @@ export default function AdminHomePage() {
           </div>
         )}
 
-        {/* User/Shop table */}
+        {/* User/Shop/Order content */}
         <div className="admin-card">
           {loading ? (
             <div className="admin-loading">
               <span className="admin-spinner" />
-              <span>Loading {activeTab === "shops" ? "shops" : "users"}…</span>
+              <span>Loading...</span>
             </div>
-          ) : activeTab === "shops" ? (
+          ) : activeTab === "shop" ? (
+            // Shop Management Section
             shops.length === 0 ? (
               <div className="admin-empty">
                 <div className="admin-empty-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                   </svg>
                 </div>
-                <p>No shops found.</p>
+                <p>No shop found. Run the seed script to create the shop.</p>
+              </div>
+            ) : (
+              <div style={{ padding: "1.5rem" }}>
+                <div className="shop-info-card">
+                  <h3 className="shop-info-title">{shops[0].name}</h3>
+                  <div className="shop-info-grid">
+                    <div className="shop-info-item">
+                      <span className="shop-info-label">Category</span>
+                      <span className="shop-info-value">{shops[0].category}</span>
+                    </div>
+                    <div className="shop-info-item">
+                      <span className="shop-info-label">Address</span>
+                      <span className="shop-info-value">{shops[0].address}</span>
+                    </div>
+                    <div className="shop-info-item">
+                      <span className="shop-info-label">MOQ Threshold</span>
+                      <span className="shop-info-value">₹{shops[0].moqThreshold.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="shop-info-item">
+                      <span className="shop-info-label">Status</span>
+                      <span className={`admin-badge admin-badge--${shops[0].verificationStatus === "verified" ? "active" : "pending_approval"}`}>
+                        {shops[0].verificationStatus}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem" }}>
+                    <button
+                      className="admin-btn admin-btn--primary"
+                      onClick={() => router.push(`/wholesaler/shop-setup`)}
+                    >
+                      Edit Shop Details
+                    </button>
+                    <button
+                      className="admin-btn admin-btn--ghost"
+                      onClick={() => router.push(`/wholesaler/catalog`)}
+                    >
+                      Manage Items
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : activeTab === "orders" ? (
+            // Orders Section
+            orders.length === 0 ? (
+              <div className="admin-empty">
+                <div className="admin-empty-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                  </svg>
+                </div>
+                <p>No orders yet.</p>
               </div>
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Shop</th>
-                      <th>Category & Location</th>
+                      <th>Order #</th>
+                      <th>Retailer</th>
+                      <th>Amount</th>
                       <th>Status</th>
+                      <th>Payment</th>
                       <th className="admin-table-actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {shops.map((shop) => (
-                      <tr key={shop.shopId}>
-                        <td className="admin-cell-user">
-                          <div className="admin-user-avatar">
-                            {shop.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="admin-user-info">
-                            <span className="admin-user-name">{shop.name}</span>
-                            <span className="admin-user-id font-data">MOQ: ₹{shop.moqThreshold.toLocaleString("en-IN")}</span>
-                          </div>
-                        </td>
-                        <td className="admin-cell-contact">
-                          <span className="admin-contact-item">{shop.category}</span>
-                          <span className="admin-contact-item font-data">{shop.address}</span>
+                    {orders.map((order) => (
+                      <tr key={order.orderId}>
+                        <td className="font-data">{order.orderNumber}</td>
+                        <td>{order.retailerSnapshot?.name || "Unknown"}</td>
+                        <td className="font-data">₹{order.grandTotal?.toLocaleString("en-IN")}</td>
+                        <td>
+                          <span className={`admin-badge admin-badge--${order.state?.toLowerCase().replace('_', '')}`}>
+                            {order.state}
+                          </span>
                         </td>
                         <td>
-                          <span className={`admin-badge admin-badge--${shop.verificationStatus === "verified" ? "active" : shop.verificationStatus === "pending" ? "pending_approval" : "suspended"}`}>
-                            {shop.verificationStatus}
+                          <span className={`admin-badge admin-badge--${order.paymentStatus === 'completed' ? 'active' : 'pending_approval'}`}>
+                            {order.paymentStatus}
                           </span>
                         </td>
                         <td className="admin-table-actions">
-                          {shop.verificationStatus === "pending" ? (
-                            <div style={{ display: "flex", gap: "0.5rem" }}>
-                              <button
-                                id={`admin-verify-${shop.shopId}`}
-                                className="admin-btn admin-btn--approve"
-                                onClick={() => handleVerifyShop(shop.shopId)}
-                              >
-                                Verify
-                              </button>
-                              <button
-                                id={`admin-reject-shop-${shop.shopId}`}
-                                className="admin-btn admin-btn--danger"
-                                onClick={() => handleRejectShop(shop.shopId)}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          ) : shop.verificationStatus === "rejected" ? (
-                            <button
-                              id={`admin-verify-${shop.shopId}`}
-                              className="admin-btn admin-btn--approve"
-                              onClick={() => handleVerifyShop(shop.shopId)}
-                            >
-                              Verify
-                            </button>
-                          ) : (
-                            <button
-                              id={`admin-reject-shop-${shop.shopId}`}
-                              className="admin-btn admin-btn--danger"
-                              onClick={() => handleRejectShop(shop.shopId)}
-                            >
-                              Reject
-                            </button>
-                          )}
+                          <button
+                            className="admin-btn admin-btn--ghost"
+                            onClick={() => router.push(`/admin/orders/${order.orderId}`)}
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -452,7 +505,21 @@ export default function AdminHomePage() {
                 </table>
               </div>
             )
-          ) : users.length === 0 ? (
+          ) : activeTab === "users" ? (
+            // Users Section with sub-tabs
+            <div>
+              <div className="admin-subtabs">
+                {(["wholesaler", "retailers", "delivery"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    className={`admin-subtab ${userSubTab === tab ? "admin-subtab--active" : ""}`}
+                    onClick={() => setUserSubTab(tab)}
+                  >
+                    {tab === "wholesaler" ? "Wholesaler" : tab === "delivery" ? "Delivery Partners" : "Retailers"}
+                  </button>
+                ))}
+              </div>
+              {users.length === 0 ? (
             <div className="admin-empty">
               <div className="admin-empty-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -462,7 +529,7 @@ export default function AdminHomePage() {
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
               </div>
-              <p>No {activeTab} found.</p>
+              <p>No {userSubTab} found.</p>
             </div>
           ) : (
             <div className="admin-table-wrap">
@@ -497,7 +564,26 @@ export default function AdminHomePage() {
                         </span>
                       </td>
                       <td className="admin-table-actions">
-                        {u.status === "active" ? (
+                        {userSubTab === "wholesaler" ? (
+                          // Wholesaler: Read-only, can only suspend
+                          u.status === "active" ? (
+                            <button
+                              id={`admin-suspend-${u.uid}`}
+                              className="admin-btn admin-btn--danger"
+                              onClick={() => handleSuspend(u.uid)}
+                            >
+                              Suspend
+                            </button>
+                          ) : (
+                            <button
+                              id={`admin-reactivate-${u.uid}`}
+                              className="admin-btn admin-btn--primary"
+                              onClick={() => handleReactivate(u.uid)}
+                            >
+                              Reactivate
+                            </button>
+                          )
+                        ) : u.status === "active" ? (
                           <button
                             id={`admin-suspend-${u.uid}`}
                             className="admin-btn admin-btn--danger"
@@ -540,6 +626,44 @@ export default function AdminHomePage() {
               </table>
             </div>
           )}
+            </div>
+          ) : activeTab === "deliveries" ? (
+            // Deliveries Section
+            <div className="admin-empty">
+              <div className="admin-empty-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="3" width="15" height="13"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <p>Delivery tracking coming in Phase 5+</p>
+            </div>
+          ) : activeTab === "payments" ? (
+            // Payments Section
+            <div className="admin-empty">
+              <div className="admin-empty-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <p>Payment analytics coming in Phase 7+</p>
+            </div>
+          ) : activeTab === "insights" ? (
+            // Insights Section
+            <div className="admin-empty">
+              <div className="admin-empty-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="20" x2="12" y2="10"/>
+                  <line x1="18" y1="20" x2="18" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="16"/>
+                </svg>
+              </div>
+              <p>Business insights coming in Phase 9+</p>
+            </div>
+          ) : null}
         </div>
       </main>
 
@@ -1118,6 +1242,81 @@ export default function AdminHomePage() {
         .admin-no-actions {
           color: var(--color-ink-muted);
           font-size: var(--text-sm);
+        }
+
+        /* ── Shop Info Card ── */
+        .shop-info-card {
+          background: #fff;
+          border-radius: var(--radius-md);
+          padding: 0;
+        }
+
+        .shop-info-title {
+          font-family: var(--font-display);
+          font-size: var(--text-xl);
+          font-weight: 700;
+          color: var(--color-ink);
+          margin: 0 0 1.25rem;
+          letter-spacing: -0.01em;
+        }
+
+        .shop-info-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.25rem;
+        }
+
+        .shop-info-item {
+          display: flex;
+          flex-direction: column;
+          gap: 0.375rem;
+        }
+
+        .shop-info-label {
+          font-size: var(--text-sm);
+          font-weight: 600;
+          color: var(--color-ink-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .shop-info-value {
+          font-size: var(--text-base);
+          font-weight: 500;
+          color: var(--color-ink);
+        }
+
+        /* ── Admin Subtabs ── */
+        .admin-subtabs {
+          display: flex;
+          gap: 0.5rem;
+          padding: 1rem 1.25rem;
+          background: #f8fafc;
+          border-bottom: 1px solid var(--color-line);
+        }
+
+        .admin-subtab {
+          font-family: var(--font-body);
+          font-size: var(--text-sm);
+          font-weight: 500;
+          color: var(--color-ink-muted);
+          background: none;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+
+        .admin-subtab:hover {
+          background: rgba(31,78,140,0.08);
+          color: var(--color-ink);
+        }
+
+        .admin-subtab--active {
+          background: var(--color-signal);
+          color: #fff;
+          font-weight: 600;
         }
       `}</style>
     </div>

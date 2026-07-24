@@ -12,7 +12,7 @@
 import 'dotenv/config';
 import * as admin from 'firebase-admin';
 import * as bcrypt from 'bcryptjs';
-import { geofire } from 'geofire-common';
+import * as geofire from 'geofire-common';
 
 // Initialize Firebase Admin using environment variables (same as main app)
 if (!admin.apps.length) {
@@ -221,6 +221,15 @@ async function setupShop(wholesalerUid: string): Promise<string> {
     if (!shopsSnapshot.empty) {
       const shopDoc = shopsSnapshot.docs[0];
       console.log('✅ Shop already exists:', shopDoc.id);
+      await shopDoc.ref.update({
+        ownerUid: wholesalerUid,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      await db.collection('users').doc(wholesalerUid).update({
+        shopId: shopDoc.id,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log('✅ Wholesaler linked to existing shop');
       return shopDoc.id;
     }
 

@@ -29,16 +29,6 @@
       ]
     },
     {
-      "collectionGroup": "shops",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "geohash",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "products",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
@@ -127,16 +117,6 @@
       ]
     },
     {
-      "collectionGroup": "orders",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "orderNumber",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "payments",
       "queryScope": "COLLECTION",
       "fields": [
@@ -147,16 +127,6 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "payments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "phonepeMerchantTransactionId",
-          "order": "ASCENDING"
         }
       ]
     },

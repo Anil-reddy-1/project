@@ -221,3 +221,67 @@ export async function cancelOrder(
     body: { reason },
   });
 }
+
+// ─── Phase 4: Order Approval Actions ──────────────────────────────────────────
+
+export type OrderRejectionReason =
+  | 'out_of_stock'
+  | 'moq_not_met'
+  | 'pricing_error'
+  | 'suspicious_order'
+  | 'wholesaler_unavailable'
+  | 'other';
+
+export interface OrderActionResponse {
+  success: boolean;
+  message: string;
+  data: Order;
+}
+
+/**
+ * Approve an order (wholesaler only)
+ * PENDING_APPROVAL → APPROVED (with atomic inventory lock)
+ */
+export async function approveOrder(orderId: string): Promise<OrderActionResponse> {
+  return apiClient<OrderActionResponse>(`/orders/${orderId}/approve`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Reject an order with reason (wholesaler only)
+ * PENDING_APPROVAL → REJECTED
+ */
+export async function rejectOrder(
+  orderId: string,
+  reason: OrderRejectionReason,
+  notes?: string
+): Promise<OrderActionResponse> {
+  return apiClient<OrderActionResponse>(`/orders/${orderId}/reject`, {
+    method: 'POST',
+    body: { reason, notes },
+  });
+}
+
+/**
+ * Mark an order as packed (wholesaler only)
+ * APPROVED → PACKED
+ */
+export async function markOrderPacked(orderId: string): Promise<OrderActionResponse> {
+  return apiClient<OrderActionResponse>(`/orders/${orderId}/pack`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Mark an order as ready for pickup (wholesaler only)
+ * PACKED → READY_FOR_PICKUP (generates pickup OTP)
+ */
+export async function markOrderReadyForPickup(
+  orderId: string
+): Promise<OrderActionResponse & { data: Order & { pickupOTP?: string } }> {
+  return apiClient<OrderActionResponse & { data: Order & { pickupOTP?: string } }>(
+    `/orders/${orderId}/ready`,
+    { method: 'POST' }
+  );
+}

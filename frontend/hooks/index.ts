@@ -19,5 +19,7 @@
 export { useCheckout } from './useCheckout';
 export { useOrders } from './useOrders';
 export { useOrderDetails } from './useOrderDetails';
+export { useOrderActions } from './useOrderActions';
 export { useAddresses } from './useAddresses';
 export { usePayment } from './usePayment';
+export { useCart } from './useCart';

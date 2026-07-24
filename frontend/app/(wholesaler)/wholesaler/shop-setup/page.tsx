@@ -90,8 +90,7 @@ export default function ShopSetupPage() {
       return;
     }
 
-    setIsUploadingPhoto(true);
-    setErrorMsg("");
+    if (!user) return;
 
     try {
       const idToken = await user.getIdToken();
@@ -160,6 +159,7 @@ export default function ShopSetupPage() {
       return;
     }
 
+    if (!user) return;
     setFormState("loading");
 
     try {

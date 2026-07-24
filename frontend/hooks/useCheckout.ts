@@ -17,7 +17,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  moq: number;
+  moq?: number;
   imageUrl?: string;
 }
 
@@ -30,45 +30,31 @@ interface CheckoutTotals {
   grandTotal: number;
 }
 
-export function useCheckout(initialCart: CartItem[] = []) {
+export function useCheckout(cartItems: CartItem[] = []) {
   const router = useRouter();
 
-  const [cart, setCart] = useState<CartItem[]>(initialCart);
+  // Don't create local cart state - use the passed cartItems directly
   const [address, setAddress] = useState<DeliveryAddress | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PHONEPE');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('prepaid');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const totals = useMemo<CheckoutTotals>(() => {
-    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxPercentage = 5; // 5% GST
     const taxAmount = (subtotal * taxPercentage) / 100;
     const deliveryCharge = subtotal >= 5000 ? 0 : 100; // Free above ₹5000
     const discount = 0;
     const grandTotal = subtotal + taxAmount + deliveryCharge - discount;
     return { subtotal, taxAmount, taxPercentage, deliveryCharge, discount, grandTotal };
-  }, [cart]);
+  }, [cartItems]);
 
   const canPlaceOrder = useMemo(
-    () => cart.length > 0 && address !== null && termsAccepted && !isPlacingOrder,
-    [cart.length, address, termsAccepted, isPlacingOrder]
+    () => cartItems.length > 0 && address !== null && termsAccepted && !isPlacingOrder,
+    [cartItems.length, address, termsAccepted, isPlacingOrder]
   );
-
-  const updateQuantity = useCallback((itemId: string, quantity: number) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.itemId === itemId
-          ? { ...item, quantity: Math.max(item.moq, quantity) }
-          : item
-      )
-    );
-  }, []);
-
-  const removeItem = useCallback((itemId: string) => {
-    setCart((prev) => prev.filter((item) => item.itemId !== itemId));
-  }, []);
 
   const placeOrder = useCallback(async () => {
     if (!canPlaceOrder) {
@@ -79,9 +65,9 @@ export function useCheckout(initialCart: CartItem[] = []) {
     try {
       setIsPlacingOrder(true);
       setError(null);
-
+      
       const response = await createOrder({
-        items: cart.map(({ itemId, quantity }) => ({ itemId, quantity })),
+        items: cartItems.map(({ itemId, quantity }) => ({ itemId, quantity })),
         deliveryAddress: address as any,
         paymentMethod,
       });
@@ -89,25 +75,38 @@ export function useCheckout(initialCart: CartItem[] = []) {
       // API returns { success, data: { orderId, phonepeRedirectUrl?, ... } }
       const data = (response as any).data ?? response;
 
-      if (paymentMethod === 'PHONEPE' && data.phonepeRedirectUrl) {
+      if (paymentMethod === 'prepaid' && data.phonepeRedirectUrl) {
         window.location.href = data.phonepeRedirectUrl;
       } else {
         router.push(`/retailer/orders/${data.orderId}?success=true`);
       }
     } catch (err: any) {
       console.error('Order placement error:', err);
-      setError(
-        err.response?.data?.error?.message ||
-          err.message ||
-          'Failed to place order. Please try again.'
-      );
+      
+      // Extract the actual error message from the backend response
+      let errorMessage = 'Failed to place order. Please try again.';
+      
+      if (err.data) {
+        // Backend sends { success: false, message: '...' }
+        errorMessage = err.data.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      console.error('Detailed error:', {
+        message: errorMessage,
+        data: err.data,
+        status: err.status,
+      });
+      
+      setError(errorMessage);
     } finally {
       setIsPlacingOrder(false);
     }
-  }, [canPlaceOrder, cart, address, paymentMethod, router]);
+  }, [canPlaceOrder, cartItems, address, paymentMethod, router]);
 
   return {
-    cart,
+    cart: cartItems, // Return the passed cartItems directly
     address,
     paymentMethod,
     termsAccepted,
@@ -116,13 +115,10 @@ export function useCheckout(initialCart: CartItem[] = []) {
     error,
     totals,
     canPlaceOrder,
-    setCart,
     setAddress,
     setPaymentMethod,
     setTermsAccepted,
     setSaveAddress,
-    updateQuantity,
-    removeItem,
     placeOrder,
   };
 }

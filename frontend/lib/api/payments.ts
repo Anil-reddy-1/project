@@ -96,9 +96,8 @@ export async function getPaymentStatus(
 export async function verifyPaymentCallback(
   merchantTransactionId: string
 ): Promise<PaymentCallbackResponse> {
-  // This is a GET request to the callback endpoint
-  // The actual redirect is handled by PhonePe, but we can check status
-  return apiClient<PaymentCallbackResponse>(
-    `/payments/phonepe/callback?merchantTransactionId=${merchantTransactionId}`
-  );
+  return apiClient<PaymentCallbackResponse>('/payments/phonepe/verify', {
+    method: 'POST',
+    body: { merchantTransactionId },
+  });
 }

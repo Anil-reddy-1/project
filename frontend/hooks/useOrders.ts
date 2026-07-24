@@ -9,7 +9,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getOrders } from '@/lib/api';
-import type { Order, OrderState } from '@/lib/types';
+import type { Order } from '@/lib/api';
+import type { OrderState } from '@/types';
 
 interface UseOrdersOptions {
   status?: OrderState;

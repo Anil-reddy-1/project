@@ -42,7 +42,9 @@ export default function RetailerLayout({ children }: RetailerLayoutProps) {
               
               <div className="hidden md:flex space-x-4">
                 {navItems.map((item) => {
-                  const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                  const isActive = item.href === '/retailer' 
+                    ? pathname === '/retailer'
+                    : pathname === item.href || pathname?.startsWith(`${item.href}/`);
                   return (
                     <Link
                       key={item.href}
@@ -74,7 +76,9 @@ export default function RetailerLayout({ children }: RetailerLayoutProps) {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
         <div className="flex justify-around">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+            const isActive = item.href === '/retailer' 
+              ? pathname === '/retailer'
+              : pathname === item.href || pathname?.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}

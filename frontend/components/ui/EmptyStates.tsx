@@ -168,9 +168,11 @@ export function NoOrdersForStatus({ status }: { status: string }) {
     PENDING_APPROVAL: 'No Pending Orders',
     APPROVED: 'No Approved Orders',
     PACKED: 'No Packed Orders',
-    SHIPPED: 'No Shipped Orders',
+    READY_FOR_PICKUP: 'No Orders Ready for Pickup',
+    ON_THE_WAY: 'No Orders On The Way',
     DELIVERED: 'No Delivered Orders',
     CANCELLED: 'No Cancelled Orders',
+    REJECTED: 'No Rejected Orders',
   };
 
   return (

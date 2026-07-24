@@ -13,7 +13,6 @@ export type {
 export type {
   Shop,
   VerificationStatus,
-  DayHours,
   DayOfWeek,
   OperatingHours,
 } from "./shop";

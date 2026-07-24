@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getOrderById } from '@/lib/api';
-import type { Order } from '@/lib/types';
+import type { Order } from '@/lib/api';
 
 export function useOrderDetails(orderId: string | null) {
   const [order, setOrder] = useState<Order | null>(null);

@@ -19,7 +19,7 @@ export type OrderState =
   | "DISPUTED"
   | "PAYMENT_SETTLED";
 
-export type PaymentMethod = "PHONEPE" | "COD";
+export type PaymentMethod = "prepaid" | "cod";
 
 export type PaymentStatus =
   | "PENDING"

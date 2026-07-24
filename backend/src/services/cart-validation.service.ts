@@ -75,8 +75,21 @@ export class CartValidationService {
   ): Promise<ValidationError | null> {
     try {
       // Fetch item from database
+      // Items are stored in /shops/{shopId}/products/{itemId}
       const db = adminDb();
-      const itemRef = db.collection('items').doc(itemId);
+      
+      // Get the single shop ID (Phase 2.5 architecture: one shop system)
+      const shopsSnap = await db.collection('shops').limit(1).get();
+      if (shopsSnap.empty) {
+        return {
+          itemId,
+          error: 'Shop not found',
+          code: 'SHOP_NOT_FOUND',
+        };
+      }
+      
+      const shopId = shopsSnap.docs[0].id;
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
       const itemDoc = await itemRef.get();
 
       if (!itemDoc.exists) {
@@ -122,7 +135,7 @@ export class CartValidationService {
       }
 
       // Check inventory availability (validation only, no decrement in Phase 3)
-      const availableStock = item.stock || 0;
+      const availableStock = item.stock || item.stockQty || 0;
       if (quantity > availableStock) {
         return {
           itemId,
@@ -164,7 +177,13 @@ export class CartValidationService {
   async checkProductAvailability(itemId: string): Promise<boolean> {
     try {
       const db = adminDb();
-      const itemRef = db.collection('items').doc(itemId);
+      
+      // Get the single shop ID
+      const shopsSnap = await db.collection('shops').limit(1).get();
+      if (shopsSnap.empty) return false;
+      
+      const shopId = shopsSnap.docs[0].id;
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
       const itemDoc = await itemRef.get();
 
       if (!itemDoc.exists) {
@@ -193,7 +212,13 @@ export class CartValidationService {
   async checkInventory(itemId: string, quantity: number): Promise<boolean> {
     try {
       const db = adminDb();
-      const itemRef = db.collection('items').doc(itemId);
+      
+      // Get the single shop ID
+      const shopsSnap = await db.collection('shops').limit(1).get();
+      if (shopsSnap.empty) return false;
+      
+      const shopId = shopsSnap.docs[0].id;
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
       const itemDoc = await itemRef.get();
 
       if (!itemDoc.exists) {
@@ -201,7 +226,7 @@ export class CartValidationService {
       }
 
       const item = itemDoc.data()!;
-      const availableStock = item.stock || 0;
+      const availableStock = item.stock || item.stockQty || 0;
 
       return quantity <= availableStock;
     } catch (error) {
@@ -216,7 +241,13 @@ export class CartValidationService {
   async verifyPricing(itemId: string, expectedPrice: number): Promise<boolean> {
     try {
       const db = adminDb();
-      const itemRef = db.collection('items').doc(itemId);
+      
+      // Get the single shop ID
+      const shopsSnap = await db.collection('shops').limit(1).get();
+      if (shopsSnap.empty) return false;
+      
+      const shopId = shopsSnap.docs[0].id;
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
       const itemDoc = await itemRef.get();
 
       if (!itemDoc.exists) {
@@ -245,7 +276,13 @@ export class CartValidationService {
   } | null> {
     try {
       const db = adminDb();
-      const itemRef = db.collection('items').doc(itemId);
+      
+      // Get the single shop ID
+      const shopsSnap = await db.collection('shops').limit(1).get();
+      if (shopsSnap.empty) return null;
+      
+      const shopId = shopsSnap.docs[0].id;
+      const itemRef = db.collection('shops').doc(shopId).collection('products').doc(itemId);
       const itemDoc = await itemRef.get();
 
       if (!itemDoc.exists) {
@@ -256,7 +293,7 @@ export class CartValidationService {
 
       return {
         price: item.price || 0,
-        stock: item.stock || 0,
+        stock: item.stock || item.stockQty || 0,
         moq: item.moq || 1,
         isAvailable: item.isAvailable !== false,
       };

@@ -41,6 +41,7 @@ export default function WholesalerHomePage() {
     if (!user) return;
 
     async function fetchShop() {
+      if (!user) return;
       try {
         const idToken = await user.getIdToken();
 
@@ -190,10 +191,10 @@ export default function WholesalerHomePage() {
 
               <div className="wdash-action-grid">
                 <button
-                  className="wdash-action-card wdash-action-card--muted tap-target"
-                  disabled
+                  className="wdash-action-card tap-target"
+                  onClick={() => router.push("/wholesaler/orders")}
                 >
-                  <div className="wdash-action-icon wdash-action-icon--muted">
+                  <div className="wdash-action-icon wdash-action-icon--blue">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                       <polyline points="14 2 14 8 20 8"/>
@@ -203,9 +204,9 @@ export default function WholesalerHomePage() {
                   </div>
                   <div className="wdash-action-body">
                     <h3 className="wdash-action-title">Orders</h3>
-                    <p className="wdash-action-desc">Manage incoming orders</p>
+                    <p className="wdash-action-desc">Review & approve incoming orders</p>
                   </div>
-                  <span className="wdash-soon-badge">Phase 3</span>
+                  <svg className="wdash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
 
                 <button
@@ -256,7 +257,7 @@ export default function WholesalerHomePage() {
                     <h3 className="wdash-action-title">Settings</h3>
                     <p className="wdash-action-desc">Shop preferences</p>
                   </div>
-                  <span className="wdash-soon-badge">Phase 3</span>
+                  <span className="wdash-soon-badge">Coming Soon</span>
                 </button>
               </div>
 

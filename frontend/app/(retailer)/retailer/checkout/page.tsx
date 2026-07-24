@@ -7,10 +7,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
-import { useCheckout, useAddresses } from '@/hooks';
+import { useCart, useCheckout, useAddresses } from '@/hooks';
 import { CheckoutSummary } from '@/components/retailer/checkout/CheckoutSummary';
 import { AddressSelection } from '@/components/retailer/checkout/AddressSelection';
 import { AddressForm } from '@/components/retailer/checkout/AddressForm';
@@ -23,36 +23,11 @@ import {
 } from '@/components/ui';
 
 export default function CheckoutPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useAuth();
+  const { items: cartItems, itemCount, clearCart } = useCart();
   
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [isLoadingCart, setIsLoadingCart] = useState(true);
-
-  // Load cart from localStorage or session
-  useEffect(() => {
-    try {
-      // Try to get cart from localStorage
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        const parsed = JSON.parse(savedCart);
-        const items = Object.values(parsed).map((cartItem: any) => ({
-          itemId: cartItem.item.itemId,
-          name: cartItem.item.name,
-          price: cartItem.item.price,
-          quantity: cartItem.qty,
-          moq: 1, // Default MOQ
-          imageUrl: cartItem.item.images?.[0]?.url,
-        }));
-        setCartItems(items);
-      }
-    } catch (error) {
-      console.error('Failed to load cart:', error);
-    } finally {
-      setIsLoadingCart(false);
-    }
-  }, []);
 
   const checkout = useCheckout(cartItems);
   const {
@@ -65,7 +40,7 @@ export default function CheckoutPage() {
     try {
       if (user?.uid) {
         const newAddress = await createAddress(addressData);
-        checkout.setAddress(newAddress);
+        checkout.setAddress(newAddress ?? null);
       } else {
         // For users without account, just use the address directly
         checkout.setAddress(addressData);
@@ -76,11 +51,11 @@ export default function CheckoutPage() {
     }
   };
 
-  if (isLoadingCart || isLoadingAddresses) {
+  if (isLoadingAddresses) {
     return <CheckoutSkeleton />;
   }
 
-  if (cartItems.length === 0) {
+  if (itemCount === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
@@ -108,9 +83,9 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               {!showAddressForm ? (
                 <AddressSelection
-                  addresses={addresses}
-                  selectedAddress={checkout.address}
-                  onSelect={checkout.setAddress}
+                  addresses={addresses as any}
+                  selectedAddress={checkout.address as any}
+                  onSelect={checkout.setAddress as any}
                   onAddNew={() => setShowAddressForm(true)}
                 />
               ) : (
@@ -129,9 +104,9 @@ export default function CheckoutPage() {
             {/* Payment Method */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <PaymentMethodSelector
-                selected={checkout.paymentMethod === 'PHONEPE' ? 'prepaid' : 'cod'}
+                selected={checkout.paymentMethod === 'prepaid' ? 'prepaid' : 'cod'}
                 onChange={(method) =>
-                  checkout.setPaymentMethod(method === 'prepaid' ? 'PHONEPE' : 'COD')
+                  checkout.setPaymentMethod(method === 'prepaid' ? 'prepaid' : 'cod')
                 }
               />
             </div>

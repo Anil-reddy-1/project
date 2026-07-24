@@ -25,7 +25,7 @@ export const phonePeConfig = {
   
   // Payment configuration
   paymentConfig: {
-    redirectMode: "POST" as const,
+    redirectMode: "REDIRECT" as const,
     paymentInstrumentType: "PAY_PAGE" as const, // Universal payment page
     expiryMinutes: 30, // Payment link expiry
     maxRetries: 3,

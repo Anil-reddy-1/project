@@ -14,13 +14,13 @@ export type {
   CreateOrderResponse,
   OrderListResponse,
   OrderDetailsResponse,
+  PaymentMethod,
+  PaymentStatus,
 } from "./order";
 
 // Payment types
 export type {
   Payment,
-  PaymentMethod,
-  PaymentStatus,
   PaymentInitiationResponse,
   PaymentVerificationResponse,
   PaymentStatusResponse,

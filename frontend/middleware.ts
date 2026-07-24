@@ -99,9 +99,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    const payload = JSON.parse(
-      Buffer.from(parts[1], "base64url").toString("utf-8"),
-    );
+    // Edge runtime compatible base64url decoding
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const binaryStr = atob(base64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+    const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
     // FIX A4: Check JWT expiration.
     // `exp` is in seconds since Unix epoch. If the token is expired,
@@ -148,7 +156,8 @@ export async function middleware(request: NextRequest) {
 
     // Authenticated user hitting a public path (e.g. login page "/"): send
     // them to their dashboard so they don't see the login screen again.
-    if (isPublicPath(pathname)) {
+    // Exclude /api routes so API requests (like logout) are not intercepted.
+    if (isPublicPath(pathname) && !pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL(correctPrefix, request.url));
     }
 

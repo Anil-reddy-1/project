@@ -10,18 +10,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/api/client';
+import { useAuth } from '@/providers/auth-provider';
+import { useCart } from '@/hooks';
 
 interface Product {
   itemId: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  stock: number;
-  moq: number;
+  stock?: number;
+  stockQty?: number;
+  moq?: number;
   unit: string;
-  category: string;
+  category?: string;
   imageUrl?: string;
-  available: boolean;
+  images?: Array<{ url: string; publicId: string }>;
+  available?: boolean;
+  isAvailable?: boolean;
 }
 
 interface Shop {
@@ -34,53 +40,62 @@ interface Shop {
 
 export default function CatalogPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { items: cartItems, addItem, itemCount } = useCart();
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<Record<string, number>>({});
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [user, authLoading, router]);
 
   // Fetch shop and products
   useEffect(() => {
-    fetchCatalog();
-  }, []);
+    if (user) {
+      fetchCatalog();
+    }
+  }, [user]);
 
   async function fetchCatalog() {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch shop info (there's only one)
-      const shopRes = await fetch('/api/shops', {
-        credentials: 'include',
+      // Fetch shop info using API client (there's only one shop)
+      const shopData = await apiClient<{ shops: Shop[] }>('/shops', {
+        method: 'GET',
       });
 
-      if (!shopRes.ok) {
-        throw new Error('Failed to fetch shop information');
-      }
-
-      const shopData = await shopRes.json();
       if (shopData.shops && shopData.shops.length > 0) {
-        setShop(shopData.shops[0]);
+        const fetchedShop = shopData.shops[0];
+        setShop(fetchedShop);
 
-        // Fetch products for the shop
-        const productsRes = await fetch(`/api/shops/${shopData.shops[0].shopId}/items`, {
-          credentials: 'include',
-        });
+        // Fetch products for the shop using correct nested route
+        const productsData = await apiClient<{ items: Product[] }>(
+          `/shops/${fetchedShop.shopId}/items`,
+          { method: 'GET' }
+        );
 
-        if (!productsRes.ok) {
-          throw new Error('Failed to fetch products');
-        }
-
-        const productsData = await productsRes.json();
         setProducts(productsData.items || []);
       } else {
         setError('Shop not found. Please contact administrator.');
       }
     } catch (err: any) {
       console.error('Failed to fetch catalog:', err);
+      
+      // Handle 401 - redirect to login
+      if (err.status === 401) {
+        router.push('/');
+        return;
+      }
+      
       setError(err.message || 'Failed to load catalog');
     } finally {
       setLoading(false);
@@ -91,29 +106,39 @@ export default function CatalogPage() {
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       searchQuery === '' ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory =
       selectedCategory === 'all' || product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory && product.available;
+    // Check both available and isAvailable fields
+    const isAvailable = product.available !== false && product.isAvailable !== false;
+
+    return matchesSearch && matchesCategory && isAvailable;
   });
 
-  // Get unique categories
-  const categories = ['all', ...new Set(products.map((p) => p.category))];
+  // Get unique categories (filter out undefined/null)
+  const categories = [
+    'all',
+    ...Array.from(new Set(products.map((p) => p.category).filter(Boolean)))
+  ];
 
-  // Add to cart
-  function addToCart(productId: string, quantity: number) {
-    setCart((prev) => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + quantity,
-    }));
-    // TODO: Sync with backend cart
+  // Handle add to cart
+  function handleAddToCart(product: Product) {
+    const quantity = product.moq || 1;
+    addItem({
+      itemId: product.itemId,
+      name: product.name,
+      price: product.price,
+      unit: product.unit,
+      moq: product.moq,
+      imageUrl: product.imageUrl || product.images?.[0]?.url,
+    }, quantity);
   }
 
   // Loading state
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -170,12 +195,12 @@ export default function CatalogPage() {
             </div>
             <button
               onClick={() => router.push('/retailer/cart')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
             >
-              View Cart
-              {Object.keys(cart).length > 0 && (
-                <span className="ml-2 bg-white text-blue-600 rounded-full px-2 py-0.5 text-sm font-bold">
-                  {Object.keys(cart).length}
+              <span>View Cart</span>
+              {itemCount > 0 && (
+                <span className="bg-white text-blue-600 rounded-full px-2.5 py-0.5 text-sm font-bold">
+                  {itemCount}
                 </span>
               )}
             </button>
@@ -204,8 +229,8 @@ export default function CatalogPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              {categories.map((category) => (
-                <option key={category} value={category}>
+              {categories.map((category, index) => (
+                <option key={`${category}-${index}`} value={category}>
                   {category === 'all' ? 'All Categories' : category}
                 </option>
               ))}
@@ -242,9 +267,9 @@ export default function CatalogPage() {
               >
                 {/* Product Image */}
                 <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
-                  {product.imageUrl ? (
+                  {(product.imageUrl || (product.images && product.images.length > 0)) ? (
                     <img
-                      src={product.imageUrl}
+                      src={product.imageUrl || product.images?.[0]?.url}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -258,9 +283,11 @@ export default function CatalogPage() {
                 {/* Product Info */}
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                    {product.description}
-                  </p>
+                  {product.description && (
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
 
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-2xl font-bold text-gray-900">
@@ -270,13 +297,13 @@ export default function CatalogPage() {
                   </div>
 
                   <div className="text-sm text-gray-600 mb-3">
-                    <p>MOQ: {product.moq} {product.unit}</p>
-                    <p>Stock: {product.stock} {product.unit}</p>
+                    {product.moq && <p>MOQ: {product.moq} {product.unit}</p>}
+                    <p>Stock: {product.stock || product.stockQty || 0} {product.unit}</p>
                   </div>
 
                   {/* Add to Cart */}
                   <button
-                    onClick={() => addToCart(product.itemId, product.moq)}
+                    onClick={() => handleAddToCart(product)}
                     className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
                   >
                     Add to Cart

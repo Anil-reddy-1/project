@@ -7,12 +7,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { getPaymentStatus } from '@/lib/api';
+import { verifyPaymentCallback } from '@/lib/api/payments';
 import { PaymentProcessingSkeleton } from '@/components/ui';
 
-export default function PaymentCallbackPage() {
+function PaymentCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'processing' | 'success' | 'failed'>('processing');
@@ -33,14 +33,14 @@ export default function PaymentCallbackPage() {
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         // Verify payment status
-        const response = await getPaymentStatus(
-          paymentId || merchantTransactionId!
+        const response = await verifyPaymentCallback(
+          merchantTransactionId!
         );
 
-        // API returns { success, data: Payment }
+        // API returns { success, data: { orderId, status, paymentId } }
         const payment = (response as any).data;
 
-        if (payment.status === 'SUCCESS') {
+        if (payment.status === 'paid') {
           setStatus('success');
           setMessage('Payment successful! Redirecting...');
           
@@ -48,14 +48,14 @@ export default function PaymentCallbackPage() {
           setTimeout(() => {
             router.push(`/retailer/orders/${payment.orderId}?success=true`);
           }, 2000);
-        } else if (payment.status === 'FAILED') {
+        } else if (payment.status === 'failed') {
           setStatus('failed');
           setMessage('Payment failed. Redirecting...');
           
           // Redirect to failure page
           setTimeout(() => {
             router.push(
-              `/retailer/payment/failure?paymentId=${payment.id}&orderId=${payment.orderId}`
+              `/retailer/payment/failure?paymentId=${payment.paymentId}&orderId=${payment.orderId}`
             );
           }, 2000);
         } else {
@@ -143,5 +143,13 @@ export default function PaymentCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense fallback={<PaymentProcessingSkeleton />}>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }

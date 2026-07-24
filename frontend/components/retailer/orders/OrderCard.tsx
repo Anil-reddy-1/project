@@ -12,11 +12,11 @@ import type { OrderState, PaymentMethod } from '@/lib/types';
 
 interface OrderCardProps {
   orderNumber: string;
-  state: OrderState;
-  createdAt: string;
+  state: OrderState | string;
+  createdAt: string | Date;
   grandTotal: number;
   itemCount: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | string;
   onClick: () => void;
 }
 

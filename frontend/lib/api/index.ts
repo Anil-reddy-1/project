@@ -12,6 +12,10 @@ export {
   getOrders,
   getOrderById,
   cancelOrder,
+  approveOrder,
+  rejectOrder,
+  markOrderPacked,
+  markOrderReadyForPickup,
 } from './orders';
 
 export type {
@@ -23,6 +27,8 @@ export type {
   OrderDetailsResponse,
   CancelOrderRequest,
   CancelOrderResponse,
+  OrderRejectionReason,
+  OrderActionResponse,
 } from './orders';
 
 // Payments API

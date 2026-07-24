@@ -23,7 +23,7 @@ interface PhonePePaymentRequest {
   merchantUserId: string;
   amount: number; // in paise
   redirectUrl: string;
-  redirectMode: "POST" | "GET";
+  redirectMode: "POST" | "GET" | "REDIRECT";
   callbackUrl?: string;
   mobileNumber?: string;
   paymentInstrument: {
@@ -102,8 +102,8 @@ export class PhonePeService {
       merchantTransactionId,
       merchantUserId: retailerId,
       amount: rupeesToPaise(amount),
-      redirectUrl: phonePeConfig.redirectUrl,
-      redirectMode: phonePeConfig.paymentConfig.redirectMode,
+      redirectUrl: `${phonePeConfig.redirectUrl}?merchantTransactionId=${merchantTransactionId}`,
+      redirectMode: phonePeConfig.paymentConfig.redirectMode as any,
       paymentInstrument: {
         type: phonePeConfig.paymentConfig.paymentInstrumentType,
       },
@@ -117,6 +117,18 @@ export class PhonePeService {
       payload.mobileNumber = retailerPhone;
     }
     
+    // MOCK FOR LOCAL TESTING WITH PGTESTPAYUAT
+    if (phonePeConfig.merchantId === 'PGTESTPAYUAT' && process.env.NODE_ENV === 'development') {
+      console.warn('[PhonePe] MOCKING PhonePe response for local development (Sandbox is unreliable)');
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + phonePeConfig.paymentConfig.expiryMinutes);
+      return {
+        merchantTransactionId,
+        paymentUrl: `http://localhost:3000/retailer/payment/callback?merchantTransactionId=${merchantTransactionId}&code=PAYMENT_SUCCESS&providerReferenceId=T${Date.now()}`,
+        expiresAt,
+      };
+    }
+
     try {
       // Base64 encode the payload
       const base64Payload = Buffer.from(JSON.stringify(payload)).toString("base64");

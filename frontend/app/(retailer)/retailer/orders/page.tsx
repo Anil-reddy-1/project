@@ -27,7 +27,8 @@ export default function RetailerOrdersPage() {
     { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
     { value: 'APPROVED', label: 'Approved' },
     { value: 'PACKED', label: 'Packed' },
-    { value: 'SHIPPED', label: 'Shipped' },
+    { value: 'READY_FOR_PICKUP', label: 'Ready for Pickup' },
+    { value: 'ON_THE_WAY', label: 'On The Way' },
     { value: 'DELIVERED', label: 'Delivered' },
     { value: 'CANCELLED', label: 'Cancelled' },
   ];
@@ -80,16 +81,16 @@ export default function RetailerOrdersPage() {
         {/* Orders List */}
         {!isLoading && orders.length > 0 && (
           <div className="space-y-4">
-            {orders.map((order) => (
+            {orders.map((order: any) => (
               <OrderCard
-                key={order.id}
+                key={order.orderId || order.id}
                 orderNumber={order.orderNumber}
                 state={order.state}
-                createdAt={order.createdAt}
-                grandTotal={order.totals.grandTotal}
-                itemCount={order.items.length}
+                createdAt={order.createdAt as string}
+                grandTotal={order.grandTotal ?? order.totals?.grandTotal ?? 0}
+                itemCount={(order.items || []).length}
                 paymentMethod={order.paymentMethod}
-                onClick={() => router.push(`/retailer/orders/${order.id}`)}
+                onClick={() => router.push(`/retailer/orders/${order.orderId || order.id}`)}
               />
             ))}
           </div>
