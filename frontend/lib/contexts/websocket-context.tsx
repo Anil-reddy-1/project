@@ -30,7 +30,7 @@ interface WebSocketProviderProps {
 }
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
-  const { user, idToken } = useAuth();
+  const { user } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -39,70 +39,98 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   // Initialize socket connection
   useEffect(() => {
-    if (!user || !idToken) {
-      // Disconnect if user logs out
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-        setIsConnected(false);
+    let active = true;
+
+    async function initSocket() {
+      if (!user) {
+        // Disconnect if user logs out
+        if (socket) {
+          socket.disconnect();
+          setSocket(null);
+          setIsConnected(false);
+        }
+        return;
       }
-      return;
+
+      try {
+        const idToken = await user.getIdToken();
+        if (!active) return;
+
+        // Create socket connection
+        const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001';
+        
+        const newSocket = io(socketUrl, {
+          auth: {
+            token: idToken,
+          },
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          reconnectionAttempts: maxReconnectAttempts,
+        });
+
+        // Connection event handlers
+        newSocket.on('connect', () => {
+          if (active) {
+            console.log('[WebSocket] Connected');
+            setIsConnected(true);
+            setConnectionError(null);
+            reconnectAttempts.current = 0;
+          }
+        });
+
+        newSocket.on('disconnect', (reason) => {
+          if (active) {
+            console.log('[WebSocket] Disconnected:', reason);
+            setIsConnected(false);
+            
+            if (reason === 'io server disconnect') {
+              // Server disconnected, try to reconnect
+              newSocket.connect();
+            }
+          }
+        });
+
+        newSocket.on('connect_error', (error) => {
+          if (active) {
+            console.error('[WebSocket] Connection error:', error);
+            reconnectAttempts.current++;
+            
+            if (reconnectAttempts.current >= maxReconnectAttempts) {
+              setConnectionError('Failed to connect to real-time server. Some features may be unavailable.');
+            }
+          }
+        });
+
+        newSocket.on('error', (error) => {
+          if (active) {
+            console.error('[WebSocket] Error:', error);
+            setConnectionError(error.message || 'WebSocket error occurred');
+          }
+        });
+
+        if (active) {
+          setSocket(newSocket);
+        } else {
+          newSocket.disconnect();
+        }
+      } catch (error) {
+        console.error('Error fetching ID token for WebSocket:', error);
+      }
     }
 
-    // Create socket connection
-    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001';
-    
-    const newSocket = io(socketUrl, {
-      auth: {
-        token: idToken,
-      },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: maxReconnectAttempts,
-    });
-
-    // Connection event handlers
-    newSocket.on('connect', () => {
-      console.log('[WebSocket] Connected');
-      setIsConnected(true);
-      setConnectionError(null);
-      reconnectAttempts.current = 0;
-    });
-
-    newSocket.on('disconnect', (reason) => {
-      console.log('[WebSocket] Disconnected:', reason);
-      setIsConnected(false);
-      
-      if (reason === 'io server disconnect') {
-        // Server disconnected, try to reconnect
-        newSocket.connect();
-      }
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('[WebSocket] Connection error:', error);
-      reconnectAttempts.current++;
-      
-      if (reconnectAttempts.current >= maxReconnectAttempts) {
-        setConnectionError('Failed to connect to real-time server. Some features may be unavailable.');
-      }
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('[WebSocket] Error:', error);
-      setConnectionError(error.message || 'WebSocket error occurred');
-    });
-
-    setSocket(newSocket);
+    initSocket();
 
     // Cleanup on unmount
     return () => {
+      active = false;
       console.log('[WebSocket] Cleaning up connection');
-      newSocket.disconnect();
+      if (socket) {
+        socket.disconnect();
+      }
     };
-  }, [user, idToken]);
+  }, [user]);
 
   // Emit event
   const emit = useCallback((event: string, data?: any) => {

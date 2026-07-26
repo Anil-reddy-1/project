@@ -12,7 +12,7 @@ interface FCMNotification {
 }
 
 export function useFCM() {
-  const { user, idToken } = useAuth();
+  const { user, role } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [token, setToken] = useState<string | null>(null);
@@ -36,13 +36,14 @@ export function useFCM() {
 
   // Initialize FCM and get token
   const initializeFCM = useCallback(async () => {
-    if (!user || !idToken || !isSupported) {
+    if (!user || !isSupported) {
       return;
     }
 
     setIsLoading(true);
 
     try {
+      const idToken = await user.getIdToken();
       // Initialize messaging
       await fcmService.initialize();
 
@@ -57,7 +58,7 @@ export function useFCM() {
         await fcmService.registerTokenWithBackend(fcmToken, idToken);
 
         // Subscribe to topics based on user role
-        if (user.role === 'delivery') {
+        if (role === 'delivery_partner') {
           await fcmService.subscribeToTopic(fcmToken, 'new_deliveries', idToken);
           await fcmService.subscribeToTopic(fcmToken, 'delivery_updates', idToken);
         }
@@ -67,7 +68,7 @@ export function useFCM() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, idToken, isSupported]);
+  }, [user, role, isSupported]);
 
   // Listen for foreground messages
   useEffect(() => {
