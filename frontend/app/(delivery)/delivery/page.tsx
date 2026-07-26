@@ -15,6 +15,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase/client';
 import { locationTrackingService } from '@/lib/services/location-tracking.service';
+import { useFCM } from '@/lib/hooks/useFCM';
+import { NotificationPermissionPrompt } from '@/components/delivery/NotificationPermissionPrompt';
+import { NotificationBanner } from '@/components/shared/NotificationBanner';
 
 interface PartnerStatus {
   status: 'available' | 'busy' | 'offline';
@@ -30,9 +33,15 @@ export default function DeliveryPage() {
   const router = useRouter();
   const [partnerStatus, setPartnerStatus] = useState<PartnerStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const { initializeFCM, permission } = useFCM();
 
   useEffect(() => {
     fetchPartnerStatus();
+    
+    // Initialize FCM if permission is already granted
+    if (permission === 'granted') {
+      initializeFCM();
+    }
     
     // Start location tracking when component mounts
     const initLocationTracking = async () => {
@@ -49,7 +58,7 @@ export default function DeliveryPage() {
     return () => {
       locationTrackingService.stopTracking();
     };
-  }, []);
+  }, [initializeFCM, permission]);
 
   const fetchPartnerStatus = async () => {
     try {
@@ -125,6 +134,12 @@ export default function DeliveryPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
+      {/* Notification Banner */}
+      <NotificationBanner />
+      
+      {/* Notification Permission Prompt */}
+      <NotificationPermissionPrompt />
+      
       {/* Status Card */}
       <div className="bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
         <div className="flex items-center justify-between mb-6">

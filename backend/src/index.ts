@@ -20,11 +20,13 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { createServer } from "http";
 import { errorHandler } from "./middleware/error";
 import router from "./routes/index";
+import { initializeSocketIO } from "./config/socket";
 
 const app = express();
-
+const httpServer = createServer(app);
 // ─── Security ─────────────────────────────────────────────────────────────────
 app.use(helmet());
 
@@ -42,7 +44,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "bypass-tunnel-reminder"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -59,14 +61,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/", router);
 
 // ─── Global error handler (must be last) ──────────────────────────────────────
-app.use(errorHandler);
+// ─── Initialize Socket.io ─────────────────────────────────────────────────────
+const io = initializeSocketIO(httpServer);
 
 // ─── Start server ─────────────────────────────────────────────────────────────
-app.listen(env.PORT, () => {
+httpServer.listen(env.PORT, () => {
   console.log(
     `\n🚀  Express API running on http://localhost:${env.PORT}  [${env.NODE_ENV}]`,
   );
-  console.log(`   CORS allowed origins: ${allowedOrigins.join(", ")}\n`);
+  console.log(`   CORS allowed origins: ${allowedOrigins.join(", ")}`);
+  console.log(`   Socket.io WebSocket server ready\n`);
 });
 
 export default app;
+export { io };

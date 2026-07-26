@@ -8,6 +8,12 @@
  * - useAddresses — Manage delivery addresses
  * - usePayment — Payment status checking and retry logic
  *
+ * Phase 5C hooks (WebSocket real-time):
+ * - useWebSocket — WebSocket connection and event management
+ * - useRealtimeLocation — Real-time partner location tracking
+ * - useRealtimeOrder — Real-time order status updates
+ * - useRealtimePartner — Real-time partner assignments and status
+ *
  * Future hooks:
  * - useOrderStatus — real-time Firestore listener for order state
  * - useLiveLocation — Firestore onSnapshot listener for delivery partner GPS
@@ -23,3 +29,10 @@ export { useOrderActions } from './useOrderActions';
 export { useAddresses } from './useAddresses';
 export { usePayment } from './usePayment';
 export { useCart } from './useCart';
+
+// Phase 5C WebSocket hooks
+export { useWebSocket } from '../lib/hooks/useWebSocket';
+export { useRealtimeLocation } from '../lib/hooks/useRealtimeLocation';
+export { useRealtimeOrder } from '../lib/hooks/useRealtimeOrder';
+export { useRealtimePartner } from '../lib/hooks/useRealtimePartner';
+export { useFCM } from '../lib/hooks/useFCM';

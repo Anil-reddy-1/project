@@ -82,11 +82,24 @@ export class SLATimerService {
       // Remove from active timers
       this.timers.delete(assignmentId);
 
-      // Process timeout via assignment service
-      await deliveryAssignmentService.handleSLATimeout(assignmentId);
+      // Check if this is a batch assignment
+      const db = adminDb();
+      const assignmentDoc = await db.collection('delivery_assignments').doc(assignmentId).get();
+      
+      if (assignmentDoc.exists) {
+        const assignmentData = assignmentDoc.data();
+        
+        if (assignmentData?.type === 'batch') {
+          // Handle batch assignment timeout
+          const { batchAssignmentService } = await import('./batch-assignment.service');
+          await batchAssignmentService.handleBatchTimeout(assignmentId);
+        } else {
+          // Handle single assignment timeout
+          await deliveryAssignmentService.handleSLATimeout(assignmentId);
+        }
+      }
 
       // Clean up timer record
-      const db = adminDb();
       await db.collection('sla_timers').doc(assignmentId).delete();
     } catch (error) {
       console.error(`Error handling timeout for ${assignmentId}:`, error);

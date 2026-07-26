@@ -210,6 +210,23 @@ export default function WholesalerHomePage() {
                 </button>
 
                 <button
+                  className="wdash-action-card tap-target"
+                  onClick={() => router.push("/wholesaler/live-tracking")}
+                >
+                  <div className="wdash-action-icon wdash-action-icon--green">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div className="wdash-action-body">
+                    <h3 className="wdash-action-title">Live Tracking</h3>
+                    <p className="wdash-action-desc">Track active deliveries in real-time</p>
+                  </div>
+                  <svg className="wdash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+
+                <button
                   className="wdash-action-card wdash-action-card--muted tap-target"
                   disabled
                 >

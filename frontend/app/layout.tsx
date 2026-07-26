@@ -15,6 +15,7 @@ import {
   IBM_Plex_Mono,
 } from "next/font/google";
 import { AuthProvider } from "@/providers/auth-provider";
+import { WebSocketProvider } from "@/lib/contexts/websocket-context";
 import "./globals.css";
 
 /**
@@ -74,7 +75,11 @@ export default function RootLayout({
       className={`${inter.variable} ${fraunces.variable} ${ibmPlexMono.variable}`}
     >
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <WebSocketProvider>
+            {children}
+          </WebSocketProvider>
+        </AuthProvider>
       </body>
     </html>
   );

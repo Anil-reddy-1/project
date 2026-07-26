@@ -73,6 +73,18 @@ export const env = {
   BREVO_FROM_EMAIL: optionalEnv("BREVO_FROM_EMAIL", "noreply@wholesalehub.com"),
   BREVO_FROM_NAME: optionalEnv("BREVO_FROM_NAME", "WholesaleHub"),
 
+  // ─── Google Maps API (Phase 5C) ────────────────────────────────────────────
+  GOOGLE_MAPS_API_KEY: optionalEnv("GOOGLE_MAPS_API_KEY"),
+
+  // ─── Dynamic Pricing (Phase 5C) ────────────────────────────────────────────
+  SURGE_PRICING_ENABLED: optionalEnv("SURGE_PRICING_ENABLED", "true").toLowerCase() === "true",
+  BASE_DELIVERY_RATE: parseFloat(optionalEnv("BASE_DELIVERY_RATE", "15")),
+  MAX_SURGE_MULTIPLIER: parseFloat(optionalEnv("MAX_SURGE_MULTIPLIER", "2.5")),
+
+  // ─── Route Optimization (Phase 5C) ─────────────────────────────────────────
+  ROUTE_CACHE_TTL_SECONDS: parseInt(optionalEnv("ROUTE_CACHE_TTL_SECONDS", "300"), 10),
+  MAX_BATCH_SIZE: parseInt(optionalEnv("MAX_BATCH_SIZE", "5"), 10),
+
   // ─── Admin Seed (one-time setup script only) ─────────────────────────────
   // Used by scripts/seed-admin.ts. Never read by the running server.
   ADMIN_EMAIL: optionalEnv("ADMIN_EMAIL"),

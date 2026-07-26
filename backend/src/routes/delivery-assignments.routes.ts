@@ -4,6 +4,7 @@ import { deliveryAssignmentService } from '../services/delivery-assignment.servi
 import { geospatialService } from '../services/geospatial.service';
 import { slaTimerService } from '../services/sla-timer.service';
 import { db } from '../config/firebase';
+import { updatePartnerLocation, getActivePartners } from '../services/realtime-location.service';
 
 const router = Router();
 
@@ -405,3 +406,192 @@ router.get('/timer/stats', authenticateToken, async (req, res) => {
 });
 
 export default router;
+
+/**
+ * POST /api/delivery-assignments/partner/location
+ * Update partner location (delivery partner only)
+ * Also updates via WebSocket in real-time
+ */
+router.post('/partner/location', authenticateToken, async (req, res) => {
+  try {
+    const { lat, lng, accuracy, orderId } = req.body;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    // Check authorization (delivery partner only)
+    if (req.user?.role !== 'delivery') {
+      return res.status(403).json({ error: 'Only delivery partners can update location' });
+    }
+
+    await updatePartnerLocation(
+      req.user.uid,
+      {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        accuracy: accuracy ? parseFloat(accuracy) : 10,
+        timestamp: new Date(),
+      },
+      orderId
+    );
+
+    res.json({
+      success: true,
+      message: 'Location updated',
+    });
+  } catch (error: any) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ error: error.message || 'Failed to update location' });
+  }
+});
+
+/**
+ * GET /api/delivery-assignments/partner/active
+ * Get all active delivery partners (wholesaler/admin only)
+ * For live tracking dashboard
+ */
+router.get('/partners/active', authenticateToken, async (req, res) => {
+  try {
+    // Check authorization (wholesaler or admin)
+    if (req.user?.role !== 'wholesaler' && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Only wholesaler or admin can view active partners' });
+    }
+
+    const partners = await getActivePartners();
+
+    res.json({
+      success: true,
+      partners,
+      count: partners.length,
+    });
+  } catch (error: any) {
+    console.error('Error getting active partners:', error);
+    res.status(500).json({ error: error.message || 'Failed to get active partners' });
+  }
+});
+
+/**
+ * POST /api/delivery-assignments/batch/assign
+ * Create batch assignment for multiple orders (wholesaler/admin only)
+ */
+router.post('/batch/assign', authenticateToken, async (req, res) => {
+  try {
+    const { orderIds, specificPartnerId, slaDurationSeconds } = req.body;
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ error: 'Order IDs array is required' });
+    }
+
+    // Check authorization
+    if (req.user?.role !== 'wholesaler' && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Only wholesaler or admin can create batch assignments' });
+    }
+
+    // Get shop location (assuming single shop)
+    const shopSnapshot = await db().collection('shops').limit(1).get();
+    if (shopSnapshot.empty) {
+      return res.status(404).json({ error: 'Shop not found' });
+    }
+
+    const shop = shopSnapshot.docs[0].data();
+    const shopLocation = {
+      lat: shop.location?.coordinates?.latitude || 0,
+      lng: shop.location?.coordinates?.longitude || 0,
+    };
+
+    const { batchAssignmentService } = await import('../services/batch-assignment.service');
+    const batchAssignment = await batchAssignmentService.createBatchAssignment({
+      orderIds,
+      shopLocation,
+      slaDurationSeconds: slaDurationSeconds || 60,
+      assignedBy: req.user.uid,
+      specificPartnerId,
+    });
+
+    if (!batchAssignment) {
+      return res.status(400).json({
+        error: 'Could not create batch assignment',
+        message: 'No available partners or orders not ready',
+      });
+    }
+
+    res.json({
+      success: true,
+      batchAssignment,
+    });
+  } catch (error: any) {
+    console.error('Error creating batch assignment:', error);
+    res.status(500).json({ error: error.message || 'Failed to create batch assignment' });
+  }
+});
+
+/**
+ * POST /api/delivery-assignments/batch/:batchId/respond
+ * Partner responds to batch assignment
+ */
+router.post('/batch/:batchId/respond', authenticateToken, async (req, res) => {
+  try {
+    const { batchId } = req.params;
+    const { response, reason } = req.body;
+
+    if (!response || !['accept', 'decline'].includes(response)) {
+      return res.status(400).json({ error: 'Invalid response. Must be "accept" or "decline"' });
+    }
+
+    // Check authorization
+    if (req.user?.role !== 'delivery') {
+      return res.status(403).json({ error: 'Only delivery partners can respond to batch assignments' });
+    }
+
+    const { batchAssignmentService } = await import('../services/batch-assignment.service');
+    await batchAssignmentService.handleBatchResponse(
+      batchId,
+      req.user.uid,
+      response,
+      reason
+    );
+
+    res.json({
+      success: true,
+      message: response === 'accept' ? 'Batch accepted' : 'Batch declined',
+    });
+  } catch (error: any) {
+    console.error('Error responding to batch:', error);
+    res.status(500).json({ error: error.message || 'Failed to respond to batch' });
+  }
+});
+
+/**
+ * GET /api/delivery-assignments/batch/:batchId
+ * Get batch assignment details
+ */
+router.get('/batch/:batchId', authenticateToken, async (req, res) => {
+  try {
+    const { batchId } = req.params;
+
+    const { batchAssignmentService } = await import('../services/batch-assignment.service');
+    const batchAssignment = await batchAssignmentService.getBatchAssignment(batchId);
+
+    if (!batchAssignment) {
+      return res.status(404).json({ error: 'Batch assignment not found' });
+    }
+
+    // Check authorization
+    if (
+      req.user?.role !== 'admin' &&
+      req.user?.role !== 'wholesaler' &&
+      (req.user?.role !== 'delivery' || batchAssignment.partnerId !== req.user.uid)
+    ) {
+      return res.status(403).json({ error: 'Not authorized to view this batch' });
+    }
+
+    res.json({
+      success: true,
+      batchAssignment,
+    });
+  } catch (error: any) {
+    console.error('Error getting batch assignment:', error);
+    res.status(500).json({ error: error.message || 'Failed to get batch assignment' });
+  }
+});
