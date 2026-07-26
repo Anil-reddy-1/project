@@ -489,7 +489,7 @@ router.post('/batch/assign', authenticateToken, async (req, res) => {
     }
 
     // Get shop location (assuming single shop)
-    const shopSnapshot = await db().collection('shops').limit(1).get();
+    const shopSnapshot = await db.collection('shops').limit(1).get();
     if (shopSnapshot.empty) {
       return res.status(404).json({ error: 'Shop not found' });
     }

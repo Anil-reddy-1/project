@@ -62,7 +62,7 @@ class BatchAssignmentService {
           if (!orderDoc.exists) {
             throw new Error(`Order ${orderId} not found`);
           }
-          return { id: orderId, ...orderDoc.data() };
+          return { id: orderId, ...orderDoc.data() } as any;
         })
       );
 
@@ -229,13 +229,12 @@ class BatchAssignmentService {
    */
   private async findSuitablePartner(shopLocation: { lat: number; lng: number }, batchSize: number): Promise<string | null> {
     try {
-      // Find partners who can handle batch size
       const partners = await geospatialService.getSortedPartnersByProximity(
-        shopLocation,
-        10000 // 10km radius
+        { latitude: shopLocation.lat, longitude: shopLocation.lng }
       );
 
-      for (const partner of partners) {
+      for (const p of partners) {
+        const partner = p as any;
         const maxBatchSize = partner.maxBatchSize || 3;
         const currentOrderCount = partner.currentOrderCount || 0;
         const maxConcurrent = partner.maxConcurrentOrders || 3;

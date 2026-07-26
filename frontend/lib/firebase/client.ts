@@ -66,5 +66,6 @@ export function getFirebaseDb(): Firestore | null {
  * These will be null during build/SSR when env vars aren't set.
  * Use the getter functions above for null-safe access.
  */
+export const app = getApp();
 export const auth = getFirebaseAuth();
 export const db = getFirebaseDb();

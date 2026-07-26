@@ -81,7 +81,7 @@ export class GeospatialService {
     radiusKm: number,
     filters: PartnerFilters = {}
   ): Promise<Array<DeliveryPartner & { distance: number }>> {
-    const center = [centerLocation.latitude, centerLocation.longitude];
+    const center: [number, number] = [centerLocation.latitude, centerLocation.longitude];
     const radiusInM = radiusKm * 1000;
 
     // Generate geohash query bounds

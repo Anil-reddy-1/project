@@ -257,15 +257,11 @@ export class PhonePeService {
       return {
         success: mockState.state === "COMPLETED",
         status: mapPhonePeStateToStatus(mockState.state),
-        data: {
-          transactionId: mockState.transactionId,
-          merchantTransactionId: merchantTransactionId,
-          amount: mockState.amount,
-          state: mockState.state,
-          responseCode: mockState.state === "COMPLETED" ? "SUCCESS" : mockState.state === "FAILED" ? "PAYMENT_ERROR" : "PAYMENT_PENDING",
-        },
+        transactionId: mockState.transactionId,
+        amount: mockState.amount,
+        responseCode: mockState.state === "COMPLETED" ? "SUCCESS" : mockState.state === "FAILED" ? "PAYMENT_ERROR" : "PAYMENT_PENDING",
         message: `Mock payment ${mockState.state}`,
-      };
+      } as any;
     }
     
     try {

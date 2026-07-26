@@ -100,5 +100,5 @@ export function getFieldValue(): typeof admin.firestore.FieldValue {
 }
 
 // Export db as shorthand for adminDb()
-export const db = () => adminDb();
+export const db = adminDb();
 export { admin };
