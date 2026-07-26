@@ -14,6 +14,8 @@ import { verifyFirebaseToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import { orderService } from "../services/order.service";
 import { orderApprovalService } from "../services/order-approval.service";
+import { deliveryAssignmentService } from "../services/delivery-assignment.service";
+import { slaTimerService } from "../services/sla-timer.service";
 import { adminDb } from "../config/firebase";
 import type { OrderRejectionReason } from "../types";
 import {
@@ -361,7 +363,7 @@ router.post(
   },
 );
 
-/** POST /orders/:orderId/ready — Wholesaler marks ready for pickup + generates pickup OTP (PACKED → READY_FOR_PICKUP) */
+/** POST /orders/:orderId/ready — Wholesaler marks ready for pickup + generates pickup OTP (PACKED → READY_FOR_PICKUP) + triggers delivery assignment */
 router.post(
   "/:orderId/ready",
   verifyFirebaseToken,
@@ -373,9 +375,31 @@ router.post(
 
       const { order, pickupOTP } = await orderApprovalService.markReadyForPickup(orderId, wholesalerUid);
 
+      // Phase 5: Automatically trigger delivery assignment
+      try {
+        console.log(`[Orders] Triggering delivery assignment for order ${orderId}`);
+        
+        const assignment = await deliveryAssignmentService.assignOrderToPartner(orderId, {
+          assignedBy: wholesalerUid,
+          method: 'auto',
+          slaDurationSeconds: 60,
+        });
+
+        if (assignment) {
+          // Start SLA timer
+          await slaTimerService.startTimer(assignment.assignmentId, assignment.slaDuration);
+          console.log(`[Orders] Delivery assignment created: ${assignment.assignmentId}`);
+        } else {
+          console.log(`[Orders] No delivery partner available for order ${orderId} - escalated to manual assignment`);
+        }
+      } catch (assignmentError) {
+        // Log error but don't fail the request - order is still ready for pickup
+        console.error(`[Orders] Failed to assign delivery partner for order ${orderId}:`, assignmentError);
+      }
+
       return res.status(200).json({
         success: true,
-        message: 'Order is ready for pickup',
+        message: 'Order is ready for pickup and delivery partner is being assigned',
         data: {
           ...order,
           pickupOTP,
@@ -459,23 +483,220 @@ router.post(
   },
 );
 
-/** POST /orders/:orderId/verify-pickup — Wholesaler verifies pickup OTP (ASSIGNED → PICKED_UP) */
+/** POST /orders/:orderId/verify-pickup — Delivery partner verifies pickup OTP (ASSIGNED → PICKED_UP) */
 router.post(
   "/:orderId/verify-pickup",
   verifyFirebaseToken,
-  requireRole("wholesaler"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 6 — not yet implemented" });
+  requireRole("delivery", "delivery_partner"),
+  async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      const { otp } = req.body;
+      const deliveryPartnerId = req.user!.uid;
+
+      if (!otp || otp.length !== 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid 6-digit OTP is required',
+        });
+      }
+
+      // Validate OTP
+      const { otpService } = await import('../services/otp.service');
+      const validation = await otpService.validatePickupOTP(orderId, otp);
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.message || 'Invalid OTP',
+        });
+      }
+
+      // Get order
+      const db = adminDb();
+      const orderRef = db.collection('orders').doc(orderId);
+      const orderDoc = await orderRef.get();
+
+      if (!orderDoc.exists) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      const order = orderDoc.data();
+
+      // Verify order is assigned to this partner
+      if (order?.assignedPartnerId !== deliveryPartnerId) {
+        return res.status(403).json({
+          success: false,
+          message: 'This order is not assigned to you',
+        });
+      }
+
+      // Verify order state
+      if (order?.state !== 'ASSIGNED') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot verify pickup for order in ${order?.state} state`,
+        });
+      }
+
+      // Generate delivery OTP for the customer
+      const deliveryOTP = await otpService.generateDeliveryOTP(orderId);
+
+      // Update order to PICKED_UP
+      await orderRef.update({
+        state: 'PICKED_UP',
+        pickedUpAt: new Date(),
+        pickedUpBy: deliveryPartnerId,
+        updatedAt: new Date(),
+      });
+
+      // Log audit
+      await db.collection('order_audit_log').add({
+        orderId,
+        timestamp: new Date(),
+        action: 'verify_pickup',
+        performedBy: deliveryPartnerId,
+        performedByRole: 'delivery_partner',
+        oldState: 'ASSIGNED',
+        newState: 'PICKED_UP',
+        metadata: { otpVerified: true },
+      });
+
+      console.log(`[Orders] Pickup verified for order ${orderId} by partner ${deliveryPartnerId}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Pickup verified successfully',
+        data: {
+          orderId,
+          state: 'PICKED_UP',
+          deliveryOTP, // Return OTP so partner can share with customer
+        },
+      });
+    } catch (error: any) {
+      console.error('[Orders] Verify pickup error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to verify pickup',
+      });
+    }
   },
 );
 
-/** POST /orders/:orderId/verify-drop — Delivery partner verifies drop OTP (ON_THE_WAY → DELIVERED) */
+/** POST /orders/:orderId/verify-delivery — Delivery partner verifies delivery OTP (PICKED_UP → DELIVERED) */
 router.post(
-  "/:orderId/verify-drop",
+  "/:orderId/verify-delivery",
   verifyFirebaseToken,
-  requireRole("delivery_partner"),
-  async (_req: Request, res: Response) => {
-    res.status(501).json({ message: "Phase 6 — not yet implemented" });
+  requireRole("delivery", "delivery_partner"),
+  async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      const { otp, photoProofUrl } = req.body;
+      const deliveryPartnerId = req.user!.uid;
+
+      if (!otp || otp.length !== 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid 6-digit OTP is required',
+        });
+      }
+
+      // Validate OTP
+      const { otpService } = await import('../services/otp.service');
+      const validation = await otpService.validateDeliveryOTP(orderId, otp);
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.message || 'Invalid OTP',
+        });
+      }
+
+      // Get order
+      const db = adminDb();
+      const orderRef = db.collection('orders').doc(orderId);
+      const orderDoc = await orderRef.get();
+
+      if (!orderDoc.exists) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      const order = orderDoc.data();
+
+      // Verify order is assigned to this partner
+      if (order?.assignedPartnerId !== deliveryPartnerId) {
+        return res.status(403).json({
+          success: false,
+          message: 'This order is not assigned to you',
+        });
+      }
+
+      // Verify order state
+      if (order?.state !== 'PICKED_UP' && order?.state !== 'ON_THE_WAY') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot verify delivery for order in ${order?.state} state`,
+        });
+      }
+
+      // Update order to DELIVERED
+      const updateData: any = {
+        state: 'DELIVERED',
+        deliveredAt: new Date(),
+        deliveredBy: deliveryPartnerId,
+        updatedAt: new Date(),
+      };
+
+      if (photoProofUrl) {
+        updateData.deliveryProofImage = photoProofUrl;
+      }
+
+      await orderRef.update(updateData);
+
+      // Update delivery partner stats
+      const partnerRef = db.collection('delivery_partners').doc(deliveryPartnerId);
+      await partnerRef.update({
+        currentOrderCount: (order?.currentOrderCount || 1) - 1,
+        totalDeliveries: (order?.totalDeliveries || 0) + 1,
+        successfulDeliveries: (order?.successfulDeliveries || 0) + 1,
+        todayDeliveryCount: (order?.todayDeliveryCount || 0) + 1,
+        status: 'available', // Back to available
+        updatedAt: new Date(),
+      });
+
+      // Log audit
+      await db.collection('order_audit_log').add({
+        orderId,
+        timestamp: new Date(),
+        action: 'verify_delivery',
+        performedBy: deliveryPartnerId,
+        performedByRole: 'delivery_partner',
+        oldState: order?.state,
+        newState: 'DELIVERED',
+        metadata: {
+          otpVerified: true,
+          photoProofProvided: !!photoProofUrl,
+        },
+      });
+
+      console.log(`[Orders] Delivery verified for order ${orderId} by partner ${deliveryPartnerId}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Delivery completed successfully',
+        data: {
+          orderId,
+          state: 'DELIVERED',
+          deliveredAt: new Date(),
+        },
+      });
+    } catch (error: any) {
+      console.error('[Orders] Verify delivery error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to verify delivery',
+      });
+    }
   },
 );
 

@@ -12,6 +12,7 @@ import usersRouter from "./users.routes";
 import shopsRouter from "./shops.routes";
 import ordersRouter from "./orders.routes";
 import paymentsRouter from "./payments.routes";
+import deliveryAssignmentsRouter from "./delivery-assignments.routes";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use("/users", usersRouter);       // User CRUD (Phase 1)
 router.use("/shops", shopsRouter);       // Shop + item CRUD (Phase 2)
 router.use("/orders", ordersRouter);     // Order state machine (Phase 3+)
 router.use("/payments", paymentsRouter); // Payment handling (Phase 3)
+router.use("/delivery-assignments", deliveryAssignmentsRouter); // Delivery assignment (Phase 5)
 
 export default router;

@@ -59,14 +59,14 @@ export const env = {
     "http://localhost:3000/retailer/payment/callback",
   ),
   PHONEPE_WEBHOOK_URL: optionalEnv("PHONEPE_WEBHOOK_URL"),
+  PHONEPE_MOCK_MODE: optionalEnv("PHONEPE_MOCK_MODE", "true").toLowerCase() === "true",
 
   // ─── Order Configuration (Phase 3) ─────────────────────────────────────────
   DEFAULT_TAX_PERCENTAGE: parseFloat(optionalEnv("DEFAULT_TAX_PERCENTAGE", "0")),
   DEFAULT_DELIVERY_CHARGE: parseFloat(optionalEnv("DEFAULT_DELIVERY_CHARGE", "0")),
   ORDER_NUMBER_PREFIX: optionalEnv("ORDER_NUMBER_PREFIX", "ORD"),
 
-  // ─── Firebase Cloud Messaging (Phase 1+) ───────────────────────────────────
-  FCM_SERVER_KEY: optionalEnv("FCM_SERVER_KEY"),
+
 
   // ─── Brevo (Email Service) ─────────────────────────────────────────────────
   BREVO_API_KEY: optionalEnv("BREVO_API_KEY"),

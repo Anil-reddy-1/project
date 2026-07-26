@@ -35,10 +35,7 @@ export async function sendPushNotification(
   fcmToken: string,
   payload: NotificationPayload,
 ): Promise<void> {
-  if (!env.FCM_SERVER_KEY) {
-    console.warn("[NotificationService] FCM_SERVER_KEY not set — skipping push notification.");
-    return;
-  }
+
 
   try {
     await adminMessaging().send({
@@ -72,7 +69,7 @@ export async function sendMulticastNotification(
   fcmTokens: string[],
   payload: NotificationPayload,
 ): Promise<void> {
-  if (!env.FCM_SERVER_KEY || fcmTokens.length === 0) return;
+  if (fcmTokens.length === 0) return;
 
   try {
     await adminMessaging().sendEachForMulticast({
@@ -736,3 +733,279 @@ export async function sendReadyForPickupNotification(
     textContent
   );
 }
+
+// ─── Phase 5: Delivery Partner Notifications ──────────────────────────────────
+
+interface DeliveryAssignmentPayload {
+  partnerId: string;
+  orderId: string;
+  assignmentId: string;
+  customerName: string;
+  deliveryAddress: string;
+  distance: number;
+  slaExpiresIn: number;
+}
+
+/**
+ * Send delivery assignment push notification to partner
+ */
+export async function sendDeliveryAssignment(
+  payload: DeliveryAssignmentPayload
+): Promise<void> {
+  try {
+    // Get partner's FCM token
+    const db = adminDb();
+    const partnerDoc = await db.collection('delivery_partners').doc(payload.partnerId).get();
+
+    if (!partnerDoc.exists) {
+      console.error(`Partner ${payload.partnerId} not found`);
+      return;
+    }
+
+    const partner = partnerDoc.data();
+    const fcmToken = partner?.fcmToken;
+
+    if (!fcmToken) {
+      console.warn(`No FCM token for partner ${payload.partnerId}`);
+      return;
+    }
+
+    // Calculate earnings (simple formula for demo)
+    const earnings = Math.ceil(payload.distance * 15); // ₹15 per km
+
+    // Send high-priority push notification
+    await adminMessaging().send({
+      token: fcmToken,
+      notification: {
+        title: '🚚 New Delivery Request!',
+        body: `${payload.distance.toFixed(1)} km away • ₹${earnings} earnings`,
+      },
+      data: {
+        type: 'delivery_assignment',
+        assignmentId: payload.assignmentId,
+        orderId: payload.orderId,
+        customerName: payload.customerName,
+        distance: payload.distance.toString(),
+        earnings: earnings.toString(),
+        slaExpiresIn: payload.slaExpiresIn.toString(),
+        expiresAt: new Date(Date.now() + payload.slaExpiresIn * 1000).toISOString(),
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'delivery_assignments',
+          priority: 'max',
+          sound: 'default',
+          defaultSound: true,
+          defaultVibrateTimings: true,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
+      webpush: {
+        notification: {
+          icon: '/icons/delivery-icon.png',
+          badge: '/icons/badge.png',
+          requireInteraction: true,
+          vibrate: [200, 100, 200],
+        },
+      },
+    });
+
+    console.log(`📲 Sent delivery assignment notification to partner ${payload.partnerId}`);
+  } catch (error) {
+    console.error('Error sending delivery assignment notification:', error);
+  }
+}
+
+interface AssignmentCancelledPayload {
+  partnerId: string;
+  orderId: string;
+  reason: string;
+}
+
+/**
+ * Send assignment cancelled notification
+ */
+export async function sendAssignmentCancelled(
+  payload: AssignmentCancelledPayload
+): Promise<void> {
+  try {
+    const db = adminDb();
+    const partnerDoc = await db.collection('delivery_partners').doc(payload.partnerId).get();
+
+    if (!partnerDoc.exists) return;
+
+    const partner = partnerDoc.data();
+    const fcmToken = partner?.fcmToken;
+
+    if (!fcmToken) return;
+
+    await adminMessaging().send({
+      token: fcmToken,
+      notification: {
+        title: 'Assignment Cancelled',
+        body: `Order cancelled: ${payload.reason}`,
+      },
+      data: {
+        type: 'assignment_cancelled',
+        orderId: payload.orderId,
+        reason: payload.reason,
+      },
+    });
+
+    console.log(`📲 Sent cancellation notification to partner ${payload.partnerId}`);
+  } catch (error) {
+    console.error('Error sending cancellation notification:', error);
+  }
+}
+
+/**
+ * Notify manual assignment required (to wholesaler/admin)
+ */
+export async function notifyManualAssignmentRequired(
+  orderId: string,
+  reason: string
+): Promise<void> {
+  try {
+    const db = adminDb();
+    
+    // Get order details
+    const orderDoc = await db.collection('orders').doc(orderId).get();
+    if (!orderDoc.exists) return;
+
+    const order = orderDoc.data();
+
+    // Get wholesaler
+    const usersSnapshot = await db.collection('users').where('role', '==', 'wholesaler').limit(1).get();
+    if (usersSnapshot.empty) return;
+
+    const wholesaler = usersSnapshot.docs[0].data();
+    const wholesalerId = usersSnapshot.docs[0].id;
+
+    // Create in-app notification
+    await createInAppNotification(
+      wholesalerId,
+      'Manual Assignment Required',
+      `Order ${order?.orderNumber} requires manual delivery assignment. Reason: ${reason}`,
+      'delivery_assignment',
+      { orderId, reason }
+    );
+
+    // Send push notification if FCM token available
+    if (wholesaler.fcmToken) {
+      await adminMessaging().send({
+        token: wholesaler.fcmToken,
+        notification: {
+          title: '⚠️ Manual Assignment Required',
+          body: `Order ${order?.orderNumber} needs delivery assignment`,
+        },
+        data: {
+          type: 'manual_assignment_required',
+          orderId,
+          reason,
+        },
+      });
+    }
+
+    console.log(`📲 Notified wholesaler about manual assignment for order ${orderId}`);
+  } catch (error) {
+    console.error('Error notifying manual assignment:', error);
+  }
+}
+
+interface DeliveryPartnerAssignedPayload {
+  orderId: string;
+  orderNumber: string;
+  retailerName: string;
+  retailerEmail: string;
+  partnerName: string;
+  partnerPhone: string;
+  estimatedTime: number; // in minutes
+}
+
+/**
+ * Send delivery partner assigned notification to retailer
+ */
+export async function sendDeliveryPartnerAssigned(
+  data: DeliveryPartnerAssignedPayload
+): Promise<void> {
+  const subject = `Delivery Partner Assigned - ${data.orderNumber}`;
+
+  const textContent = [
+    `Hi ${data.retailerName},`,
+    ``,
+    `Great news! A delivery partner has been assigned to your order.`,
+    ``,
+    `Order Number: ${data.orderNumber}`,
+    `Delivery Partner: ${data.partnerName}`,
+    `Contact: ${data.partnerPhone}`,
+    `Estimated Arrival: ${data.estimatedTime} minutes`,
+    ``,
+    `Your order is on the way!`,
+    ``,
+    `WholesaleHub Team`,
+  ].join('\n');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #10B981;">Delivery Partner Assigned! 🚚</h2>
+      <p>Hi ${data.retailerName},</p>
+      <p>Great news! A delivery partner has been assigned to your order.</p>
+      <div style="background: #F0FDF4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
+        <h3 style="margin-top: 0; color: #166534;">Delivery Details</h3>
+        <p style="margin: 5px 0;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+        <p style="margin: 5px 0;"><strong>Delivery Partner:</strong> ${data.partnerName}</p>
+        <p style="margin: 5px 0;"><strong>Contact:</strong> ${data.partnerPhone}</p>
+        <p style="margin: 5px 0;"><strong>Estimated Arrival:</strong> ${data.estimatedTime} minutes</p>
+      </div>
+      <p style="font-size: 18px; color: #10B981;">Your order is on the way! 🎉</p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+      <p style="color: #64748B; font-size: 14px;">WholesaleHub Team</p>
+    </div>
+  `;
+
+  await sendEmail(
+    { name: data.retailerName, email: data.retailerEmail },
+    subject,
+    htmlContent,
+    textContent
+  );
+
+  // Create in-app notification
+  await createInAppNotification(
+    data.orderId.split('_')[0], // Extract retailer ID
+    'Delivery Partner Assigned',
+    `${data.partnerName} will deliver your order in ~${data.estimatedTime} min`,
+    'delivery',
+    { orderId: data.orderId, partnerName: data.partnerName }
+  );
+}
+
+// ─── Export NotificationService ───────────────────────────────────────────────
+
+export const notificationService = {
+  sendPushNotification,
+  sendMulticastNotification,
+  sendOrderPlacedNotification,
+  sendNewOrderAlertToWholesaler,
+  sendPaymentSuccessNotification,
+  sendPaymentFailureNotification,
+  sendCODConfirmation,
+  createInAppNotification,
+  sendOrderApprovedNotification,
+  sendOrderRejectedNotification,
+  sendOrderPackedNotification,
+  sendReadyForPickupNotification,
+  // Phase 5: Delivery notifications
+  sendDeliveryAssignment,
+  sendAssignmentCancelled,
+  notifyManualAssignmentRequired,
+  sendDeliveryPartnerAssigned,
+};

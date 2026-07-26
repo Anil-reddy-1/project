@@ -1,181 +1,242 @@
-"use client";
-
 /**
- * Delivery Partner Dashboard — Home.
- * URL: /delivery
- * Derived from: app-flow.md §3.1 (Onboarding), §3.2 (Assignment Screen)
- *
- * Phase 1: navigation shell only.
- * Phase 5 adds: online/offline toggle, assignment acceptance, map, route execution.
- *
- * IMPORTANT (rules.md §1 + tech-spec.md §3.1):
- * There is no public registration route for delivery partners anywhere in this app.
- * This route is reachable only by users with role=delivery_partner in their token claim,
- * which is set server-side by Admin via POST /users. The middleware enforces this.
- *
- * Auth bug fixes applied:
- *   A1 — Replaced duplicate/race-condition sign-out logic with useAuth().logout()
+ * Delivery Partner Dashboard - Phase 5
+ * Modern, visual-first UI for semi-literate users
+ * 
+ * Features:
+ * - Large buttons and icons
+ * - Color-coded status
+ * - Minimal text, maximum visuals
+ * - One-tap actions
  */
 
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/auth-provider";
+'use client';
 
-export default function DeliveryHomePage() {
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase/client';
+import { locationTrackingService } from '@/lib/services/location-tracking.service';
+
+interface PartnerStatus {
+  status: 'available' | 'busy' | 'offline';
+  isOnline: boolean;
+  currentOrderCount: number;
+  maxConcurrentOrders: number;
+  todayDeliveryCount: number;
+  rating: number;
+  totalDeliveries: number;
+}
+
+export default function DeliveryPage() {
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const [partnerStatus, setPartnerStatus] = useState<PartnerStatus | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function handleSignOut() {
-    await logout();
-    router.push("/");
+  useEffect(() => {
+    fetchPartnerStatus();
+    
+    // Start location tracking when component mounts
+    const initLocationTracking = async () => {
+      try {
+        await locationTrackingService.startTracking();
+      } catch (error) {
+        console.error('Failed to start location tracking:', error);
+      }
+    };
+    
+    initLocationTracking();
+    
+    // Cleanup on unmount
+    return () => {
+      locationTrackingService.stopTracking();
+    };
+  }, []);
+
+  const fetchPartnerStatus = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      const response = await fetch('http://localhost:3001/api/delivery-assignments/partner/status', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPartnerStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching partner status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (newStatus: 'available' | 'offline') => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      await fetch('http://localhost:3001/api/delivery-assignments/partner/status', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          isOnline: newStatus === 'available',
+        }),
+      });
+
+      // Start/stop location tracking based on status
+      if (newStatus === 'available') {
+        await locationTrackingService.startTracking();
+      } else {
+        locationTrackingService.stopTracking();
+      }
+
+      await fetchPartnerStatus();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">📦</div>
+          <p className="text-white text-xl">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
+  const statusIcon =
+    partnerStatus?.status === 'available'
+      ? '🟢'
+      : partnerStatus?.status === 'busy'
+      ? '🟡'
+      : '⚪';
+
   return (
-    <div className="delivery-dashboard">
-      <header className="dashboard-header">
-        <div className="header-brand">
-          <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="10" fill="#1F4E8C"/>
-            <path d="M10 28L16 12h3l4 10.5L27 12h3L20 32l-4-10L10 28z" fill="white" fillOpacity="0.95"/>
-          </svg>
-          <span className="dashboard-wordmark">WholesaleHub</span>
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
+      {/* Status Card */}
+      <div className="bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-slate-400 text-sm mb-1">Your Status</p>
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{statusIcon}</span>
+              <h2 className="text-white text-3xl font-bold capitalize">
+                {partnerStatus?.status || 'Offline'}
+              </h2>
+            </div>
+          </div>
         </div>
-        <div className="header-actions">
-          <span className="user-email">{user?.email}</span>
-          <button id="delivery-signout" onClick={handleSignOut} className="dashboard-signout tap-target">
-            Sign out
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-slate-700/50 rounded-2xl p-4 text-center">
+            <div className="text-3xl mb-2">📦</div>
+            <div className="text-2xl font-bold text-white">
+              {partnerStatus?.currentOrderCount || 0}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">Active</div>
+          </div>
+
+          <div className="bg-slate-700/50 rounded-2xl p-4 text-center">
+            <div className="text-3xl mb-2">✅</div>
+            <div className="text-2xl font-bold text-green-400">
+              {partnerStatus?.todayDeliveryCount || 0}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">Today</div>
+          </div>
+
+          <div className="bg-slate-700/50 rounded-2xl p-4 text-center">
+            <div className="text-3xl mb-2">⭐</div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {partnerStatus?.rating?.toFixed(1) || '0.0'}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">Rating</div>
+          </div>
+        </div>
+
+        {/* Status Toggle */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => toggleStatus('available')}
+            disabled={partnerStatus?.status === 'available'}
+            className={`h-16 rounded-2xl font-bold text-lg transition-all ${
+              partnerStatus?.status === 'available'
+                ? 'bg-green-600 text-white shadow-lg shadow-green-600/50'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">✅</span>
+              <span>Available</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => toggleStatus('offline')}
+            disabled={partnerStatus?.status === 'offline'}
+            className={`h-16 rounded-2xl font-bold text-lg transition-all ${
+              partnerStatus?.status === 'offline'
+                ? 'bg-slate-600 text-white shadow-lg shadow-slate-600/50'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">⏸️</span>
+              <span>Break</span>
+            </div>
           </button>
         </div>
-      </header>
+      </div>
 
-      <main className="dashboard-main">
-        <div className="dashboard-hero">
-          <div className="role-badge-wrap">
-            <span className="dashboard-role-badge">Delivery Partner</span>
+      {/* Active Deliveries Section */}
+      <div className="bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
+        <h3 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
+          <span className="text-2xl">🚚</span>
+          Active Deliveries
+        </h3>
+
+        {partnerStatus?.currentOrderCount === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📦</div>
+            <p className="text-slate-400 text-lg">No active deliveries</p>
+            <p className="text-slate-500 text-sm mt-2">
+              You'll be notified when new orders are available
+            </p>
           </div>
-          <h1 className="dashboard-title">Welcome back</h1>
-          <p className="dashboard-subtitle">
-            Assignment and delivery execution features arrive in Phase 5.
-          </p>
-        </div>
-      </main>
+        ) : (
+          <div className="space-y-3">
+            {/* Placeholder for active deliveries - will be populated from API */}
+            <p className="text-slate-400 text-center py-8">
+              Active deliveries will appear here
+            </p>
+          </div>
+        )}
+      </div>
 
-      <style>{`
-        .delivery-dashboard { 
-          min-height: 100svh; 
-          background: var(--color-paper); 
-          display: flex; 
-          flex-direction: column; 
-        }
-        
-        .dashboard-header { 
-          display: flex; 
-          align-items: center; 
-          justify-content: space-between; 
-          padding: 1rem 1.5rem; 
-          border-bottom: 1px solid var(--color-line); 
-          background: #fff;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-        
-        .header-brand {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        
-        .dashboard-wordmark { 
-          font-family: var(--font-display); 
-          font-size: 1.25rem; 
-          font-weight: 700; 
-          color: var(--color-ink); 
-        }
-        
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        
-        .user-email {
-          font-size: var(--text-sm);
-          color: var(--color-ink-muted);
-          display: none;
-        }
-        
-        @media (min-width: 600px) {
-          .user-email { display: block; }
-        }
-        
-        .dashboard-signout { 
-          font-size: var(--text-sm); 
-          font-weight: 500;
-          color: var(--color-ink-muted); 
-          background: none; 
-          border: 1px solid transparent; 
-          cursor: pointer; 
-          padding: 0.375rem 0.75rem; 
-          border-radius: var(--radius-md); 
-          transition: all 0.15s;
-        }
-        
-        .dashboard-signout:hover { 
-          background: var(--color-paper); 
-          border-color: var(--color-line);
-          color: var(--color-ink);
-        }
-        
-        .dashboard-main { 
-          flex: 1; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          padding: 2rem; 
-        }
-        
-        .dashboard-hero { 
-          text-align: center; 
-          max-width: 440px; 
-          background: #fff;
-          padding: 3rem 2rem;
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--color-line);
-          box-shadow: var(--shadow-sm);
-        }
-        
-        .role-badge-wrap {
-          margin-bottom: 1.25rem;
-        }
-        
-        .dashboard-role-badge { 
-          display: inline-block; 
-          font-size: var(--text-xs); 
-          font-weight: 600; 
-          text-transform: uppercase; 
-          letter-spacing: 0.08em; 
-          color: #fff; 
-          background: var(--color-green); 
-          padding: 0.375rem 0.875rem; 
-          border-radius: var(--radius-pill); 
-        }
-        
-        .dashboard-title { 
-          font-family: var(--font-display); 
-          font-size: var(--text-2xl); 
-          font-weight: 700; 
-          color: var(--color-ink); 
-          margin: 0 0 0.75rem; 
-          letter-spacing: -0.02em; 
-        }
-        
-        .dashboard-subtitle { 
-          font-size: var(--text-base); 
-          color: var(--color-ink-muted); 
-          margin: 0; 
-          line-height: 1.6; 
-        }
-      `}</style>
+      {/* Total Earnings */}
+      <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-green-100 text-sm mb-1">Total Deliveries</p>
+            <p className="text-white text-4xl font-bold">
+              {partnerStatus?.totalDeliveries || 0}
+            </p>
+          </div>
+          <div className="text-6xl">💰</div>
+        </div>
+      </div>
     </div>
   );
 }

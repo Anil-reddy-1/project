@@ -7,6 +7,7 @@
 
 import axios, { AxiosError } from "axios";
 import { phonePeConfig } from "../config/phonepe";
+import { env } from "../config/env";
 import {
   generateChecksum,
   generateMerchantTransactionId,
@@ -73,6 +74,17 @@ interface PhonePeStatusResponse {
 }
 
 export class PhonePeService {
+  // In-memory store for mock payment states (for testing)
+  private mockPaymentStates: Map<
+    string,
+    {
+      state: "COMPLETED" | "FAILED" | "PENDING";
+      amount: number;
+      transactionId: string;
+      createdAt: Date;
+    }
+  > = new Map();
+
   /**
    * Initiate a payment with PhonePe
    */
@@ -117,11 +129,28 @@ export class PhonePeService {
       payload.mobileNumber = retailerPhone;
     }
     
-    // MOCK FOR LOCAL TESTING WITH PGTESTPAYUAT
-    if (phonePeConfig.merchantId === 'PGTESTPAYUAT' && process.env.NODE_ENV === 'development') {
-      console.warn('[PhonePe] MOCKING PhonePe response for local development (Sandbox is unreliable)');
+    // MOCK MODE FOR TESTING (configurable via environment variable)
+    if (env.PHONEPE_MOCK_MODE) {
+      console.warn('[PhonePe] MOCK MODE ENABLED - Using simulated payment flow');
+      console.log('[PhonePe Mock] Transaction ID:', merchantTransactionId);
+      console.log('[PhonePe Mock] Amount:', amount, 'INR');
+      
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + phonePeConfig.paymentConfig.expiryMinutes);
+      
+      // Store mock payment state (default to PENDING, will be updated on "payment")
+      // For testing different scenarios, you can modify the state:
+      // - Use query param ?mockResult=success/failure/pending in the URL
+      // - Or manipulate this.mockPaymentStates directly
+      this.mockPaymentStates.set(merchantTransactionId, {
+        state: "PENDING",
+        amount: rupeesToPaise(amount),
+        transactionId: `T${Date.now()}`,
+        createdAt: new Date(),
+      });
+      
+      // Return mock payment URL that simulates PhonePe redirect
+      // The URL includes a mock payment page that will redirect back
       return {
         merchantTransactionId,
         paymentUrl: `http://localhost:3000/retailer/payment/callback?merchantTransactionId=${merchantTransactionId}&code=PAYMENT_SUCCESS&providerReferenceId=T${Date.now()}`,
@@ -199,6 +228,46 @@ export class PhonePeService {
       throw new Error("PhonePe configuration is incomplete");
     }
     
+    // MOCK MODE FOR TESTING
+    if (env.PHONEPE_MOCK_MODE) {
+      console.log('[PhonePe Mock] Checking status for:', merchantTransactionId);
+      
+      const mockState = this.mockPaymentStates.get(merchantTransactionId);
+      
+      if (!mockState) {
+        console.log('[PhonePe Mock] Transaction not found');
+        return {
+          success: false,
+          status: "pending",
+          message: "Transaction not found",
+        };
+      }
+      
+      // Auto-complete PENDING transactions after 2 seconds (simulate processing)
+      const ageInSeconds = (Date.now() - mockState.createdAt.getTime()) / 1000;
+      if (mockState.state === "PENDING" && ageInSeconds > 2) {
+        // Automatically mark as successful after 2 seconds
+        mockState.state = "COMPLETED";
+        this.mockPaymentStates.set(merchantTransactionId, mockState);
+        console.log('[PhonePe Mock] Auto-completed transaction');
+      }
+      
+      console.log('[PhonePe Mock] Current state:', mockState.state);
+      
+      return {
+        success: mockState.state === "COMPLETED",
+        status: mapPhonePeStateToStatus(mockState.state),
+        data: {
+          transactionId: mockState.transactionId,
+          merchantTransactionId: merchantTransactionId,
+          amount: mockState.amount,
+          state: mockState.state,
+          responseCode: mockState.state === "COMPLETED" ? "SUCCESS" : mockState.state === "FAILED" ? "PAYMENT_ERROR" : "PAYMENT_PENDING",
+        },
+        message: `Mock payment ${mockState.state}`,
+      };
+    }
+    
     try {
       // Generate endpoint
       const endpoint = phonePeConfig.endpoints.status(
@@ -244,7 +313,7 @@ export class PhonePeService {
         if (axiosError.response?.data?.code === "TRANSACTION_NOT_FOUND") {
           return {
             success: false,
-            status: "PENDING",
+            status: "pending",
             message: "Transaction not found",
           };
         }
@@ -254,6 +323,27 @@ export class PhonePeService {
         );
       }
       throw error;
+    }
+  }
+
+  /**
+   * Manually set mock payment state (for testing different scenarios)
+   * Only works in mock mode
+   */
+  setMockPaymentState(
+    merchantTransactionId: string,
+    state: "COMPLETED" | "FAILED" | "PENDING"
+  ): void {
+    if (!env.PHONEPE_MOCK_MODE) {
+      console.warn('[PhonePe] setMockPaymentState called but mock mode is disabled');
+      return;
+    }
+    
+    const mockState = this.mockPaymentStates.get(merchantTransactionId);
+    if (mockState) {
+      mockState.state = state;
+      this.mockPaymentStates.set(merchantTransactionId, mockState);
+      console.log(`[PhonePe Mock] Set ${merchantTransactionId} to ${state}`);
     }
   }
 }

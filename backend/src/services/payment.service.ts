@@ -100,7 +100,8 @@ export class PaymentService {
       });
 
       const redirectUrl = phonePeResponse.paymentUrl;
-      const actualMerchantTxId = phonePeResponse.merchantTransactionId || merchantTransactionId;
+      // Use the transaction ID returned by PhonePe (for mock mode, this is the actual ID)
+      const actualMerchantTxId = phonePeResponse.merchantTransactionId;
 
       // Create payment record
       const db = adminDb();
@@ -113,7 +114,7 @@ export class PaymentService {
         status: 'PENDING',
         amount,
         currency: 'INR',
-        phonepeMerchantTransactionId: merchantTransactionId,
+        phonepeMerchantTransactionId: actualMerchantTxId, // Use the actual transaction ID from PhonePe
         signatureVerified: false,
         retryCount: 0,
         createdAt: new Date(),
@@ -125,7 +126,7 @@ export class PaymentService {
 
       console.log('[Payment] PhonePe payment initiated:', {
         paymentId: payment.paymentId,
-        merchantTransactionId,
+        merchantTransactionId: actualMerchantTxId,
         amount,
       });
 
@@ -458,8 +459,13 @@ export class PaymentService {
       } else if (data.state === 'FAILED' || data.responseCode === 'PAYMENT_ERROR') {
         updates.status = 'failed';
         updates.failedAt = new Date();
-        updates.errorCode = data.responseCode;
-        updates.errorMessage = response.message;
+        // Only include error fields if they exist
+        if (data.responseCode) {
+          updates.errorCode = data.responseCode;
+        }
+        if (response.message) {
+          updates.errorMessage = response.message;
+        }
       } else if (data.state === 'PENDING') {
         updates.status = 'pending';
       }
@@ -470,8 +476,13 @@ export class PaymentService {
       // Payment failed
       updates.status = 'failed';
       updates.failedAt = new Date();
-      updates.errorCode = response.code;
-      updates.errorMessage = response.message;
+      // Only include error fields if they exist
+      if (response.code) {
+        updates.errorCode = response.code;
+      }
+      if (response.message) {
+        updates.errorMessage = response.message;
+      }
     }
 
     await paymentRef.update(updates);

@@ -117,13 +117,13 @@ export function parsePhonePeResponseCode(code: string): string {
  */
 export function mapPhonePeStateToStatus(state: string): string {
   const stateMap: Record<string, string> = {
-    COMPLETED: "SUCCESS",
-    FAILED: "FAILED",
-    PENDING: "PENDING",
-    EXPIRED: "EXPIRED",
+    COMPLETED: "paid",
+    FAILED: "failed",
+    PENDING: "pending",
+    EXPIRED: "failed",
   };
   
-  return stateMap[state] || "PENDING";
+  return stateMap[state] || "pending";
 }
 
 /**

@@ -13,6 +13,7 @@ export type UserRole =
   | "retailer"
   | "wholesaler"
   | "delivery_partner"
+  | "delivery"  // Alias for delivery_partner (Phase 5)
   | "admin";
 
 export type UserStatus = "active" | "suspended" | "pending_approval";

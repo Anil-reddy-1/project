@@ -55,14 +55,23 @@ export async function createProductSnapshot(itemId: string): Promise<ProductSnap
   
   const item = itemDoc.data()!;
   
-  return {
+  // Build snapshot, excluding undefined fields (Firestore doesn't allow undefined)
+  const snapshot: ProductSnapshot = {
     name: item.name || 'Unknown Product',
     description: item.description || '',
     imageUrl: item.imageUrl || item.images?.[0]?.url || '',
     category: item.category || 'Uncategorized',
-    sku: item.sku,
-    barcode: item.barcode,
   };
+  
+  // Only include optional fields if they have values
+  if (item.sku) {
+    snapshot.sku = item.sku;
+  }
+  if (item.barcode) {
+    snapshot.barcode = item.barcode;
+  }
+  
+  return snapshot;
 }
 
 /**
