@@ -147,7 +147,7 @@ export default function HistoryPage() {
             <div>
               <p className="text-green-100 text-sm mb-1">
                 {filter === 'today'
-                  ? 'Today's Earnings'
+                  ? "Today's Earnings"
                   : filter === 'week'
                   ? 'This Week'
                   : filter === 'month'

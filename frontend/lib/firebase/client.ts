@@ -67,5 +67,5 @@ export function getFirebaseDb(): Firestore | null {
  * Use the getter functions above for null-safe access.
  */
 export const app = getApp();
-export const auth = getFirebaseAuth();
-export const db = getFirebaseDb();
+export const auth = getFirebaseAuth() as import('firebase/auth').Auth;
+export const db = getFirebaseDb() as import('firebase/firestore').Firestore;
