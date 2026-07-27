@@ -66,7 +66,7 @@ router.post('/:assignmentId/respond', authenticateToken, async (req, res) => {
     }
 
     // Check authorization (delivery partner only)
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can respond to assignments' });
     }
 
@@ -172,7 +172,7 @@ router.get('/order/:orderId', authenticateToken, async (req, res) => {
 router.get('/partner/active', authenticateToken, async (req, res) => {
   try {
     // Check authorization
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can access this endpoint' });
     }
 
@@ -243,7 +243,7 @@ router.post('/partner/location', authenticateToken, async (req, res) => {
     const { latitude, longitude, accuracy } = req.body;
 
     // Check authorization
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can update location' });
     }
 
@@ -274,7 +274,7 @@ router.post('/partner/location', authenticateToken, async (req, res) => {
 router.get('/partner/status', authenticateToken, async (req, res) => {
   try {
     // Check authorization
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can access this endpoint' });
     }
 
@@ -311,7 +311,7 @@ router.post('/partner/status', authenticateToken, async (req, res) => {
     const { status, isOnline } = req.body;
 
     // Check authorization
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can update status' });
     }
 
@@ -405,49 +405,8 @@ router.get('/timer/stats', authenticateToken, async (req, res) => {
   }
 });
 
-export default router;
-
 /**
- * POST /api/delivery-assignments/partner/location
- * Update partner location (delivery partner only)
- * Also updates via WebSocket in real-time
- */
-router.post('/partner/location', authenticateToken, async (req, res) => {
-  try {
-    const { lat, lng, accuracy, orderId } = req.body;
-
-    if (!lat || !lng) {
-      return res.status(400).json({ error: 'Latitude and longitude are required' });
-    }
-
-    // Check authorization (delivery partner only)
-    if (req.user?.role !== 'delivery') {
-      return res.status(403).json({ error: 'Only delivery partners can update location' });
-    }
-
-    await updatePartnerLocation(
-      req.user.uid,
-      {
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        accuracy: accuracy ? parseFloat(accuracy) : 10,
-        timestamp: new Date(),
-      },
-      orderId
-    );
-
-    res.json({
-      success: true,
-      message: 'Location updated',
-    });
-  } catch (error: any) {
-    console.error('Error updating location:', error);
-    res.status(500).json({ error: error.message || 'Failed to update location' });
-  }
-});
-
-/**
- * GET /api/delivery-assignments/partner/active
+ * GET /api/delivery-assignments/partners/active
  * Get all active delivery partners (wholesaler/admin only)
  * For live tracking dashboard
  */
@@ -496,8 +455,8 @@ router.post('/batch/assign', authenticateToken, async (req, res) => {
 
     const shop = shopSnapshot.docs[0].data();
     const shopLocation = {
-      lat: shop.location?.coordinates?.latitude || 0,
-      lng: shop.location?.coordinates?.longitude || 0,
+      lat: shop.geopoint?.latitude || 0,
+      lng: shop.geopoint?.longitude || 0,
     };
 
     const { batchAssignmentService } = await import('../services/batch-assignment.service');
@@ -540,7 +499,7 @@ router.post('/batch/:batchId/respond', authenticateToken, async (req, res) => {
     }
 
     // Check authorization
-    if (req.user?.role !== 'delivery') {
+    if (req.user?.role !== 'delivery' && req.user?.role !== 'delivery_partner') {
       return res.status(403).json({ error: 'Only delivery partners can respond to batch assignments' });
     }
 
@@ -595,3 +554,5 @@ router.get('/batch/:batchId', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message || 'Failed to get batch assignment' });
   }
 });
+
+export default router;

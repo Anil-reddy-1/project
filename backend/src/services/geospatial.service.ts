@@ -90,13 +90,9 @@ export class GeospatialService {
 
     // Query for each geohash range
     for (const b of bounds) {
-      let query = db
-        .collection('delivery_partners')
-        .orderBy('currentLocation.geohash')
-        .startAt(b[0])
-        .endAt(b[1]);
+      let query: FirebaseFirestore.Query = db.collection('delivery_partners');
 
-      // Apply filters
+      // Apply filters FIRST
       if (filters.status) {
         query = query.where('status', '==', filters.status);
       }
@@ -104,6 +100,12 @@ export class GeospatialService {
       if (filters.shopId) {
         query = query.where('shopId', '==', filters.shopId);
       }
+
+      // Apply orderBy and bounds AFTER where clauses
+      query = query
+        .orderBy('currentLocation.geohash')
+        .startAt(b[0])
+        .endAt(b[1]);
 
       promises.push(query.get());
     }

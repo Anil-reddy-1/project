@@ -67,7 +67,7 @@ class BatchAssignmentService {
       );
 
       // Validate all orders are ready for pickup
-      const invalidOrders = orders.filter(order => order.status !== 'READY_FOR_PICKUP');
+      const invalidOrders = orders.filter(order => order.state !== 'READY_FOR_PICKUP');
       if (invalidOrders.length > 0) {
         console.error('[Batch Assignment] Some orders are not ready for pickup:', invalidOrders.map(o => o.id));
         return null;
@@ -163,12 +163,12 @@ class BatchAssignmentService {
       orderIds.forEach((orderId) => {
         const orderRef = db.collection('orders').doc(orderId);
         batch.update(orderRef, {
-          status: 'ASSIGNED',
+          state: 'ASSIGNED',
           deliveryPartnerId: partnerId,
           batchId: batchNumber,
           assignedAt: admin.firestore.Timestamp.now(),
           'stateHistory': admin.firestore.FieldValue.arrayUnion({
-            status: 'ASSIGNED',
+            state: 'ASSIGNED',
             timestamp: admin.firestore.Timestamp.now(),
             note: `Batch assignment ${batchNumber}`,
           }),
@@ -319,11 +319,11 @@ class BatchAssignmentService {
         assignment.orderIds.forEach((orderId: string) => {
           const orderRef = db.collection('orders').doc(orderId);
           batch.update(orderRef, {
-            status: 'READY_FOR_PICKUP',
+            state: 'READY_FOR_PICKUP',
             deliveryPartnerId: null,
             batchId: null,
             'stateHistory': admin.firestore.FieldValue.arrayUnion({
-              status: 'READY_FOR_PICKUP',
+              state: 'READY_FOR_PICKUP',
               timestamp: admin.firestore.Timestamp.now(),
               note: `Batch declined by partner`,
             }),
@@ -395,11 +395,11 @@ class BatchAssignmentService {
       assignment.orderIds.forEach((orderId: string) => {
         const orderRef = db.collection('orders').doc(orderId);
         batch.update(orderRef, {
-          status: 'READY_FOR_PICKUP',
+          state: 'READY_FOR_PICKUP',
           deliveryPartnerId: null,
           batchId: null,
           'stateHistory': admin.firestore.FieldValue.arrayUnion({
-            status: 'READY_FOR_PICKUP',
+            state: 'READY_FOR_PICKUP',
             timestamp: admin.firestore.Timestamp.now(),
             note: 'Batch assignment timeout',
           }),

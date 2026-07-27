@@ -66,7 +66,6 @@ export async function apiClient<T>(
 
   const requestHeaders: Record<string, string> = {
     "Content-Type": "application/json",
-    "Bypass-Tunnel-Reminder": "true", // Bypasses localtunnel's warning page which breaks CORS
     ...headers,
   };
 

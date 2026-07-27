@@ -240,10 +240,40 @@ export default function WholesalerOrderDetailsPage() {
             </button>
           )}
 
-          {orderData.state === 'READY_FOR_PICKUP' && !pickupOTP && !orderData.pickupOTP && (
-            <div className="text-center text-gray-600">
-              <p className="text-sm">Waiting for delivery partner assignment (Phase 5)</p>
-            </div>
+          {orderData.state === 'READY_FOR_PICKUP' && (
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:3001/api/delivery-assignments/assign`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${await (await import('@/lib/firebase/client')).auth.currentUser?.getIdToken()}`,
+                    },
+                    body: JSON.stringify({
+                      orderId: orderData.orderId,
+                      slaDurationSeconds: 60,
+                    }),
+                  });
+
+                  if (response.ok) {
+                    const data = await response.json();
+                    showFeedback('success', `Delivery partner assigned! Assignment ID: ${data.assignment.assignmentId.slice(0, 8)}...`);
+                    refresh();
+                  } else {
+                    const error = await response.json();
+                    showFeedback('error', error.error || 'Failed to assign delivery partner');
+                  }
+                } catch (err) {
+                  showFeedback('error', 'Failed to assign delivery partner');
+                  console.error('Assignment error:', err);
+                }
+              }}
+              disabled={isActing}
+              className="w-full px-4 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+            >
+              🚴 Assign Delivery Partner
+            </button>
           )}
 
           {orderData.state === 'REJECTED' && (

@@ -53,12 +53,7 @@ interface AssignmentOptions {
 interface Order {
   orderId: string;
   shopId: string;
-  shopDetails: {
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-  };
+  state: string;
   status: string;
   assignmentAttempts?: number;
   assignedPartnerId?: string;
@@ -90,11 +85,13 @@ export class DeliveryAssignmentService {
         throw new Error('Order not found');
       }
 
-      const order = { ...orderDoc.data(), orderId } as Order;
+      const order = { ...orderDoc.data(), orderId } as any; // Changed to any for flexibility
 
       // Check if order is in correct status
-      if (order.status !== 'READY_FOR_PICKUP' && order.status !== 'pending') {
-        console.log(`Order ${orderId} not in READY_FOR_PICKUP status. Current: ${order.status}`);
+      const state = order.state;
+      
+      if (state !== 'READY_FOR_PICKUP' && state !== 'ASSIGNED') {
+        console.log(`Order ${orderId} not in READY_FOR_PICKUP status. Current: ${state}`);
         return null;
       }
 
@@ -107,7 +104,12 @@ export class DeliveryAssignmentService {
       }
 
       // Get shop location
-      const shopLocation = order.shopDetails.location;
+      const shopDoc = await db.collection('shops').doc(order.shopId).get();
+      const shopData = shopDoc.data();
+      const shopLocation = shopData?.geopoint ? {
+        latitude: shopData.geopoint.latitude,
+        longitude: shopData.geopoint.longitude
+      } : null;
 
       if (!shopLocation || !shopLocation.latitude || !shopLocation.longitude) {
         throw new Error('Shop location not available');
@@ -187,7 +189,7 @@ export class DeliveryAssignmentService {
 
       // Update order
       await db.collection('orders').doc(orderId).update({
-        status: 'ASSIGNED',
+        state: 'ASSIGNED',
         assignedPartnerId: selectedPartner.uid,
         assignedAt: new Date(),
         assignmentAttempts: attemptNumber,
@@ -298,7 +300,7 @@ export class DeliveryAssignmentService {
 
       // Update order status
       await db.collection('orders').doc(assignment.orderId).update({
-        status: 'ASSIGNED',
+        state: 'ASSIGNED',
         assignedPartnerId: assignment.partnerId,
         assignedAt: now,
         updatedAt: now,
@@ -433,7 +435,7 @@ export class DeliveryAssignmentService {
     if (order.assignedPartnerId === assignment.partnerId) {
       await db.collection('orders').doc(assignment.orderId).update({
         assignedPartnerId: null,
-        status: 'READY_FOR_PICKUP',
+        state: 'READY_FOR_PICKUP',
         updatedAt: now,
       });
     }
@@ -452,7 +454,7 @@ export class DeliveryAssignmentService {
 
     // Update order status
     await db.collection('orders').doc(orderId).update({
-      status: 'AWAITING_MANUAL_ASSIGNMENT',
+      state: 'AWAITING_MANUAL_ASSIGNMENT',
       assignmentFailureReason: reason,
       updatedAt: new Date(),
     });

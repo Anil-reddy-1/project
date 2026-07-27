@@ -44,7 +44,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Bypass-Tunnel-Reminder"],
   }),
 );
 
@@ -58,7 +58,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Route groups ─────────────────────────────────────────────────────────────
-app.use("/", router);
+app.use("/api", router);
 
 // ─── Global error handler (must be last) ──────────────────────────────────────
 // ─── Initialize Socket.io ─────────────────────────────────────────────────────
