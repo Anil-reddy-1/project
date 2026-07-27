@@ -92,16 +92,7 @@ export class GeospatialService {
     for (const b of bounds) {
       let query: FirebaseFirestore.Query = db.collection('delivery_partners');
 
-      // Apply filters FIRST
-      if (filters.status) {
-        query = query.where('status', '==', filters.status);
-      }
-
-      if (filters.shopId) {
-        query = query.where('shopId', '==', filters.shopId);
-      }
-
-      // Apply orderBy and bounds AFTER where clauses
+      // Apply orderBy and bounds
       query = query
         .orderBy('currentLocation.geohash')
         .startAt(b[0])
@@ -124,6 +115,15 @@ export class GeospatialService {
         seenIds.add(doc.id);
 
         const partner = doc.data() as DeliveryPartner;
+
+        // Apply filters in-memory to avoid requiring composite indexes
+        if (filters.status && partner.status !== filters.status) {
+          continue;
+        }
+
+        if (filters.shopId && partner.shopId !== filters.shopId) {
+          continue;
+        }
 
         // Skip if in exclude list
         if (filters.excludePartnerIds?.includes(partner.uid)) {

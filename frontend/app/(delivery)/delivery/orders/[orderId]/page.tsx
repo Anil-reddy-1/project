@@ -24,11 +24,11 @@ interface Order {
   state: string;
   
   // Shop details (pickup)
-  shopDetails: {
+  shopSnapshot?: {
     name: string;
     phone: string;
     address: string;
-    location: {
+    location?: {
       latitude: number;
       longitude: number;
     };
@@ -304,35 +304,39 @@ export default function OrderDetailsPage() {
             <div className="text-4xl">🏪</div>
             <div>
               <p className="text-slate-400 text-sm">Pickup From</p>
-              <h2 className="text-white text-2xl font-bold">{order.shopDetails.name}</h2>
+              <h2 className="text-white text-2xl font-bold">{order.shopSnapshot?.name || 'Shop'}</h2>
             </div>
           </div>
 
           <div className="bg-slate-700/50 rounded-2xl p-4 mb-4">
             <p className="text-slate-300 text-base leading-relaxed">
-              {order.shopDetails.address}
+              {order.shopSnapshot?.address || 'No address provided'}
             </p>
           </div>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => makeCall(order.shopDetails.phone)}
-              className="h-14 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+              onClick={() => makeCall(order.shopSnapshot?.phone || '')}
+              disabled={!order.shopSnapshot?.phone}
+              className="h-14 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-xl font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <span className="text-2xl">📞</span>
               <span>Call</span>
             </button>
 
             <button
-              onClick={() =>
-                openNavigation(
-                  order.shopDetails.location.latitude,
-                  order.shopDetails.location.longitude,
-                  order.shopDetails.name
-                )
-              }
-              className="h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+              onClick={() => {
+                if (order.shopSnapshot?.location) {
+                  openNavigation(
+                    order.shopSnapshot.location.latitude,
+                    order.shopSnapshot.location.longitude,
+                    order.shopSnapshot.name
+                  );
+                }
+              }}
+              disabled={!order.shopSnapshot?.location}
+              className="h-14 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white rounded-xl font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <span className="text-2xl">📍</span>
               <span>Navigate</span>

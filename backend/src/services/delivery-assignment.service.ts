@@ -91,7 +91,7 @@ export class DeliveryAssignmentService {
       const state = order.state;
       
       if (state !== 'READY_FOR_PICKUP' && state !== 'ASSIGNED') {
-        console.log(`Order ${orderId} not in READY_FOR_PICKUP status. Current: ${state}`);
+        console.log(`Order ${orderId} not in an assignable status. Current: ${state}`);
         return null;
       }
 
@@ -242,7 +242,7 @@ export class DeliveryAssignmentService {
       partnerDistanceFromShop: options.distance,
       partnerLocation: options.partnerLocation,
       attemptNumber: options.attemptNumber,
-      previousAttempts: previousAttempts.length > 0 ? previousAttempts : undefined,
+      previousAttempts: previousAttempts,
       createdAt: now as any,
       updatedAt: now as any,
     };
@@ -452,9 +452,8 @@ export class DeliveryAssignmentService {
   ): Promise<void> {
     console.log(`Escalating order ${orderId} to manual assignment. Reason: ${reason}`);
 
-    // Update order status
+    // Update order with failure reason but keep current state
     await db.collection('orders').doc(orderId).update({
-      state: 'AWAITING_MANUAL_ASSIGNMENT',
       assignmentFailureReason: reason,
       updatedAt: new Date(),
     });

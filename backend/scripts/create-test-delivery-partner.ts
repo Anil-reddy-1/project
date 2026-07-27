@@ -3,6 +3,7 @@
  * Quick script to set up test data for E2E testing
  */
 
+import 'dotenv/config';
 import { adminDb, adminAuth } from '../src/config/firebase';
 import * as geofire from 'geofire-common';
 
@@ -50,8 +51,8 @@ async function createTestDeliveryPartner() {
     console.log('✅ Found shop:', shopData.name);
 
     // 4. Create location near shop (San Francisco for demo)
-    const latitude = shopData.location?.latitude || 37.7749;
-    const longitude = shopData.location?.longitude || -122.4194;
+    const latitude = shopData.geopoint?.latitude || 37.7749;
+    const longitude = shopData.geopoint?.longitude || -122.4194;
     const geohash = geofire.geohashForLocation([latitude, longitude]);
 
     // 5. Create delivery_partners document

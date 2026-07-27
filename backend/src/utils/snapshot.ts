@@ -146,6 +146,10 @@ export async function createShopSnapshot(shopId: string): Promise<ShopSnapshot> 
     name: shop.name || 'Unknown Shop',
     phone: shop.phone || '',
     address: shop.address || '',
+    location: shop.geopoint ? {
+      latitude: shop.geopoint.latitude,
+      longitude: shop.geopoint.longitude,
+    } : null,
   };
 }
 
