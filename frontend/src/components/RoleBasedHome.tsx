@@ -1,21 +1,21 @@
 import { useAuth } from "../context/AuthContext";
-import { StudentDashboard } from "../pages/student/Dashboard";
-import { FacultyDashboard } from "../pages/faculty/Dashboard";
-import { AdminDashboard } from "../pages/admin/Dashboard";
+import { DeliveryDashboard } from "../pages/delivery/Dashboard";
+import { BuyerDashboard } from "../pages/buyer/Dashboard";
+import { Dashboard } from "../pages/admin/Dashboard";
 
 /**
  * Renders the appropriate home page based on the user's role from the backend.
  */
 export function RoleBasedHome() {
-  const { profile } = useAuth();
+  const { user } = useAuth();
 
-  switch (profile?.role) {
+  switch (user?.role) {
     case "admin":
-      return <AdminDashboard />;
-    case "faculty":
-      return <FacultyDashboard />;
-    case "student":
+      return <Dashboard />;
+    case "buyer":
+      return <BuyerDashboard />;
+    case "delivery":
     default:
-      return <StudentDashboard />;
+      return <DeliveryDashboard />;
   }
 }
