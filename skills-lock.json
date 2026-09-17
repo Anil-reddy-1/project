@@ -1,6 +1,124 @@
 {
   "version": 1,
   "skills": {
+    "api-design": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/api-design/SKILL.md",
+      "computedHash": "d7721b31618e73019d90590a5758a1fa7ecb92a9512b60027b2adb4717b86053"
+    },
+    "api-designer": {
+      "source": "LambdaTest/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "api-skill/api-designer/SKILL.md",
+      "computedHash": "b1e8e0f9cecab6ee8ae73b2fbad2e7c10bea006ff7b7bb05fadceb40433ebb07"
+    },
+    "api-inferrer-from-files": {
+      "source": "LambdaTest/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "api-skill/api-inference-from-files/SKILL.md",
+      "computedHash": "1aa8a31361f1b1891df9c9d9b16acd7e5523151f3be1dcd50f57c55e1c483070"
+    },
+    "api-security-auth-pattern": {
+      "source": "LambdaTest/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "api-skill/api-security-patterns/SKILL.md",
+      "computedHash": "a5351d9bce2cb2f3598368ca154472d23cd342832259750bdf71fec86ff22909"
+    },
+    "api-to-testcase-generator": {
+      "source": "LambdaTest/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "api-skill/api-to-testcase-generator/SKILL.md",
+      "computedHash": "de2a1d0fbdecbc72bfa691f6af7aa5c6c6a0baf1d3c021a62f8959b3ecddde0c"
+    },
+    "authentication": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/authentication/SKILL.md",
+      "computedHash": "a49f168b7bd9a8c6f04caf581ca8f88a30976cb6da7805d8835fed51bfacec55"
+    },
+    "backend-core": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/backend-core/SKILL.md",
+      "computedHash": "7eaf57e5c256ffce4ab6a1e4bfc73d9f5e7412bfde801da7bb8c5092b99a4e46"
+    },
+    "backend-craft": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/backend-craft/SKILL.md",
+      "computedHash": "73c668c481afc20d14a9626136e9d68b4a7f3c1d7dc25914833969f6f805b604"
+    },
+    "caching": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/caching/SKILL.md",
+      "computedHash": "54e97ea75fe5d55bbcd5b3ab166a6a8ec2fe163d1cb526e68fd2a84f08e0b0c9"
+    },
+    "database-architecture": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/database-architecture/SKILL.md",
+      "computedHash": "3629c1ed618a5bab48e37b7ace332987f8bf21e950aea608569731c6430523ab"
+    },
+    "database-optimizer": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/database-optimizer/SKILL.md",
+      "computedHash": "68cf96c6db0436f5a98b72cfa976ba583c87495a409b7bcb414a7c49ad5955d1"
+    },
+    "database-performance": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/database-performance/SKILL.md",
+      "computedHash": "362284a7b89d5967a3256fd281325a1aa8b793ca2e5fb426ea583897e0217c6f"
+    },
+    "dpdpa-compliance": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/dpdpa-compliance/SKILL.md",
+      "computedHash": "1f708910f64fe0fc32728812f3bbed651a559345078d186cd4d412070b045d59"
+    },
+    "express": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/express/SKILL.md",
+      "computedHash": "a193ba7c7f1539764a9e3cbf6626b939981d3d21d8d8d2d50764fbcc913bd775"
+    },
+    "fastify": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/fastify/SKILL.md",
+      "computedHash": "9161ef45f91abe48f5a1819b8a3e40ce9550dde3d63287861ea2582e87f9fe64"
+    },
+    "feature-arch": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/feature-arch/SKILL.md",
+      "computedHash": "ca93de79f858668668220544ffd8b0f31b1741a9113432b30652f05c4307ea7e"
+    },
+    "file-storage": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/file-storage/SKILL.md",
+      "computedHash": "25401f990e8b9d82a807e904249224f72e6c5fe044962fe5c4aca0636fb18c87"
+    },
     "firebase-auth-basics": {
       "source": "firebase/agent-skills",
       "sourceType": "github",
@@ -12,6 +130,212 @@
       "sourceType": "github",
       "skillPath": "skills/firebase-basics/SKILL.md",
       "computedHash": "667d6865609d3480ca04a5586a25e9709cc0f841b828276d082a6e4029582acf"
+    },
+    "graphql-architect": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/graphql-architect/SKILL.md",
+      "computedHash": "7cc5b2e790aba9dd0102d7ba47546585b9ca750e4f8769a10a1becf384a801ae"
+    },
+    "integrations": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/integrations/SKILL.md",
+      "computedHash": "c1de95e4c421478c1519b2167eca3cfe1f70bb63e920af8dd99da7a417adc52d"
+    },
+    "messaging": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/messaging/SKILL.md",
+      "computedHash": "5fd1aec1e0fd1d13724db7ea63f59d62fdfa35d973d904762b2ee0bd86e93dcf"
+    },
+    "microservices-architect": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/microservices-architect/SKILL.md",
+      "computedHash": "c7e6f0ae69484d03083217cbcae342a23f6555f156917c54630bd20e63ace1ad"
+    },
+    "msw": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/msw/SKILL.md",
+      "computedHash": "020292e802e22df21f2e4b016056cf066e8ef7d967698d5f70506712a72ac86d"
+    },
+    "nestjs": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/nestjs/SKILL.md",
+      "computedHash": "5dc4b863a7431f863cf5ef1d562eeaa7e64ddc1872eb2ea0d8c5e37f4d1b273d"
+    },
+    "nextjs": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nextjs/SKILL.md",
+      "computedHash": "1190e3f93148daab8c7656a3b6a75fc44e4a966a68982c19dc36e5a0ae0221fd"
+    },
+    "node": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/node/SKILL.md",
+      "computedHash": "50c9e2e7fa897570834e7a00d7b508ed10d5bcabe6b1e60096103fd014ab827c"
+    },
+    "nuqs": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nuqs/SKILL.md",
+      "computedHash": "20e949e3be72e5537b1eb4899626b01c151c58bba1640550b651af873b3d9ead"
+    },
+    "pandas-pro": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/pandas-pro/SKILL.md",
+      "computedHash": "244a87c4e9e20aac2822cdd99a221a7fa6999bf1194abbbd4a5e16bde34bf6ef"
+    },
+    "playwright": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/playwright/SKILL.md",
+      "computedHash": "d415646751ad11909247835d20b85c7103d86b8f0f82d4c68a47d1afcfddd6e7"
+    },
+    "postgres-pro": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/postgres-pro/SKILL.md",
+      "computedHash": "4cfcfed71e0ed8b1d8d493c603e253ce52e763b24f0438394717b5df57a4cb96"
+    },
+    "rag": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/rag/SKILL.md",
+      "computedHash": "ac761123d9b132cba6a376466bdd1e1b22dca622f643ec47421ef918a920349d"
+    },
+    "react": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react/SKILL.md",
+      "computedHash": "d535abdf95b4b332a1cd252ac7f8f54ec12e63c229c65d76f1fdd92e93d5fc13"
+    },
+    "react-hook-form": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-hook-form/SKILL.md",
+      "computedHash": "6f6097c085b2ea85d27a4b4d8760a4d0b66d97d74f42ea8b2cfc59a81e0ef539"
+    },
+    "salesforce-developer": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/salesforce-developer/SKILL.md",
+      "computedHash": "4bed964239a46dd2814bfc8522bea67671666dc8248f71c32d1ce4d56d692eb9"
+    },
+    "shadcn": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "07a5b59f6eb55a11590b797ab3c7e63e6fa081e5e5b6eb512a4c5af03d14d467"
+    },
+    "skill-awesome": {
+      "source": "full-stack-skills/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-awesome/SKILL.md",
+      "computedHash": "06937f02726c54d9806de28f475c4c749149c91f5aa2a407d73acc2404d5e460"
+    },
+    "spark-engineer": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/spark-engineer/SKILL.md",
+      "computedHash": "afd4d4e4af2bd0abab0ee656ca0515a5480a37e15e7ada6736bfdda41a42e707"
+    },
+    "spring-boot-engineer": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/spring-boot-engineer/SKILL.md",
+      "computedHash": "293d15785cda1eaebdce24f99a6f363be5c25390e383324df1feeda158bba10d"
+    },
+    "sql-pro": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/databases-data/sql-pro/SKILL.md",
+      "computedHash": "9e885b2dde7c91ec9026191e1f5b2c6216d28ed14b13dfc830c7721c15a89012"
+    },
+    "tailwind": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tailwind/SKILL.md",
+      "computedHash": "e893783a3d72877ecf1437389689c6a2c7fa4457b163a22730f1f27fc2515204"
+    },
+    "tanstack-query": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tanstack-query/SKILL.md",
+      "computedHash": "d94687968e178b471b5f575aaaef7f7a802b316feeccd1fe76899465bf5efe0b"
+    },
+    "tdd": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tdd/SKILL.md",
+      "computedHash": "909cdf42290f6132fbe888a0218d1fc4aca7a1bb95529fa9284385bc980b6cc8"
+    },
+    "typescript": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/typescript/SKILL.md",
+      "computedHash": "984db4fa6caa704c4338876e4aa5b711fbfabc44d5ee3fc3580c1f7fd72762ba"
+    },
+    "ui-design": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-design/SKILL.md",
+      "computedHash": "38a92057f0cdd0231fb1d097ca76fb992ba2037b32d7af8a967d7d9bff6c5928"
+    },
+    "vercel-composition-patterns": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-composition-patterns/SKILL.md",
+      "computedHash": "7c8881e1aacf284828f974013c5e1b6b7c61b075291a2b93a65cccdf863438e4"
+    },
+    "vercel-react-best-practices": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-react-best-practices/SKILL.md",
+      "computedHash": "dddbb5d89790f20331214a668131e7fe23c47beca74661646bfd7607fae674b2"
+    },
+    "vitest": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vitest/SKILL.md",
+      "computedHash": "b289786dc34d07a5ea4d5960ae288ad38a225763ef7be616e67e00a8d2dfd1c0"
+    },
+    "web-design-guidelines": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "b746e3f00338019288dbd406961ae945ad822ab3c2be4fa0eb64905914d83897"
+    },
+    "websocket-engineer": {
+      "source": "Emmraan/agent-skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/backend-apis/websocket-engineer/SKILL.md",
+      "computedHash": "0be23b3291c1ad1b58ebf5e9cbd56f6cba4a0a7799ec466660c6ad97fd657b1c"
+    },
+    "zod": {
+      "source": "PyModel/react-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/zod/SKILL.md",
+      "computedHash": "f075a4826e2b4e054ad2fff523e9afc419ab0bda6b5fd331baa959970275b493"
     }
   }
 }
