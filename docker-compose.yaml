@@ -1,5 +1,6 @@
 services:
   web:
+    container_name: enterprise-ops-frontend
     depends_on:
       - api
     build:
@@ -11,14 +12,17 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
       VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+      VITE_FIREBASE_DATABASE_URL: ${VITE_FIREBASE_DATABASE_URL}
       VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
       VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
       VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
       VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
       VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID}
-      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:5000/api}
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://api:5000/api}
     ports:
       - "5173:5173"
+    networks:
+      - enterprise-ops-network
     develop:
       watch:
         - path: ./frontend/package.json
@@ -28,8 +32,18 @@ services:
         - path: ./frontend/src
           action: sync
           target: /app/src
+        - path: ./frontend/postcss.config.cjs
+          action: sync
+          target: /app/postcss.config.cjs
+        - path: ./frontend/vite.config.ts
+          action: sync
+          target: /app/vite.config.ts
+        - path: ./frontend/tailwind.config.js
+          action: sync
+          target: /app/tailwind.config.js
 
   api:
+    container_name: enterprise-ops-backend
     depends_on:
       db:
         condition: service_healthy
@@ -45,15 +59,18 @@ services:
       PORT: ${PORT:-5000}
       DB_USER_NAME: ${DB_USER_NAME:-postgres}
       DB_HOST: ${DB_HOST:-db}
-      DATABASE_NAME: ${DATABASE_NAME:-campusiq}
+      DATABASE_NAME: ${DATABASE_NAME:-ganga_jamuna}
       DB_PORT: ${DB_PORT:-5432}
       DB_PASS: ${DB_PASS}
-      REDIS_URI: ${REDIS_URI}
+      REDIS_URI: ${REDIS_URI:-redis://redis:6379}
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+      FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL}
     ports:
       - "${PORT:-5000}:${PORT:-5000}"
+    networks:
+      - enterprise-ops-network
     develop:
       watch:
         - path: ./backend/package.json
@@ -65,40 +82,52 @@ services:
           target: /app/src
 
   db:
+    container_name: enterprise-ops-postgres
     image: postgres:15-alpine
     restart: always
     user: postgres
     environment:
-      POSTGRES_DB: ${DATABASE_NAME:-campusiq}
+      POSTGRES_DB: ${DATABASE_NAME:-ganga_jamuna}
       POSTGRES_USER: ${DB_USER_NAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_NAME:-postgres} -d ${DATABASE_NAME:-campusiq}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_NAME:-postgres} -d ${DATABASE_NAME:-ganga_jamuna}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5433:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      - enterprise-ops-network
 
   redis:
+    container_name: enterprise-ops-redis
     image: redis:7-alpine
     restart: always
     command: ["sh", "-c", "redis-server $${REDIS_PASSWORD:+--requirepass \"$$REDIS_PASSWORD\"}"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "sh", "-c", "redis-cli -a $${REDIS_PASSWORD} ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - enterprise-ops-network
 
 volumes:
   db-data:
+    driver: local
   redis-data:
+    driver: local
+
+networks:
+  enterprise-ops-network:
+    driver: bridge
