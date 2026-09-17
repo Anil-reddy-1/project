@@ -1,47 +1,26 @@
 {
-  "name": "backend",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Express API — B2B Wholesale Marketplace",
-  "main": "dist/index.js",
+  "name": "campusiq",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "nodemon -e ts -w src -x \"ts-node --transpile-only src/index.ts\"",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "lint": "eslint src --ext .ts",
-    "seed:admin": "ts-node --skip-project scripts/seed-admin.ts",
-    "seed:delete-users": "ts-node --skip-project scripts/delete-all-users.ts"
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^6.0.2",
-    "@googlemaps/google-maps-services-js": "^3.4.2",
-    "axios": "^1.18.1",
-    "bcryptjs": "^2.4.3",
-    "cloudinary": "^2.5.1",
     "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-async-errors": "^3.1.1",
-    "firebase-admin": "^12.3.0",
-    "geofire-common": "^6.0.0",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "multer": "^2.0.0",
-    "razorpay": "^2.9.5",
-    "socket.io": "^4.8.3",
-    "uuid": "^11.0.0"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.10.0",
+    "joi": "^18.2.3",
+    "pg": "^8.22.0",
+    "redis": "^6.1.0",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/morgan": "^1.9.9",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^20.14.0",
-    "@types/uuid": "^10.0.0",
-    "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.4.5"
+    "@types/node": "^26.1.2",
+    "nodemon": "^3.1.14"
   }
 }
