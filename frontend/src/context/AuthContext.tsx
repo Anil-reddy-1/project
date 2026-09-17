@@ -1,89 +1,152 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { auth } from "../firebase";
-import { api } from "../utils/api";
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '../firebase';
 
-interface BackendProfile {
+const API_URL = 'http://localhost:5000/api/v1'; // v2 - fixed URL
+
+interface User {
   id: string;
-  firebase_uid: string;
-  email: string;
   name: string;
-  role: "student" | "faculty" | "admin";
-  department: string | null;
-  avatar_url: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  email: string;
+  role: string;
+  firebaseUid: string;
+  phone?: string;
+  avatarUrl?: string;
+  isActive: boolean;
 }
 
 interface AuthContextType {
-  firebaseUser: User | null;
-  profile: BackendProfile | null;
+  user: User | null;
   loading: boolean;
-  error: string | null;
   logout: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<BackendProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = async () => {
+  // Fetch user profile from backend
+  const fetchUserProfile = async (idToken: string): Promise<User | null> => {
     try {
-      setError(null);
-      const data = await api.getMe();
-      setProfile(data.data);
-    } catch (err: any) {
-      setError(err.message);
-      setProfile(null);
+      console.log('🔍 Fetching user profile from:', `${API_URL}/auth/me`);
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Backend response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Failed to fetch user profile:', response.status, errorText);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log('✅ User profile fetched:', data.data?.user);
+      return data.data?.user || null;
+    } catch (error) {
+      console.error('❌ Error fetching user profile:', error);
+      return null;
+    }
+  };
+
+  // Refresh user data
+  const refreshUser = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const idToken = await currentUser.getIdToken(true);
+      const userData = await fetchUserProfile(idToken);
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
     }
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setFirebaseUser(user);
-      if (user) {
-        // Sync user to backend, then fetch profile
-        try {
-          await api.syncUser();
-          await fetchProfile();
-        } catch (err: any) {
-          setError(err.message);
+    console.log('🔐 AuthContext: Setting up Firebase auth listener');
+    // Listen to Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔥 Firebase auth state changed:', firebaseUser ? `User: ${firebaseUser.email}` : 'No user');
+      try {
+        if (firebaseUser) {
+          // User is signed in, fetch profile from backend
+          console.log('🎫 Getting Firebase ID token...');
+          const idToken = await firebaseUser.getIdToken();
+          console.log('✅ Firebase token obtained');
+          
+          const userData = await fetchUserProfile(idToken);
+          
+          if (userData) {
+            console.log('✅ User authenticated:', userData);
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            // Failed to fetch user data, sign out
+            console.warn('⚠️ Failed to fetch user data from backend, signing out');
+            await firebaseSignOut(auth);
+            setUser(null);
+            localStorage.removeItem('user');
+          }
+        } else {
+          // User is signed out
+          console.log('👋 User signed out');
+          setUser(null);
+          localStorage.removeItem('user');
         }
-      } else {
-        setProfile(null);
-        setError(null);
+      } catch (error) {
+        console.error('❌ Auth state change error:', error);
+        setUser(null);
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsubscribe;
+
+    return () => unsubscribe();
   }, []);
 
   const logout = async () => {
-    await signOut(auth);
-    setProfile(null);
-  };
-
-  const refreshProfile = async () => {
-    await fetchProfile();
+    try {
+      // Call backend logout
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken();
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Backend logout error:', error);
+    } finally {
+      // Always sign out from Firebase
+      await firebaseSignOut(auth);
+      setUser(null);
+      localStorage.removeItem('user');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, profile, loading, error, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return ctx;
+  return context;
 }
