@@ -58,7 +58,7 @@ function formatReqUser(decodedToken) {
     emailVerified: Boolean(decodedToken.email_verified),
     name: decodedToken.name || decodedToken.display_name || null,
     picture: decodedToken.picture || null,
-    role: decodedToken.role || (decodedToken.customClaims && decodedToken.customClaims.role) || 'student',
+    role: decodedToken.role || (decodedToken.customClaims && decodedToken.customClaims.role) || 'buyer',
     claims: { ...decodedToken },
     authTime: decodedToken.auth_time,
     tokenIssuedAt: decodedToken.iat,
@@ -219,7 +219,7 @@ function requireRole(...allowedRoles) {
       return next(new UnauthorizedError('Authentication required.', 'UNAUTHORIZED'));
     }
 
-    const userRole = req.user.role ? String(req.user.role).toLowerCase() : 'student';
+    const userRole = req.user.role ? String(req.user.role).toLowerCase() : 'buyer';
     const isAllowed = rolesList.includes(userRole);
 
     if (!isAllowed) {

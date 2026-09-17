@@ -57,7 +57,7 @@ if (process.env.NODE_ENV === "production") {
 // Create logger instance
 const logger = winston.createLogger({
   level,
-  defaultMeta: { service: "campusiq-api" },
+  defaultMeta: { service: "ganga-jamuna-api" },
   transports,
   // Don't exit on unhandled errors
   exitOnError: false,
@@ -67,7 +67,7 @@ const logger = winston.createLogger({
 logger.child = (metadata) => {
   return winston.createLogger({
     level,
-    defaultMeta: { service: "campusiq-api", ...metadata },
+    defaultMeta: { service: "ganga-jamuna-api", ...metadata },
     transports,
     exitOnError: false,
   });
