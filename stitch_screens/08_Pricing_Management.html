@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Cornerstone OPS HUB</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-dim":"#d0daf2","inverse-primary":"#adc8f5","error":"#ba1a1a","primary-fixed":"#d5e3ff","secondary-fixed":"#bfe9ff","on-surface-variant":"#43474e","primary-container":"#1e3a5f","surface-container-low":"#f0f3ff","on-secondary-fixed":"#001f2a","on-tertiary-fixed-variant":"#005236","on-secondary-fixed-variant":"#004d65","primary-fixed-dim":"#adc8f5","primary":"#022448","tertiary-fixed":"#a4f3ca","error-container":"#ffdad6","outline":"#74777f","on-primary-container":"#8aa4cf","on-error":"#ffffff","on-tertiary-container":"#65b28c","on-primary":"#ffffff","secondary-fixed-dim":"#8ccff0","on-tertiary-fixed":"#002113","on-primary-fixed-variant":"#2d486d","on-secondary-container":"#0e6380","background":"#f9f9ff","tertiary-container":"#00422b","surface-container-highest":"#d9e3fb","on-background":"#111c2d","inverse-on-surface":"#ecf0ff","surface-container-high":"#dfe8ff","on-secondary":"#ffffff","surface-container-lowest":"#ffffff","secondary":"#146683","on-tertiary":"#ffffff","surface-tint":"#455f87","on-surface":"#111c2d","on-primary-fixed":"#001c3b","inverse-surface":"#273143","secondary-container":"#9addff","surface-bright":"#f9f9ff","on-error-container":"#93000a","tertiary":"#002a1a","surface-variant":"#d9e3fb","tertiary-fixed-dim":"#88d6af","outline-variant":"#c4c6cf","surface-container":"#e8eeff","surface":"#f9f9ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-md":"0.75rem","space-xl":"1.5rem","space-lg":"1rem","space-xs":"0.25rem","margin":"1rem"},fontFamily:{"headline-lg":["Inter"],"title-md":["Inter"],"title-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"headline-sm":["Inter"],"data-mono":["Inter"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",fontWeight:"600"}],"title-md":["16px",{lineHeight:"24px",fontWeight:"600"}],"title-sm":["14px",{lineHeight:"20px",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-md":["13px",{lineHeight:"18px",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"28px",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"24px",fontWeight:"600"}],"data-mono":["13px",{lineHeight:"18px",fontWeight:"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-primary-container z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 flex items-center px-space-lg gap-space-sm bg-primary"><img alt="Brand logo. - Primary color: #2563eb - Font: inter - Mode: light - Roundness: rounded-sm " class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wg4Osm-gQWDfq96ZEJTmDygdBNubP15SUZVLI_8EIc0JQOFcsAUldHXPS7pnu907QaWTn4vu4qb_KcLB938sMKVQSYbnVVCO8frO9mfAJdLu2fsg-ROHUhfQB53mCX-S6FSDMbhOobTQhylGizOOqVJ-QBn93WsZYNNBHyHoWjW5tZSDJ08xsuUeuNktKNvFNl7lEeER-Uh9reqZZeccXbDa3jW8gGWWVYmodfev_e8FZLCg9jtm2Phzg"/><div class="flex flex-col min-w-0 leading-tight"><span class="font-title-sm text-title-sm text-on-primary font-semibold tracking-wide truncate">Cornerstone</span><span class="font-label-sm text-label-sm text-on-primary-container uppercase tracking-wider">OPS HUB</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-sm text-label-sm text-on-primary-container uppercase font-semibold tracking-wider px-space-sm">Operations</span></div><nav class="flex flex-col gap-space-xs px-space-sm" data-active-classes="bg-surface-container-high text-on-surface font-semibold"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="user-management" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span>User Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="role-management" href="#"><span class="material-symbols-outlined text-[18px]">admin_panel_settings</span><span>Role Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="staff-management" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Staff Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="stock-management" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span>Stock Management</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-semibold" data-path="pricing-management" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Pricing Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="delivery-management" href="#"><span class="material-symbols-outlined text-[18px]">local_shipping</span><span>Delivery Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pending-debts" href="#"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Pending Debts</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="reports" href="#"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports</span></a></nav></div><div class="p-space-md bg-primary mx-space-sm mb-space-md rounded-lg flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-title-sm text-title-sm shrink-0 font-bold">SJ</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-primary truncate font-medium">Sarah Jenkins</span><span class="font-label-sm text-label-sm text-on-primary-container truncate">Store Manager</span></div></div><button class="text-on-primary-container hover:text-on-primary shrink-0 transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-14 bg-surface-container-lowest z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg flex-1"><div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="font-medium text-on-surface">OPS HUB</span><span class="text-outline">/</span><span class="text-on-surface-variant capitalize">Console</span></div><div class="relative w-72"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span><input class="w-full h-8 pl-8 pr-3 text-on-surface bg-surface-container-low rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Search inventory, orders, staff..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface"><span class="w-2 h-2 rounded-full bg-tertiary-container shrink-0"></span><span class="font-medium">Shift #1 Active</span></div><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px] text-secondary">store</span><span class="font-medium">Main Store #04</span></div><button class="relative p-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-space-xl pb-margin-desktop bg-surface flex-1"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-xl">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pt-space-xs">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider mb-0.5">
+<span>Inventory Operations</span>
+<span>•</span>
+<span class="text-secondary font-semibold">Store #04 Retail Execution</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Pricing &amp; Margin Management</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5 max-w-3xl">
+          Control retail shelf prices, cost margins, markdown batches, and promotional price rules across departments.
+        </p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="h-9 px-space-md bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-md text-label-md rounded shadow-sm flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">file_download</span>
+<span>Export Price Catalog (CSV)</span>
+</button>
+<button class="h-9 px-space-lg bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded shadow-sm flex items-center gap-space-xs transition-colors" onclick="openPriceModal('SKU-GROC-1021', 'Farm Fresh Whole Milk 1 Gal', 'Dairy &amp; Chilled', 2.60, 3.89, 33.2)" type="button">
+<span class="material-symbols-outlined text-[18px]">add_box</span>
+<span>+ Batch Price Update</span>
+</button>
+</div>
+</div>
+<!-- Summary Stats Bento Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-space-lg rounded shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-semibold tracking-wider text-on-surface-variant">Active Catalog SKUs</span>
+<div class="w-8 h-8 rounded bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">840</div>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">
+              100% Audited
+            </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Products active in POS</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-container/20 group-hover:bg-primary-container transition-colors"></div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-space-lg rounded shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-semibold tracking-wider text-on-surface-variant">Average Gross Margin</span>
+<div class="w-8 h-8 rounded bg-tertiary-fixed/30 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">28.4%</div>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-tertiary-fixed/40 text-on-tertiary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+              +1.2%
+            </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">vs Q3 target (27.0%)</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-tertiary-container/30 group-hover:bg-tertiary-container transition-colors"></div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-space-lg rounded shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-semibold tracking-wider text-on-surface-variant">Pending Price Changes</span>
+<div class="w-8 h-8 rounded bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">6</div>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm font-medium">
+              Queue Locked
+            </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Executes Shift #1 (06:00)</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary group-hover:bg-primary transition-colors"></div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest p-space-lg rounded shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-semibold tracking-wider text-on-surface-variant">Active Markdowns</span>
+<div class="w-8 h-8 rounded bg-error-container/40 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[20px]">sell</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">18 SKUs</div>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+              Flash Clearance
+            </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Evening Produce &amp; Bakery</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-error group-hover:bg-error-container transition-colors"></div>
+</div>
+</div>
+<!-- Filters & Search Toolbar -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col lg:flex-row gap-space-md items-stretch lg:items-center justify-between">
+<div class="flex flex-1 flex-col sm:flex-row gap-space-sm items-center">
+<!-- Search bar -->
+<div class="relative w-full sm:w-80">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full h-9 pl-9 pr-3 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors shadow-none" id="tableSearch" placeholder="Search product, SKU, barcode..." type="text"/>
+</div>
+<!-- Category Dropdown -->
+<div class="relative w-full sm:w-48">
+<select class="w-full h-9 pl-3 pr-8 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest transition-colors">
+<option value="">All Categories</option>
+<option value="dairy">Dairy &amp; Chilled</option>
+<option value="pantry">Baking &amp; Pantry</option>
+<option value="produce">Fresh Produce</option>
+<option value="household">Cleaning &amp; Household</option>
+<option value="beverages">Beverages &amp; Juices</option>
+<option value="bakery">Bakery &amp; Fresh Daily</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+<!-- Margin Filter -->
+<div class="relative w-full sm:w-40">
+<select class="w-full h-9 pl-3 pr-8 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest transition-colors">
+<option value="">Margin: All</option>
+<option value="low">&lt; 15% (Critical)</option>
+<option value="mid">15% - 30% (Standard)</option>
+<option value="high">&gt; 30% (High Yield)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">filter_alt</span>
+</div>
+<!-- Price Status Filter -->
+<div class="relative w-full sm:w-44">
+<select class="w-full h-9 pl-3 pr-8 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest transition-colors">
+<option value="">Status: All Active</option>
+<option value="std">Standard Price</option>
+<option value="mdown">Marked Down (-%)</option>
+<option value="sched">Pending Scheduled</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">tune</span>
+</div>
+</div>
+<!-- Quick Utility Toggles -->
+<div class="flex items-center gap-space-xs shrink-0 self-end lg:self-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium mr-1">Sort:</span>
+<button class="h-8 px-space-sm bg-surface-container-high text-on-surface rounded font-label-sm text-label-sm flex items-center gap-1 font-semibold" type="button">
+          Margin % <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+</button>
+<button class="h-8 w-8 bg-surface-container-low hover:bg-surface-container text-on-surface-variant rounded flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+</button>
+</div>
+</div>
+<!-- Pricing Catalog Data Table -->
+<div class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="h-10 bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider select-none">
+<th class="px-space-md py-2 font-semibold">Product Name &amp; Department</th>
+<th class="px-space-md py-2 font-semibold">SKU / Barcode</th>
+<th class="px-space-md py-2 font-semibold text-right">Base Wholesale</th>
+<th class="px-space-md py-2 font-semibold text-right">Retail Shelf</th>
+<th class="px-space-md py-2 font-semibold text-right">Gross Margin %</th>
+<th class="px-space-md py-2 font-semibold">Last Audit</th>
+<th class="px-space-md py-2 font-semibold">Audit By</th>
+<th class="px-space-md py-2 font-semibold text-center w-36">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface font-body-sm text-body-sm">
+<!-- Row 1 -->
+<tr class="h-14 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                    Farm Fresh Whole Milk 1 Gal
+                  </span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Dairy &amp; Chilled</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold">Staple Index</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-GROC-1021</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">041220-10928</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$2.60</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-primary font-semibold text-[14px]">$3.89</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-tertiary-container">33.2%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-tertiary-container" style="width: 66%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Today, 08:30</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">AM Shift Sync</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-bold">S</div>
+<span class="font-body-sm text-body-sm text-on-surface">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-GROC-1021', 'Farm Fresh Whole Milk 1 Gal', 'Dairy &amp; Chilled', 2.60, 3.89, 33.2)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="h-14 bg-surface-container-lowest/50 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                    Pure Cane Sugar 4lb Bag
+                  </span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Baking &amp; Pantry</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-GROC-2044</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">071110-84721</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$1.90</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-primary font-semibold text-[14px]">$2.99</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-tertiary-container">36.5%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-tertiary-container" style="width: 73%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Oct 18, 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Weekly Price Batch</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-bold">S</div>
+<span class="font-body-sm text-body-sm text-on-surface">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-GROC-2044', 'Pure Cane Sugar 4lb Bag', 'Baking &amp; Pantry', 1.90, 2.99, 36.5)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="h-14 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                    Refined Sunflower Oil 2L
+                  </span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cooking Oil &amp; Fats</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-GROC-3190</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">085441-29011</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$4.20</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-primary font-semibold text-[14px]">$5.75</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-secondary">27.0%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-secondary" style="width: 54%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Oct 22, 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Vendor Cost Update</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-bold">S</div>
+<span class="font-body-sm text-body-sm text-on-surface">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-GROC-3190', 'Refined Sunflower Oil 2L', 'Cooking Oil', 4.20, 5.75, 27.0)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="h-14 bg-surface-container-lowest/50 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                    Grade A Large Brown Eggs 12pk
+                  </span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Dairy &amp; Chilled</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-GROC-1108</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">049811-30042</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$2.40</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-primary font-semibold text-[14px]">$3.49</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-tertiary-container">31.2%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-tertiary-container" style="width: 62%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Oct 15, 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Regular Audit</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-bold">S</div>
+<span class="font-body-sm text-body-sm text-on-surface">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-GROC-1108', 'Grade A Large Brown Eggs 12pk', 'Dairy &amp; Chilled', 2.40, 3.49, 31.2)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="h-14 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                    Multi-Surface Disinfectant 750ml
+                  </span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cleaning &amp; Household</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-HOU-3401</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">019448-91280</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$3.80</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-primary font-semibold text-[14px]">$5.49</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-tertiary-container">30.8%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-tertiary-container" style="width: 61%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Oct 10, 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">System Policy Rule</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">A</div>
+<span class="font-body-sm text-body-sm text-on-surface">Admin System</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-HOU-3401', 'Multi-Surface Disinfectant 750ml', 'Cleaning &amp; Household', 3.80, 5.49, 30.8)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="h-14 bg-surface-container-lowest/50 hover:bg-surface-container-low/60 transition-colors group">
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface group-hover:text-primary font-semibold transition-colors">
+                      Artisan Sourdough Loaf 500g
+                    </span>
+<span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+                      Markdown -15%
+                    </span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Bakery &amp; Fresh Daily</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Exp: Today 22:00</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">SKU-BAK-0512</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider">030104-55109</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant font-medium">$1.80</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="flex flex-col items-end">
+<span class="font-data-mono text-data-mono text-error font-semibold text-[14px]">$3.25</span>
+<span class="font-label-sm text-label-sm text-outline line-through">$3.82</span>
+</div>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<span class="font-data-mono text-data-mono font-semibold text-tertiary-container">44.6%</span>
+<span class="w-12 h-1.5 rounded-full bg-surface-container-high overflow-hidden inline-block align-middle">
+<span class="block h-full bg-tertiary-container" style="width: 89%;"></span>
+</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">Today, 06:15</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bakery AM Bake</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-bold">M</div>
+<span class="font-body-sm text-body-sm text-on-surface">Mike S.</span>
+</div>
+</td>
+<td class="px-space-md py-2">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="h-7 px-2 bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" onclick="openPriceModal('SKU-BAK-0512', 'Artisan Sourdough Loaf 500g', 'Bakery &amp; Fresh Daily', 1.80, 3.25, 44.6)" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Update</span>
+</button>
+<button class="h-7 w-7 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded flex items-center justify-center transition-colors" title="Audit Log" type="button">
+<span class="material-symbols-outlined text-[15px]">history</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination footer -->
+<div class="h-12 px-space-md bg-surface-container-low flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-space-xs">
+<span>Showing</span>
+<span class="font-medium text-on-surface">1-6</span>
+<span>of</span>
+<span class="font-medium text-on-surface">840</span>
+<span>catalog items</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="h-7 px-2 rounded bg-surface-container-lowest text-on-surface disabled:opacity-50 flex items-center gap-1 font-label-sm text-label-sm" disabled="">
+<span class="material-symbols-outlined text-[14px]">chevron_left</span> Prev
+          </button>
+<div class="flex items-center gap-1">
+<span class="h-7 w-7 rounded bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold flex items-center justify-center">1</span>
+<button class="h-7 w-7 rounded hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">2</button>
+<button class="h-7 w-7 rounded hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="h-7 w-7 rounded hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">140</button>
+</div>
+<button class="h-7 px-2 rounded bg-surface-container-lowest hover:bg-surface-container text-on-surface flex items-center gap-1 font-label-sm text-label-sm">
+            Next <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Promotional Markdown Rules & Policy Alert Banner -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<div class="lg:col-span-2 bg-surface-container-lowest p-space-lg rounded shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">policy</span>
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Automated Store Price Guardrails</h3>
+</div>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed/40 text-on-tertiary-fixed-variant px-2 py-0.5 rounded font-semibold uppercase">Active Rules</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md mt-space-sm">
+<div class="bg-surface-container-low p-space-md rounded">
+<div class="flex items-center justify-between">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Minimum Margin Floor</span>
+<span class="font-data-mono text-data-mono text-error font-semibold">18.0%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Shelf prices cannot be manually reduced below an 18% margin without Store General Manager override.
+            </p>
+</div>
+<div class="bg-surface-container-low p-space-md rounded">
+<div class="flex items-center justify-between">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Daily Perishables Markdown</span>
+<span class="font-data-mono text-data-mono text-secondary font-semibold">18:00 Local</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Auto-applies 15% markdown to same-day expiration Bakery and Cut-Fruit SKUs every evening.
+            </p>
+</div>
+</div>
+</div>
+<!-- Quick Batch Audit Card -->
+<div class="bg-primary text-on-primary p-space-lg rounded shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary-fixed-dim font-semibold">Operational Batch</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed animate-pulse"></span>
+</div>
+<h3 class="font-title-md text-title-md text-on-primary font-semibold mt-1">Upcoming EDI Price Feed</h3>
+<p class="font-body-sm text-body-sm text-surface-variant mt-1">
+            Supplier Valley Dairy price schedule queued for overnight POS ingestion.
+          </p>
+<div class="mt-space-md bg-primary-container p-space-sm rounded flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-primary-container">Next Sync Window</span>
+<span class="font-data-mono text-data-mono text-primary-fixed font-semibold">04:00 AM (4h 12m)</span>
+</div>
+</div>
+<div class="pt-space-md">
+<button class="w-full h-8 bg-surface-container-lowest hover:bg-surface-container-low text-primary font-label-md text-label-md rounded font-semibold transition-colors flex items-center justify-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+<span>Review 12 Pending EDI Changes</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Price Update Modal / Drawer Overlay -->
+<div class="fixed inset-0 z-50 bg-primary/40 backdrop-blur-xs flex justify-end transition-opacity duration-300 opacity-0 pointer-events-none" id="priceDrawer">
+<!-- Drawer backdrop click close -->
+<div class="flex-1" onclick="closePriceModal()"></div>
+<!-- Drawer Content Panel -->
+<div class="w-full max-w-lg bg-surface-container-lowest h-full shadow-2xl flex flex-col justify-between transform translate-x-full transition-transform duration-300" id="drawerPanel">
+<!-- Drawer Header -->
+<div class="px-space-xl py-space-lg bg-surface-container-low flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold tracking-wider">Price Configuration</span>
+<h2 class="font-title-md text-title-md text-primary font-semibold mt-0.5" id="modalProductTitle">
+            Update Retail Price: Farm Fresh Whole Milk 1 Gal
+          </h2>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-[12px] mt-0.5" id="modalSkuTag">
+            SKU-GROC-1021 • Dairy &amp; Chilled
+          </span>
+</div>
+<button class="w-8 h-8 rounded hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="closePriceModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Drawer Body / Form Fields -->
+<div class="px-space-xl py-space-lg flex-1 overflow-y-auto flex flex-col gap-space-lg">
+<!-- Cost & Current Margin Overview Box -->
+<div class="bg-surface-container-low p-space-md rounded grid grid-cols-2 gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-on-surface-variant">Supplier Base Cost</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-data-mono text-data-mono font-semibold text-[15px] text-on-surface" id="displayBaseCost">$2.60</span>
+<span class="material-symbols-outlined text-[14px] text-outline" title="Wholesale EDI Locked">lock</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">Wholesale EDI Locked</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-on-surface-variant">Current Shelf Retail</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-data-mono text-data-mono font-semibold text-[15px] text-on-surface" id="displayCurrentRetail">$3.89</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary" id="displayCurrentMargin">(33.2%)</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">Active POS Shelf Tag</span>
+</div>
+</div>
+<!-- Margin Simulator Section -->
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between" for="newRetailInput">
+<span>New Proposed Retail Shelf Price</span>
+<span class="text-on-surface-variant font-normal text-[11px]">Tax inclusive ($)</span>
+</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 font-data-mono text-on-surface-variant font-semibold">$</span>
+<input class="w-full h-10 pl-8 pr-3 text-on-surface bg-surface-container-low rounded font-data-mono text-[16px] font-semibold focus:outline-none focus:bg-surface-container-lowest transition-colors" id="newRetailInput" oninput="recalculateMargin()" step="0.01" type="number" value="4.19"/>
+</div>
+</div>
+<!-- Margin Impact Comparison Result -->
+<div class="p-space-md rounded bg-surface-container flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Calculated New Margin</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-data-mono text-data-mono text-headline-sm font-semibold text-tertiary-container" id="calculatedMargin">37.9%</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold" id="marginDeltaBadge">
+                +4.7% Margin
+              </span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Gross Profit / Unit</span>
+<span class="font-data-mono text-data-mono font-semibold text-on-surface mt-0.5" id="unitProfit">$1.59</span>
+</div>
+</div>
+<!-- Effective Scheduling -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="effectiveDateSelect">Effective POS Activation Date</label>
+<div class="relative">
+<select class="w-full h-9 pl-3 pr-8 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none" id="effectiveDateSelect">
+<option selected="" value="shift1">Tomorrow at Shift #1 Start (06:00 AM)</option>
+<option value="immediate">Immediate Sync (Within 5 Minutes)</option>
+<option value="shift2">Tomorrow Afternoon Shift #2 (14:00 PM)</option>
+<option value="weekend">Next Saturday Opening (Weekly Cycle)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">event</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Electronic Shelf Labels (ESL) will blink 30 minutes prior to shift launch.</p>
+</div>
+<!-- Reason Dropdown -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="priceReason">Reason for Price Adjustment</label>
+<div class="relative">
+<select class="w-full h-9 pl-3 pr-8 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none" id="priceReason">
+<option selected="" value="cost_inc">Supplier Cost Increase</option>
+<option value="seasonal">Seasonal Adjustment</option>
+<option value="promo">Promotional Markdown</option>
+<option value="comp">Competitive Price Match</option>
+<option value="margin_rec">Target Margin Recovery</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Operational Note Input -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="operationalNote">Operational Audit Note</label>
+<textarea class="w-full p-2.5 text-on-surface bg-surface-container-low rounded font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" id="operationalNote" rows="3">Reflecting 5% raw milk wholesale index adjustment from Valley Dairy</textarea>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-right text-[11px]">Logged in master price audit log with timestamp</span>
+</div>
+</div>
+<!-- Drawer Actions Footer -->
+<div class="px-space-xl py-space-md bg-surface-container-low flex items-center justify-between gap-space-md">
+<button class="h-9 px-space-md bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md rounded transition-colors font-medium" onclick="closePriceModal()" type="button">
+          Cancel
+        </button>
+<button class="h-9 px-space-lg bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded font-semibold transition-colors flex items-center gap-1.5 shadow-sm" onclick="confirmPriceChange()" type="button">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Confirm &amp; Schedule Price Change</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Toast Notification -->
+<div class="fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-space-lg py-space-md rounded shadow-xl flex items-center gap-space-md transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none" id="toastNotification">
+<div class="w-7 h-7 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col min-w-0 pr-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-primary">Price Change Scheduled</span>
+<span class="font-body-sm text-body-sm text-surface-variant" id="toastMessage">Update queued for Shift #1 execution.</span>
+</div>
+<button class="text-surface-variant hover:text-on-primary" onclick="dismissToast()" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<script>
+  let currentItemCost = 2.60;
+  let currentOldMargin = 33.2;
+
+  function openPriceModal(sku, title, dept, cost, currentPrice, margin) {
+    currentItemCost = cost;
+    currentOldMargin = margin;
+
+    document.getElementById('modalProductTitle').textContent = `Update Retail Price: ${title}`;
+    document.getElementById('modalSkuTag').textContent = `${sku} • ${dept}`;
+    document.getElementById('displayBaseCost').textContent = `$${cost.toFixed(2)}`;
+    document.getElementById('displayCurrentRetail').textContent = `$${currentPrice.toFixed(2)}`;
+    document.getElementById('displayCurrentMargin').textContent = `(${margin.toFixed(1)}%)`;
+
+    // Default proposed price slightly higher for demo
+    const proposed = (currentPrice * 1.077).toFixed(2);
+    document.getElementById('newRetailInput').value = proposed;
+
+    recalculateMargin();
+
+    const drawer = document.getElementById('priceDrawer');
+    const panel = document.getElementById('drawerPanel');
+    
+    drawer.classList.remove('pointer-events-none', 'opacity-0');
+    drawer.classList.add('opacity-100');
+    panel.classList.remove('translate-x-full');
+    panel.classList.add('translate-x-0');
+  }
+
+  function closePriceModal() {
+    const drawer = document.getElementById('priceDrawer');
+    const panel = document.getElementById('drawerPanel');
+    
+    panel.classList.remove('translate-x-0');
+    panel.classList.add('translate-x-full');
+    drawer.classList.remove('opacity-100');
+    drawer.classList.add('opacity-0');
+    setTimeout(() => {
+      drawer.classList.add('pointer-events-none');
+    }, 300);
+  }
+
+  function recalculateMargin() {
+    const input = document.getElementById('newRetailInput');
+    const newRetail = parseFloat(input.value) || 0;
+    
+    if (newRetail <= 0) {
+      document.getElementById('calculatedMargin').textContent = '0.0%';
+      document.getElementById('unitProfit').textContent = '$0.00';
+      return;
+    }
+
+    const profit = newRetail - currentItemCost;
+    const marginPct = (profit / newRetail) * 100;
+    const delta = marginPct - currentOldMargin;
+
+    document.getElementById('calculatedMargin').textContent = `${marginPct.toFixed(1)}%`;
+    document.getElementById('unitProfit').textContent = `$${profit.toFixed(2)}`;
+
+    const deltaBadge = document.getElementById('marginDeltaBadge');
+    if (delta >= 0) {
+      deltaBadge.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold';
+      deltaBadge.textContent = `+${delta.toFixed(1)}% Margin`;
+    } else {
+      deltaBadge.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold';
+      deltaBadge.textContent = `${delta.toFixed(1)}% Margin`;
+    }
+  }
+
+  function confirmPriceChange() {
+    const newPrice = parseFloat(document.getElementById('newRetailInput').value).toFixed(2);
+    closePriceModal();
+
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.textContent = `New price $${newPrice} scheduled for next shift deployment.`;
+
+    toast.classList.remove('pointer-events-none', 'translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      dismissToast();
+    }, 4500);
+  }
+
+  function dismissToast() {
+    const toast = document.getElementById('toastNotification');
+    toast.classList.remove('translate-y-0', 'opacity-100');
+    toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+  }
+
+  // Keyboard shortcut for drawer escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closePriceModal();
+    }
+  });
+</script></main></div></body></html>

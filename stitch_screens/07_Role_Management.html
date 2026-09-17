@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Cornerstone OPS HUB</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-dim":"#d0daf2","inverse-primary":"#adc8f5","error":"#ba1a1a","primary-fixed":"#d5e3ff","secondary-fixed":"#bfe9ff","on-surface-variant":"#43474e","primary-container":"#1e3a5f","surface-container-low":"#f0f3ff","on-secondary-fixed":"#001f2a","on-tertiary-fixed-variant":"#005236","on-secondary-fixed-variant":"#004d65","primary-fixed-dim":"#adc8f5","primary":"#022448","tertiary-fixed":"#a4f3ca","error-container":"#ffdad6","outline":"#74777f","on-primary-container":"#8aa4cf","on-error":"#ffffff","on-tertiary-container":"#65b28c","on-primary":"#ffffff","secondary-fixed-dim":"#8ccff0","on-tertiary-fixed":"#002113","on-primary-fixed-variant":"#2d486d","on-secondary-container":"#0e6380","background":"#f9f9ff","tertiary-container":"#00422b","surface-container-highest":"#d9e3fb","on-background":"#111c2d","inverse-on-surface":"#ecf0ff","surface-container-high":"#dfe8ff","on-secondary":"#ffffff","surface-container-lowest":"#ffffff","secondary":"#146683","on-tertiary":"#ffffff","surface-tint":"#455f87","on-surface":"#111c2d","on-primary-fixed":"#001c3b","inverse-surface":"#273143","secondary-container":"#9addff","surface-bright":"#f9f9ff","on-error-container":"#93000a","tertiary":"#002a1a","surface-variant":"#d9e3fb","tertiary-fixed-dim":"#88d6af","outline-variant":"#c4c6cf","surface-container":"#e8eeff","surface":"#f9f9ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-md":"0.75rem","space-xl":"1.5rem","space-lg":"1rem","space-xs":"0.25rem","margin":"1rem"},fontFamily:{"headline-lg":["Inter"],"title-md":["Inter"],"title-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"headline-sm":["Inter"],"data-mono":["Inter"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",fontWeight:"600"}],"title-md":["16px",{lineHeight:"24px",fontWeight:"600"}],"title-sm":["14px",{lineHeight:"20px",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-md":["13px",{lineHeight:"18px",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"28px",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"24px",fontWeight:"600"}],"data-mono":["13px",{lineHeight:"18px",fontWeight:"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-primary-container z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 flex items-center px-space-lg gap-space-sm bg-primary"><img alt="Brand logo. - Primary color: #2563eb - Font: inter - Mode: light - Roundness: rounded-sm " class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wg4Osm-gQWDfq96ZEJTmDygdBNubP15SUZVLI_8EIc0JQOFcsAUldHXPS7pnu907QaWTn4vu4qb_KcLB938sMKVQSYbnVVCO8frO9mfAJdLu2fsg-ROHUhfQB53mCX-S6FSDMbhOobTQhylGizOOqVJ-QBn93WsZYNNBHyHoWjW5tZSDJ08xsuUeuNktKNvFNl7lEeER-Uh9reqZZeccXbDa3jW8gGWWVYmodfev_e8FZLCg9jtm2Phzg"/><div class="flex flex-col min-w-0 leading-tight"><span class="font-title-sm text-title-sm text-on-primary font-semibold tracking-wide truncate">Cornerstone</span><span class="font-label-sm text-label-sm text-on-primary-container uppercase tracking-wider">OPS HUB</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-sm text-label-sm text-on-primary-container uppercase font-semibold tracking-wider px-space-sm">Operations</span></div><nav class="flex flex-col gap-space-xs px-space-sm" data-active-classes="bg-surface-container-high text-on-surface font-semibold"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="user-management" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span>User Management</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-semibold" data-path="role-management" href="#"><span class="material-symbols-outlined text-[18px]">admin_panel_settings</span><span>Role Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="staff-management" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Staff Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="stock-management" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span>Stock Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pricing-management" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Pricing Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="delivery-management" href="#"><span class="material-symbols-outlined text-[18px]">local_shipping</span><span>Delivery Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pending-debts" href="#"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Pending Debts</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="reports" href="#"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports</span></a></nav></div><div class="p-space-md bg-primary mx-space-sm mb-space-md rounded-lg flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-title-sm text-title-sm shrink-0 font-bold">SJ</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-primary truncate font-medium">Sarah Jenkins</span><span class="font-label-sm text-label-sm text-on-primary-container truncate">Store Manager</span></div></div><button class="text-on-primary-container hover:text-on-primary shrink-0 transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-14 bg-surface-container-lowest z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg flex-1"><div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="font-medium text-on-surface">OPS HUB</span><span class="text-outline">/</span><span class="text-on-surface-variant capitalize">Console</span></div><div class="relative w-72"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span><input class="w-full h-8 pl-8 pr-3 text-on-surface bg-surface-container-low rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Search inventory, orders, staff..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface"><span class="w-2 h-2 rounded-full bg-tertiary-container shrink-0"></span><span class="font-medium">Shift #1 Active</span></div><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px] text-secondary">store</span><span class="font-medium">Main Store #04</span></div><button class="relative p-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-space-xl pb-margin-desktop bg-surface flex-1"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg mb-space-xl">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-xs mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Access Governance</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">SEC-POL-V4.2</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Role &amp; Permission Management</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-0.5">Define access tiers, operational privileges, store terminal permissions, and security policies.</p>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto shrink-0">
+<button class="h-9 px-space-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-low shadow-sm rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">history_toggle_off</span>
+<span>Audit Role Changes</span>
+</button>
+<button class="h-9 px-space-md bg-primary-container text-on-primary hover:bg-primary shadow-sm rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">add_moderator</span>
+<span>+ Create New Role</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Configured Roles</span>
+<span class="font-headline-md text-headline-md text-primary mt-1">6 Active</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">shield_person</span>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Assigned Staff</span>
+<span class="font-headline-md text-headline-md text-primary mt-1">34 Users</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Terminal Nodes</span>
+<span class="font-headline-md text-headline-md text-primary mt-1">8 Enrolled</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">point_of_sale</span>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Policy Enforcement</span>
+<span class="font-headline-md text-headline-md text-tertiary-container mt-1">100% Strict</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<div class="lg:col-span-4 xl:col-span-4 flex flex-col gap-space-md">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-title-sm text-title-sm text-primary font-semibold">Roles Directory</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant px-space-xs py-0.5 rounded-lg bg-surface-container">6 Roles</span>
+</div>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-on-surface bg-surface-container-lowest rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors shadow-sm" id="role-search-input" placeholder="Filter roles or access scope..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col divide-y-0" id="roles-list">
+<div class="role-item p-space-md hover:bg-surface-container-low cursor-pointer transition-colors flex flex-col gap-space-xs" data-role-id="admin">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Store Administrator</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Full System Access, root security, fiscal override</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-surface-container text-on-surface-variant font-semibold">System</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-data-mono text-data-mono">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>2 Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<div class="role-item p-space-md bg-surface-container cursor-pointer transition-colors flex flex-col gap-space-xs relative" data-role-id="ops-manager">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary rounded-l"></div>
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-title-sm text-title-sm text-primary font-bold truncate">Store Operations Manager</span>
+<span class="w-2 h-2 rounded-full bg-secondary shrink-0"></span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Inventory, shift audits, vendor payables</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-semibold">Custom</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-secondary font-data-mono text-data-mono font-semibold">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>4 Users Active</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<div class="role-item p-space-md hover:bg-surface-container-low cursor-pointer transition-colors flex flex-col gap-space-xs" data-role-id="cashier">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Senior Cashier &amp; POS Operator</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Sales registers, cash drawer reconciliation</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-surface-container text-on-surface-variant font-semibold">System</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-data-mono text-data-mono">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>12 Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<div class="role-item p-space-md hover:bg-surface-container-low cursor-pointer transition-colors flex flex-col gap-space-xs" data-role-id="inventory">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Inventory &amp; Stock Clerk</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Barcode scanning, stock audit, receiving dock check-in</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-surface-container text-on-surface-variant font-semibold">System</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-data-mono text-data-mono">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>8 Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<div class="role-item p-space-md hover:bg-surface-container-low cursor-pointer transition-colors flex flex-col gap-space-xs" data-role-id="courier">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Dispatch &amp; Delivery Courier</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Route manifests, delivery signature, mobile intake</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-semibold">Custom</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-data-mono text-data-mono">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>6 Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<div class="role-item p-space-md hover:bg-surface-container-low cursor-pointer transition-colors flex flex-col gap-space-xs" data-role-id="auditor">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate">External Auditor / Accountant</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">Read-only financial payables &amp; reports</span>
+</div>
+<span class="shrink-0 px-2 py-0.5 rounded-lg font-label-sm text-label-sm bg-surface-container text-on-surface-variant font-semibold">System</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-data-mono text-data-mono">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>2 Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Duplicate Role" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded transition-colors" title="Edit Metadata" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 6 system roles</span>
+<button class="text-secondary font-label-sm text-label-sm font-semibold hover:underline flex items-center gap-1" type="button">
+<span>Export Matrix</span>
+<span class="material-symbols-outlined text-[14px]">download</span>
+</button>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-title-sm text-title-sm text-primary font-semibold">Store Terminal Enrolment</span>
+<span class="px-1.5 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm rounded font-medium">8 / 8 Online</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active roles propagate instantaneously to edge terminals in Main Store #04.</p>
+<div class="space-y-1.5 pt-1">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm">
+<span class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+              POS Register #01 (Front Lane)
+            </span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Sync: 1m ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm">
+<span class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+              POS Register #02 (Express Basket)
+            </span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Sync: 1m ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm">
+<span class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+              Warehouse Bay Dock PDA Scanner
+            </span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Sync: Just now</span>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8 xl:col-span-8 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="px-2 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold uppercase">Active - 4 Users Assigned</span>
+<span class="text-outline font-label-sm text-label-sm">•</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">ROLE-ID: #OPS-04</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<h2 class="font-headline-md text-headline-md text-primary font-bold">Store Operations Manager</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Comprehensive access to daily floor ops, inventory cycle counts, dispatch rosters, and vendor payables review.</p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="h-8 px-space-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-high rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+<span>Edit Details</span>
+</button>
+<button class="h-8 px-space-md bg-surface-container-lowest text-error hover:bg-error-container hover:text-on-error-container rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">lock_reset</span>
+<span>Revoke All</span>
+</button>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<span class="font-semibold text-primary">Assigned Personnel:</span>
+<div class="flex items-center -space-x-1.5">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-[10px] ring-2 ring-surface-container-lowest">SJ</span>
+<span class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-bold text-[10px] ring-2 ring-surface-container-lowest">RM</span>
+<span class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-bold text-[10px] ring-2 ring-surface-container-lowest">DW</span>
+<span class="w-6 h-6 rounded-full bg-surface-dim text-primary flex items-center justify-center font-bold text-[10px] ring-2 ring-surface-container-lowest">AL</span>
+</div>
+<span class="text-on-surface-variant">(Sarah Jenkins, Roberto Mills, Dave Wu, Alicia Lopez)</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="text-secondary font-label-sm text-label-sm font-semibold hover:underline" id="btn-toggle-all" type="button">Select All Applicable</button>
+<span class="text-outline">|</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant" id="active-perm-count">14 / 17 Granted</span>
+</div>
+</div>
+<div class="p-space-lg flex flex-col gap-space-xl">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px] text-secondary">group</span>
+<h3 class="font-title-md text-title-md font-semibold">1. User &amp; Staff Management</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">3 of 4 Enabled</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">View Staff Directory</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Access active shift rosters, emergency contacts, and role tags.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Manage Shift Schedules</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Approve shift swaps, publish weekly rosters, and record attendance.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Delete User Accounts</span>
+<span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Admin Only</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Permanent deactivation and purge of employee credentials.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Assign Store Terminal Access</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Pair staff badges to POS Lane 1-4 and warehouse bay docks.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px] text-secondary">inventory_2</span>
+<h3 class="font-title-md text-title-md font-semibold">2. Stock &amp; Inventory Management</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">4 of 4 Enabled</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">View SKU Inventory &amp; Thresholds</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Monitor real-time on-shelf counts, safety buffers, and par levels.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Perform Stock Adjustments &amp; Counts</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Log physical cycle audits, shrinkage reconciliations, and bin movements.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Create Wholesale Restock POs</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Issue standard purchase orders directly to registered grocery vendors.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Authorize Damaged Goods Write-offs</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Sign off on expired perishables, carton denting, and spoilage losses.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px] text-secondary">sell</span>
+<h3 class="font-title-md text-title-md font-semibold">3. Pricing &amp; Discounts</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">3 of 4 Enabled</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">View Retail Price Catalog</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Read shelf prices, wholesale margins, and promo campaign schedules.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Update Retail Prices</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Push updated consumer retail pricing across registers and shelf tags.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Apply Shift Clearance Markdowns</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Authorize quick end-of-day discounts on fresh produce, deli, and bakery.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Override Supplier Base Cost</span>
+<span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Restricted</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Direct manual modification of vendor purchase contracts.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px] text-secondary">local_shipping</span>
+<h3 class="font-title-md text-title-md font-semibold">4. Deliveries &amp; Inbounds</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">3 of 3 Enabled</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">View Live Inbounds</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Track supplier freight ETA and dock scheduling.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Assign Couriers to Dispatch</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Route local residential drops to available van drivers.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Sign Off Dock Receipts</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Execute bill of lading acceptance at warehouse receiving.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px] text-secondary">payments</span>
+<h3 class="font-title-md text-title-md font-semibold">5. Financial Payables &amp; Debts</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">2 of 3 Enabled</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">View Payable Ledgers</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Audit aging supplier debt, terms, and invoice status.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Record Remittance</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Log standard bank transfers and vendor partial payments.</span>
+</div>
+</label>
+<label class="perm-card flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<input class="mt-0.5 h-4 w-4 rounded accent-primary-container cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface font-medium">Over-Limit Settlements</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold">Admin</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Release vendor payouts exceeding &gt;$10,000 threshold.</span>
+</div>
+</label>
+</div>
+</div>
+</div>
+<div class="p-space-lg bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-secondary">info</span>
+<span>Unsaved adjustments will take effect across 4 active user sessions immediately upon save.</span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<button class="h-9 px-space-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-high rounded-lg font-label-md text-label-md transition-colors shadow-sm" id="btn-discard" type="button">
+              Discard Changes
+            </button>
+<button class="h-9 px-space-lg bg-primary-container text-on-primary hover:bg-primary rounded-lg font-label-md text-label-md font-semibold flex items-center gap-space-xs transition-colors shadow-sm" id="btn-save" type="button">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span>Save Permission Changes</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const roles = document.querySelectorAll('.role-item');
+    const checkboxes = document.querySelectorAll('.perm-card input[type="checkbox"]');
+    const permCountEl = document.getElementById('active-perm-count');
+    const toggleAllBtn = document.getElementById('btn-toggle-all');
+    const saveBtn = document.getElementById('btn-save');
+    const discardBtn = document.getElementById('btn-discard');
+    const searchInput = document.getElementById('role-search-input');
+
+    function updateCount() {
+      const checked = document.querySelectorAll('.perm-card input[type="checkbox"]:checked').length;
+      const total = checkboxes.length;
+      if (permCountEl) {
+        permCountEl.textContent = `${checked} / ${total} Granted`;
+      }
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', updateCount);
+    });
+
+    if (toggleAllBtn) {
+      let state = false;
+      toggleAllBtn.addEventListener('click', () => {
+        state = !state;
+        checkboxes.forEach(cb => { cb.checked = state; });
+        toggleAllBtn.textContent = state ? 'Deselect All' : 'Select All Applicable';
+        updateCount();
+      });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Saving Matrix...</span>';
+        saveBtn.disabled = true;
+        setTimeout(() => {
+          saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span><span>Permissions Saved!</span>';
+          setTimeout(() => {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+          }, 2000);
+        }, 600);
+      });
+    }
+
+    if (discardBtn) {
+      discardBtn.addEventListener('click', () => {
+        checkboxes.forEach((cb, idx) => {
+          cb.checked = (idx !== 2 && idx !== 7 && idx !== 13);
+        });
+        updateCount();
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        roles.forEach(role => {
+          const text = role.textContent.toLowerCase();
+          role.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    roles.forEach(role => {
+      role.addEventListener('click', () => {
+        roles.forEach(r => {
+          r.classList.remove('bg-surface-container');
+          const indicator = r.querySelector('.w-1.bg-secondary');
+          if (indicator) indicator.remove();
+        });
+        role.classList.add('bg-surface-container');
+        if (!role.querySelector('.w-1.bg-secondary')) {
+          const bar = document.createElement('div');
+          bar.className = 'absolute left-0 top-0 bottom-0 w-1 bg-secondary rounded-l';
+          role.classList.add('relative');
+          role.prepend(bar);
+        }
+      });
+    });
+  })();
+</script></main></div></body></html>

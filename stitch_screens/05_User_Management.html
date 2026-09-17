@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Cornerstone OPS HUB</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-dim":"#d0daf2","inverse-primary":"#adc8f5","error":"#ba1a1a","primary-fixed":"#d5e3ff","secondary-fixed":"#bfe9ff","on-surface-variant":"#43474e","primary-container":"#1e3a5f","surface-container-low":"#f0f3ff","on-secondary-fixed":"#001f2a","on-tertiary-fixed-variant":"#005236","on-secondary-fixed-variant":"#004d65","primary-fixed-dim":"#adc8f5","primary":"#022448","tertiary-fixed":"#a4f3ca","error-container":"#ffdad6","outline":"#74777f","on-primary-container":"#8aa4cf","on-error":"#ffffff","on-tertiary-container":"#65b28c","on-primary":"#ffffff","secondary-fixed-dim":"#8ccff0","on-tertiary-fixed":"#002113","on-primary-fixed-variant":"#2d486d","on-secondary-container":"#0e6380","background":"#f9f9ff","tertiary-container":"#00422b","surface-container-highest":"#d9e3fb","on-background":"#111c2d","inverse-on-surface":"#ecf0ff","surface-container-high":"#dfe8ff","on-secondary":"#ffffff","surface-container-lowest":"#ffffff","secondary":"#146683","on-tertiary":"#ffffff","surface-tint":"#455f87","on-surface":"#111c2d","on-primary-fixed":"#001c3b","inverse-surface":"#273143","secondary-container":"#9addff","surface-bright":"#f9f9ff","on-error-container":"#93000a","tertiary":"#002a1a","surface-variant":"#d9e3fb","tertiary-fixed-dim":"#88d6af","outline-variant":"#c4c6cf","surface-container":"#e8eeff","surface":"#f9f9ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-md":"0.75rem","space-xl":"1.5rem","space-lg":"1rem","space-xs":"0.25rem","margin":"1rem"},fontFamily:{"headline-lg":["Inter"],"title-md":["Inter"],"title-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"headline-sm":["Inter"],"data-mono":["Inter"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",fontWeight:"600"}],"title-md":["16px",{lineHeight:"24px",fontWeight:"600"}],"title-sm":["14px",{lineHeight:"20px",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-md":["13px",{lineHeight:"18px",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"28px",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"24px",fontWeight:"600"}],"data-mono":["13px",{lineHeight:"18px",fontWeight:"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-primary-container z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 flex items-center px-space-lg gap-space-sm bg-primary"><img alt="Brand logo. - Primary color: #2563eb - Font: inter - Mode: light - Roundness: rounded-sm " class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wg4Osm-gQWDfq96ZEJTmDygdBNubP15SUZVLI_8EIc0JQOFcsAUldHXPS7pnu907QaWTn4vu4qb_KcLB938sMKVQSYbnVVCO8frO9mfAJdLu2fsg-ROHUhfQB53mCX-S6FSDMbhOobTQhylGizOOqVJ-QBn93WsZYNNBHyHoWjW5tZSDJ08xsuUeuNktKNvFNl7lEeER-Uh9reqZZeccXbDa3jW8gGWWVYmodfev_e8FZLCg9jtm2Phzg"/><div class="flex flex-col min-w-0 leading-tight"><span class="font-title-sm text-title-sm text-on-primary font-semibold tracking-wide truncate">Cornerstone</span><span class="font-label-sm text-label-sm text-on-primary-container uppercase tracking-wider">OPS HUB</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-sm text-label-sm text-on-primary-container uppercase font-semibold tracking-wider px-space-sm">Operations</span></div><nav class="flex flex-col gap-space-xs px-space-sm" data-active-classes="bg-surface-container-high text-on-surface font-semibold"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-semibold" data-path="user-management" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span>User Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="role-management" href="#"><span class="material-symbols-outlined text-[18px]">admin_panel_settings</span><span>Role Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="staff-management" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Staff Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="stock-management" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span>Stock Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pricing-management" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Pricing Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="delivery-management" href="#"><span class="material-symbols-outlined text-[18px]">local_shipping</span><span>Delivery Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pending-debts" href="#"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Pending Debts</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="reports" href="#"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports</span></a></nav></div><div class="p-space-md bg-primary mx-space-sm mb-space-md rounded-lg flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-title-sm text-title-sm shrink-0 font-bold">SJ</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-primary truncate font-medium">Sarah Jenkins</span><span class="font-label-sm text-label-sm text-on-primary-container truncate">Store Manager</span></div></div><button class="text-on-primary-container hover:text-on-primary shrink-0 transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-14 bg-surface-container-lowest z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg flex-1"><div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="font-medium text-on-surface">OPS HUB</span><span class="text-outline">/</span><span class="text-on-surface-variant capitalize">Console</span></div><div class="relative w-72"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span><input class="w-full h-8 pl-8 pr-3 text-on-surface bg-surface-container-low rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Search inventory, orders, staff..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface"><span class="w-2 h-2 rounded-full bg-tertiary-container shrink-0"></span><span class="font-medium">Shift #1 Active</span></div><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px] text-secondary">store</span><span class="font-medium">Main Store #04</span></div><button class="relative p-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-space-xl pb-margin-desktop bg-surface flex-1"><div class="flex flex-col w-full">
+<section class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-lg">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface">User Management</span>
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-data-mono text-label-sm font-semibold">42 ACCOUNTS</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Manage system access, seller credentials, store associates, and administrative accounts.</p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="h-9 px-space-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-low transition-colors rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">file_download</span>
+<span>Export Directory</span>
+</button>
+<button class="h-9 px-space-md bg-primary-container hover:bg-primary text-on-primary transition-colors rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm" id="addUserBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ Add User</span>
+</button>
+</div>
+</section>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-xl">
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Directory</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+</div>
+<div class="my-space-sm flex items-baseline gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">42</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Registered Personnel</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm pt-space-xs">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed-variant"></span>38 Active
+        </span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-secondary-container text-on-secondary-container font-medium">
+          3 Pending
+        </span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-error-container text-on-error-container font-medium">
+          1 Suspended
+        </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Role Profiles</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+</div>
+</div>
+<div class="my-space-sm flex items-baseline gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">5 Active Profiles</span>
+</div>
+<div class="flex flex-wrap items-center gap-1.5 font-label-sm text-label-sm text-on-surface-variant">
+<span class="bg-surface-container px-2 py-0.5 rounded-lg font-data-mono">Admin</span>
+<span class="bg-surface-container px-2 py-0.5 rounded-lg font-data-mono">Store Manager</span>
+<span class="bg-surface-container px-2 py-0.5 rounded-lg font-data-mono">Cashier</span>
+<span class="bg-surface-container px-2 py-0.5 rounded-lg font-data-mono">Inventory Clerk</span>
+<span class="bg-surface-container px-2 py-0.5 rounded-lg font-data-mono">Dispatch</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Active Store Sessions</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">devices</span>
+</div>
+</div>
+<div class="my-space-sm flex items-baseline gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">14</span>
+<span class="font-label-sm text-label-sm text-tertiary-container font-semibold flex items-center gap-0.5">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container inline-block"></span> Live On-Shift
+        </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm pt-space-xs">
+<span>4 Hardware POS Terminals</span>
+<span class="font-data-mono font-medium text-on-surface">10 Handheld Scanners / Apps</span>
+</div>
+</div>
+</section>
+<div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-md bg-surface-container-lowest flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<div class="flex flex-1 items-center gap-space-sm">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full h-9 pl-9 pr-3 text-on-surface bg-surface-container-low rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" id="searchInput" placeholder="Search by name, email, terminal, or employee ID..." type="text"/>
+</div>
+<div class="relative">
+<select class="h-9 px-3 pr-8 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest" id="roleFilter">
+<option value="ALL">All Roles</option>
+<option value="Admin">Administrator</option>
+<option value="Store Manager">Store Manager</option>
+<option value="Cashier">Cashier</option>
+<option value="Inventory Specialist">Inventory Clerk</option>
+<option value="Dispatch Driver">Dispatch Driver</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="h-9 px-3 pr-8 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest" id="statusFilter">
+<option value="ALL">All Statuses</option>
+<option value="Active">Active</option>
+<option value="Pending">Pending Invite</option>
+<option value="Inactive">Inactive / Suspended</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end lg:self-auto">
+<button class="h-9 px-space-sm bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm rounded-lg flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">tune</span>
+<span>Columns</span>
+</button>
+<button class="h-9 px-space-sm bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm rounded-lg flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">refresh</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left font-body-sm text-body-sm whitespace-nowrap">
+<thead class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<tr>
+<th class="w-10 px-space-md py-3 text-center">
+<input class="w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" id="selectAllCheckbox" type="checkbox"/>
+</th>
+<th class="px-space-md py-3 font-semibold">Associate / Name</th>
+<th class="px-space-md py-3 font-semibold">Contact Details</th>
+<th class="px-space-md py-3 font-semibold">Assigned Station</th>
+<th class="px-space-md py-3 font-semibold">System Role</th>
+<th class="px-space-md py-3 font-semibold">Access Status</th>
+<th class="px-space-md py-3 font-semibold">Audit / Created</th>
+<th class="px-space-md py-3 text-right font-semibold">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-none text-on-surface" id="userTableBody">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Store Manager" data-status="Active">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-primary-container text-on-primary font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  SJ
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">Sarah Jenkins</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">EMP-00104</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">sarah.jenkins@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 234-8901</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">desktop_windows</span>
+<span class="font-label-md text-label-md text-on-surface">Main Store #04 <span class="text-on-surface-variant font-data-mono text-label-sm">(Manager Desk)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold">Store Manager</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed-variant"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Jan 12, 2023</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">Last: 4 mins ago</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="View details" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Edit permissions" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Dispatch Driver" data-status="Active">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-secondary-fixed text-on-secondary-fixed font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  MV
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">Marcus Vance</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">EMP-00218</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">marcus.v@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 345-9012</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">local_shipping</span>
+<span class="font-label-md text-label-md text-on-surface">Logistics &amp; Dock <span class="text-on-surface-variant font-data-mono text-label-sm">(Bay #2 Mobile)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold">Dispatch Driver</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed-variant"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Mar 04, 2023</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">Last: 18 mins ago</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="View details" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Edit permissions" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Inventory Specialist" data-status="Active">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  DC
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">David Chen</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">EMP-00342</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">david.chen@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 456-0123</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">warehouse</span>
+<span class="font-label-md text-label-md text-on-surface">Floor &amp; Storage <span class="text-on-surface-variant font-data-mono text-label-sm">(Cold Unit A)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold">Inventory Clerk</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed-variant"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Aug 19, 2023</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">Last: 2 hrs ago</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="View details" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Edit permissions" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Cashier" data-status="Active">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-container-high text-primary font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  ER
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">Elena Rostova</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">EMP-00412</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">elena.r@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 567-1234</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">point_of_sale</span>
+<span class="font-label-md text-label-md text-on-surface">Register <span class="text-on-surface-variant font-data-mono text-label-sm">(Front POS #1)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold">Senior Cashier</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed-variant"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Sep 10, 2023</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">Last: Online Now</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="View details" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Edit permissions" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Cashier" data-status="Inactive">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-dim text-on-surface font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  SK
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">Samira Khan</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">EMP-00489</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">samira.k@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 678-2345</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-outline">storefront</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Floor &amp; Stock <span class="font-data-mono text-label-sm">(Aisles 1-8)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm font-medium">Store Associate</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-error-container"></span>
+                INACTIVE (ON LEAVE)
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Nov 02, 2023</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">Last: 6 days ago</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="View details" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Edit permissions" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container-low transition-colors user-row" data-role="Cashier" data-status="Pending">
+<td class="px-space-md py-3 text-center">
+<input class="row-checkbox w-4 h-4 rounded-sm accent-primary cursor-pointer align-middle" type="checkbox"/>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-secondary-container text-on-secondary-container font-title-sm text-title-sm flex items-center justify-center shrink-0 font-semibold shadow-sm">
+                  LO
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface truncate">Liam O'Connor</span>
+<span class="font-data-mono text-label-sm text-outline">EMP-00502</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">liam.oc@cornerstone-retail.com</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant">+1 (555) 789-3456</span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">point_of_sale</span>
+<span class="font-label-md text-label-md text-on-surface">Register <span class="text-on-surface-variant font-data-mono text-label-sm">(POS #3 Express)</span></span>
+</div>
+</td>
+<td class="px-space-md py-3">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm font-medium">Cashier Trainee</span>
+</td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                PENDING INVITE
+              </span>
+</td>
+<td class="px-space-md py-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Yesterday</span>
+<span class="font-data-mono text-label-sm text-on-secondary-container">Invite sent</span>
+</div>
+</td>
+<td class="px-space-md py-3 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="px-2 py-1 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded-lg transition-colors font-medium" type="button">Resend</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors" title="Account settings" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-space-md bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
+<span>Showing <strong class="text-on-surface font-semibold">1</strong> to <strong class="text-on-surface font-semibold">6</strong> of <strong class="text-on-surface font-semibold">42</strong> users</span>
+<span class="text-outline">|</span>
+<div class="flex items-center gap-1">
+<span>Rows per page:</span>
+<select class="h-7 px-1.5 bg-surface-container-low text-on-surface rounded-lg font-data-mono text-label-sm cursor-pointer focus:outline-none">
+<option value="6">6</option>
+<option value="10">10</option>
+<option value="25">25</option>
+<option value="50">50</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="h-8 px-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 transition-colors flex items-center justify-center font-label-md text-label-md" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+<span>Prev</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center" type="button">1</button>
+<button class="w-8 h-8 rounded-lg text-on-surface hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors" type="button">2</button>
+<button class="w-8 h-8 rounded-lg text-on-surface hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors" type="button">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="w-8 h-8 rounded-lg text-on-surface hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors" type="button">7</button>
+<button class="h-8 px-2 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors flex items-center justify-center font-label-md text-label-md" type="button">
+<span>Next</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro-interaction / Interactive Filters Script -->
+<script>
+    (function() {
+      const searchInput = document.getElementById('searchInput');
+      const roleFilter = document.getElementById('roleFilter');
+      const statusFilter = document.getElementById('statusFilter');
+      const rows = document.querySelectorAll('.user-row');
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+      function filterTable() {
+        const query = (searchInput ? searchInput.value.toLowerCase().trim() : '');
+        const selectedRole = roleFilter ? roleFilter.value : 'ALL';
+        const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
+
+        rows.forEach(row => {
+          const rowText = row.innerText.toLowerCase();
+          const rowRole = row.getAttribute('data-role') || '';
+          const rowStatus = row.getAttribute('data-status') || '';
+
+          const matchesQuery = !query || rowText.includes(query);
+          const matchesRole = (selectedRole === 'ALL') || rowRole.includes(selectedRole);
+          const matchesStatus = (selectedStatus === 'ALL') || rowStatus.includes(selectedStatus);
+
+          if (matchesQuery && matchesRole && matchesStatus) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      }
+
+      if (searchInput) searchInput.addEventListener('input', filterTable);
+      if (roleFilter) roleFilter.addEventListener('change', filterTable);
+      if (statusFilter) statusFilter.addEventListener('change', filterTable);
+
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+          rowCheckboxes.forEach(cb => {
+            cb.checked = selectAllCheckbox.checked;
+          });
+        });
+      }
+
+      const addUserBtn = document.getElementById('addUserBtn');
+      if (addUserBtn) {
+        addUserBtn.addEventListener('click', function() {
+          const name = prompt("Enter full name of store associate to invite:");
+          if (name) {
+            alert("Invitation dispatch initiated for " + name + " (Credentials sent to employee inbox).");
+          }
+        });
+      }
+    })();
+  </script>
+</div></main></div></body></html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Cornerstone OPS HUB</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-dim":"#d0daf2","inverse-primary":"#adc8f5","error":"#ba1a1a","primary-fixed":"#d5e3ff","secondary-fixed":"#bfe9ff","on-surface-variant":"#43474e","primary-container":"#1e3a5f","surface-container-low":"#f0f3ff","on-secondary-fixed":"#001f2a","on-tertiary-fixed-variant":"#005236","on-secondary-fixed-variant":"#004d65","primary-fixed-dim":"#adc8f5","primary":"#022448","tertiary-fixed":"#a4f3ca","error-container":"#ffdad6","outline":"#74777f","on-primary-container":"#8aa4cf","on-error":"#ffffff","on-tertiary-container":"#65b28c","on-primary":"#ffffff","secondary-fixed-dim":"#8ccff0","on-tertiary-fixed":"#002113","on-primary-fixed-variant":"#2d486d","on-secondary-container":"#0e6380","background":"#f9f9ff","tertiary-container":"#00422b","surface-container-highest":"#d9e3fb","on-background":"#111c2d","inverse-on-surface":"#ecf0ff","surface-container-high":"#dfe8ff","on-secondary":"#ffffff","surface-container-lowest":"#ffffff","secondary":"#146683","on-tertiary":"#ffffff","surface-tint":"#455f87","on-surface":"#111c2d","on-primary-fixed":"#001c3b","inverse-surface":"#273143","secondary-container":"#9addff","surface-bright":"#f9f9ff","on-error-container":"#93000a","tertiary":"#002a1a","surface-variant":"#d9e3fb","tertiary-fixed-dim":"#88d6af","outline-variant":"#c4c6cf","surface-container":"#e8eeff","surface":"#f9f9ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-md":"0.75rem","space-xl":"1.5rem","space-lg":"1rem","space-xs":"0.25rem","margin":"1rem"},fontFamily:{"headline-lg":["Inter"],"title-md":["Inter"],"title-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"headline-sm":["Inter"],"data-mono":["Inter"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",fontWeight:"600"}],"title-md":["16px",{lineHeight:"24px",fontWeight:"600"}],"title-sm":["14px",{lineHeight:"20px",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-md":["13px",{lineHeight:"18px",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"28px",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"24px",fontWeight:"600"}],"data-mono":["13px",{lineHeight:"18px",fontWeight:"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-primary-container z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 flex items-center px-space-lg gap-space-sm bg-primary"><img alt="Brand logo. - Primary color: #2563eb - Font: inter - Mode: light - Roundness: rounded-sm " class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wg4Osm-gQWDfq96ZEJTmDygdBNubP15SUZVLI_8EIc0JQOFcsAUldHXPS7pnu907QaWTn4vu4qb_KcLB938sMKVQSYbnVVCO8frO9mfAJdLu2fsg-ROHUhfQB53mCX-S6FSDMbhOobTQhylGizOOqVJ-QBn93WsZYNNBHyHoWjW5tZSDJ08xsuUeuNktKNvFNl7lEeER-Uh9reqZZeccXbDa3jW8gGWWVYmodfev_e8FZLCg9jtm2Phzg"/><div class="flex flex-col min-w-0 leading-tight"><span class="font-title-sm text-title-sm text-on-primary font-semibold tracking-wide truncate">Cornerstone</span><span class="font-label-sm text-label-sm text-on-primary-container uppercase tracking-wider">OPS HUB</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-sm text-label-sm text-on-primary-container uppercase font-semibold tracking-wider px-space-sm">Operations</span></div><nav class="flex flex-col gap-space-xs px-space-sm" data-active-classes="bg-surface-container-high text-on-surface font-semibold"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="user-management" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span>User Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="role-management" href="#"><span class="material-symbols-outlined text-[18px]">admin_panel_settings</span><span>Role Management</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-semibold" data-path="staff-management" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Staff Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="stock-management" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span>Stock Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pricing-management" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Pricing Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="delivery-management" href="#"><span class="material-symbols-outlined text-[18px]">local_shipping</span><span>Delivery Management</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="pending-debts" href="#"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Pending Debts</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md" data-path="reports" href="#"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports</span></a></nav></div><div class="p-space-md bg-primary mx-space-sm mb-space-md rounded-lg flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-title-sm text-title-sm shrink-0 font-bold">SJ</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-primary truncate font-medium">Sarah Jenkins</span><span class="font-label-sm text-label-sm text-on-primary-container truncate">Store Manager</span></div></div><button class="text-on-primary-container hover:text-on-primary shrink-0 transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-14 bg-surface-container-lowest z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg flex-1"><div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="font-medium text-on-surface">OPS HUB</span><span class="text-outline">/</span><span class="text-on-surface-variant capitalize">Console</span></div><div class="relative w-72"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span><input class="w-full h-8 pl-8 pr-3 text-on-surface bg-surface-container-low rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Search inventory, orders, staff..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface"><span class="w-2 h-2 rounded-full bg-tertiary-container shrink-0"></span><span class="font-medium">Shift #1 Active</span></div><div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px] text-secondary">store</span><span class="font-medium">Main Store #04</span></div><button class="relative p-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-space-xl pb-margin-desktop bg-surface flex-1"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg mb-space-xl">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-sm mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold bg-surface-container-high px-space-sm py-0.5 rounded">Store #04 Workforce</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active Operations</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Staff Management &amp; Floor Supervision</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Monitor on-duty staff, active shifts, register assignments, and worker performance in real time.</p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="h-9 px-space-md bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md rounded-lg shadow-sm transition-all flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">print</span>
+<span>Print Shift Roster</span>
+</button>
+<button class="h-9 px-space-md bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md rounded-lg shadow-sm transition-all flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ Add Staff Member</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-space-md">
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Total Staff</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">badge</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">28</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-1">Members</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>100% account verified</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">On Duty Today</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary-container">schedule</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">14</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Staff</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm truncate">
+          Shift #1: <strong class="text-on-surface">8</strong> • Shift #2: <strong class="text-on-surface">6</strong>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Available for Task</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary-container">check_circle</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">4</span>
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant bg-tertiary-fixed px-1.5 py-0.2 rounded font-semibold">Ready</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span>Replenishment &amp; Front-end</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">On Delivery Route</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">local_shipping</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">3</span>
+<span class="font-label-sm text-label-sm text-on-secondary-container bg-secondary-container px-1.5 py-0.2 rounded font-semibold">Active Run</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm truncate">
+          Trucks #03, #05 &amp; #08
+        </div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Inactive / Off</span>
+<span class="material-symbols-outlined text-[18px] text-outline">event_busy</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">7</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Standby</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span>Scheduled weekend relief</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<div class="xl:col-span-8 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full h-9 pl-9 pr-3 text-on-surface bg-surface-container-lowest rounded-lg font-body-sm text-body-sm placeholder:text-outline focus:outline-none shadow-sm transition-all" id="staffSearchInput" placeholder="Search staff by name, worker ID or station..." type="text"/>
+</div>
+<div class="flex items-center gap-space-xs overflow-x-auto pb-1 md:pb-0">
+<select class="h-9 px-space-sm text-on-surface font-label-sm text-label-sm bg-surface-container-lowest rounded-lg shadow-sm focus:outline-none cursor-pointer">
+<option>Shift #1 Active (8)</option>
+<option>Shift #2 Upcoming (6)</option>
+<option>All Shifts (14)</option>
+</select>
+<select class="h-9 px-space-sm text-on-surface font-label-sm text-label-sm bg-surface-container-lowest rounded-lg shadow-sm focus:outline-none cursor-pointer">
+<option>All Roles</option>
+<option>Dispatch &amp; Logistics</option>
+<option>Cashier / Checkout</option>
+<option>Inventory Control</option>
+<option>Receiving / Stocker</option>
+</select>
+<select class="h-9 px-space-sm text-on-surface font-label-sm text-label-sm bg-surface-container-lowest rounded-lg shadow-sm focus:outline-none cursor-pointer">
+<option>All Statuses</option>
+<option>Active</option>
+<option>Busy</option>
+<option>On Delivery</option>
+<option>Available</option>
+<option>Inactive</option>
+</select>
+<button class="h-9 w-9 bg-surface-container-lowest hover:bg-surface-container rounded-lg shadow-sm flex items-center justify-center text-on-surface-variant transition-colors" title="Reset Filters" type="button">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm px-1">
+<span>Showing <strong class="text-on-surface">5 of 14</strong> active shift associates</span>
+<span class="text-secondary font-medium">Floor capacity: 92% operational</span>
+</div>
+</div>
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="h-10 bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-2 px-space-md font-semibold">Staff Member</th>
+<th class="py-2 px-space-md font-semibold">Role &amp; Department</th>
+<th class="py-2 px-space-md font-semibold">Current Status</th>
+<th class="py-2 px-space-md font-semibold">Assigned Station</th>
+<th class="py-2 px-space-md font-semibold">Contact</th>
+<th class="py-2 px-space-md font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low text-on-surface font-body-sm text-body-sm" id="staffTableBody">
+<tr class="staff-row h-14 bg-surface-container cursor-pointer transition-colors group" data-staff-id="STF-104" onclick="selectStaff('STF-104')">
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary font-title-sm text-title-sm font-semibold shrink-0">
+                    MV
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate group-hover:text-primary">Marcus Vance</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">STF-104</span>
+</div>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-on-surface">Dispatch &amp; Logistics</span>
+<span class="text-[11px] text-on-surface-variant">Route Fleet Alpha</span>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-secondary-container text-on-secondary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                  On Delivery
+                </span>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">local_shipping</span>
+<span class="font-medium">Truck #3 Chilled</span>
+<span class="text-on-surface-variant text-[11px]">(Bay #2)</span>
+</div>
+</td>
+<td class="py-2 px-space-md text-on-surface-variant font-data-mono text-[12px] whitespace-nowrap">
+                +1 (555) 345-9012
+              </td>
+<td class="py-2 px-space-md text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Direct Call">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-primary font-semibold" onclick="selectStaff('STF-104')" title="View Detail Drawer">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="staff-row h-14 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-colors group" data-staff-id="STF-108" onclick="selectStaff('STF-108')">
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-title-sm text-title-sm font-semibold shrink-0">
+                    ER
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate group-hover:text-primary">Elena Rostova</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">STF-108</span>
+</div>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-on-surface">Senior Cashier</span>
+<span class="text-[11px] text-on-surface-variant">Front-End Sales</span>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-surface-container-high text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Busy (Shift #1)
+                </span>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">point_of_sale</span>
+<span class="font-medium">Register POS #01</span>
+</div>
+</td>
+<td class="py-2 px-space-md text-on-surface-variant font-data-mono text-[12px] whitespace-nowrap">
+                +1 (555) 567-1234
+              </td>
+<td class="py-2 px-space-md text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Direct Call">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" onclick="selectStaff('STF-108')" title="View Detail Drawer">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="staff-row h-14 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-colors group" data-staff-id="STF-112" onclick="selectStaff('STF-112')">
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-title-sm text-title-sm font-semibold shrink-0">
+                    DC
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate group-hover:text-primary">David Chen</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">STF-112</span>
+</div>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-on-surface">Inventory Lead</span>
+<span class="text-[11px] text-on-surface-variant">Warehouse / Audits</span>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-tertiary-fixed text-on-tertiary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">kitchen</span>
+<span class="font-medium">Chilled Cooler B Count</span>
+</div>
+</td>
+<td class="py-2 px-space-md text-on-surface-variant font-data-mono text-[12px] whitespace-nowrap">
+                +1 (555) 456-0123
+              </td>
+<td class="py-2 px-space-md text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Direct Call">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" onclick="selectStaff('STF-112')" title="View Detail Drawer">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="staff-row h-14 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-colors group" data-staff-id="STF-119" onclick="selectStaff('STF-119')">
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-title-sm text-title-sm font-semibold shrink-0">
+                    SK
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate group-hover:text-primary">Samira Khan</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">STF-119</span>
+</div>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-on-surface">Store Associate</span>
+<span class="text-[11px] text-on-surface-variant">Dry Goods &amp; Pantry</span>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-tertiary-fixed text-on-tertiary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+                  Available
+                </span>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">shelves</span>
+<span class="font-medium">Aisle 4 Replenishment</span>
+</div>
+</td>
+<td class="py-2 px-space-md text-on-surface-variant font-data-mono text-[12px] whitespace-nowrap">
+                +1 (555) 678-2345
+              </td>
+<td class="py-2 px-space-md text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Direct Call">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" onclick="selectStaff('STF-119')" title="View Detail Drawer">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="staff-row h-14 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-colors group" data-staff-id="STF-122" onclick="selectStaff('STF-122')">
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-title-sm text-title-sm font-semibold shrink-0">
+                    MS
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate group-hover:text-primary">Mike Sullivan</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">STF-122</span>
+</div>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-on-surface">Receiving Clerk</span>
+<span class="text-[11px] text-on-surface-variant">Inbound Freight</span>
+</div>
+</td>
+<td class="py-2 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-tertiary-fixed text-on-tertiary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-2 px-space-md">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">rv_hookup</span>
+<span class="font-medium">Dock Bay #1</span>
+</div>
+</td>
+<td class="py-2 px-space-md text-on-surface-variant font-data-mono text-[12px] whitespace-nowrap">
+                +1 (555) 890-4567
+              </td>
+<td class="py-2 px-space-md text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Direct Call">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" onclick="selectStaff('STF-122')" title="View Detail Drawer">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-space-md bg-surface-container-low flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-space-sm">
+<span>Rows per page: <strong>5</strong></span>
+<span class="text-outline">|</span>
+<span>Shift window: 07:00 - 15:30 EST</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-container-lowest hover:bg-surface-container text-on-surface shadow-sm disabled:opacity-50" disabled="">Previous</button>
+<button class="px-2 py-1 rounded bg-primary text-on-primary font-semibold shadow-sm">1</button>
+<button class="px-2 py-1 rounded bg-surface-container-lowest hover:bg-surface-container text-on-surface shadow-sm">2</button>
+<button class="px-2 py-1 rounded bg-surface-container-lowest hover:bg-surface-container text-on-surface shadow-sm">Next</button>
+</div>
+</div>
+</div>
+<div class="xl:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col transition-all" id="staffDetailPanel">
+<div class="p-space-lg bg-surface-container-high flex items-start justify-between">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-14 h-14 rounded-xl bg-primary flex items-center justify-center text-on-primary font-headline-md text-headline-md font-bold shrink-0 shadow-sm" id="panelAvatar">
+            MV
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate" id="panelName">Marcus Vance</h2>
+<span class="font-data-mono text-[11px] text-on-surface-variant bg-surface-container-lowest px-1.5 py-0.5 rounded font-semibold" id="panelIdBadge">STF-104</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate" id="panelRole">Dispatch &amp; Logistics Specialist</p>
+<div class="mt-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase bg-secondary-container text-on-secondary-container" id="panelStatusBadge">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                On Delivery
+              </span>
+</div>
+</div>
+</div>
+<button class="p-1 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="minimizePanel()" title="Collapse Panel" type="button">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="p-space-lg flex flex-col gap-space-lg">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Shift Progress &amp; Performance</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">56% Completed</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden mb-space-md">
+<div class="h-full bg-primary rounded-full" style="width: 56.25%;"></div>
+</div>
+<div class="grid grid-cols-3 gap-space-xs bg-surface-container-low p-space-sm rounded-lg text-center">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Deliveries</span>
+<span class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5" id="panelStatDeliveries">142</span>
+<span class="text-[10px] text-on-surface-variant">This Month</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">On-Time</span>
+<span class="font-title-sm text-title-sm text-secondary font-bold mt-0.5" id="panelStatOnTime">98.4%</span>
+<span class="text-[10px] text-tertiary-container font-medium">+1.2% avg</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hours</span>
+<span class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5" id="panelStatHours">4.5h</span>
+<span class="text-[10px] text-on-surface-variant">of 8.0h shift</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs bg-surface-container-low p-space-md rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold mb-1">Contact &amp; Emergency Details</span>
+<div class="flex items-center justify-between text-body-sm text-body-sm py-1">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">mail</span>
+              Work Email
+            </span>
+<span class="text-on-surface font-data-mono truncate ml-2 font-medium" id="panelEmail">marcus.v@cornerstone-retail.com</span>
+</div>
+<div class="flex items-center justify-between text-body-sm text-body-sm py-1">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">call</span>
+              Mobile Phone
+            </span>
+<span class="text-on-surface font-data-mono font-medium" id="panelPhone">+1 (555) 345-9012</span>
+</div>
+<div class="flex items-center justify-between text-body-sm text-body-sm py-1">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">emergency</span>
+              Emergency
+            </span>
+<span class="text-on-surface font-medium" id="panelEmergency">Clara Vance (Wife)</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Current Assigned Deliveries</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary">2 Manifests Active</span>
+</div>
+<div class="space-y-space-xs">
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-md text-label-md">
+<span class="font-data-mono font-bold text-primary">#DEL-9042</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold bg-surface-container-high px-1.5 py-0.2 rounded">ETA 14:30</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">Apex Distribution Hub → Dock B Inbound</p>
+<div class="flex items-center justify-between text-[11px] text-on-surface-variant">
+<span>14 cargo packages (Chilled)</span>
+<span class="text-tertiary-container font-semibold">Priority Freight</span>
+</div>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-md text-label-md">
+<span class="font-data-mono font-bold text-primary">#DEL-9039</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-1.5 py-0.2 rounded">Scheduled</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">Valley Fresh Depot → Chilled Cooler 1</p>
+<div class="flex items-center justify-between text-[11px] text-on-surface-variant">
+<span>24 produce crates</span>
+<span>Standby staging</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold mb-1">Shift Activity Log</span>
+<div class="relative pl-5 space-y-3 before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5 before:bg-surface-container-high">
+<div class="relative">
+<span class="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-primary"></span>
+<div class="flex items-baseline justify-between">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Dispatched on route</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">11:30 AM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">En route for Manifest #DEL-9042 with Reefer Van #03</p>
+</div>
+<div class="relative">
+<span class="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<div class="flex items-baseline justify-between">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Completed delivery</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">09:15 AM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Manifest #DEL-9035 signed off at Central Wholesale</p>
+</div>
+<div class="relative">
+<span class="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-tertiary-container"></span>
+<div class="flex items-baseline justify-between">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Clocked in for Shift #1</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">08:00 AM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Authenticated via Dock Bay Terminal reader</p>
+</div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center gap-space-sm">
+<button class="flex-1 h-9 px-space-md bg-secondary hover:bg-on-secondary-container text-on-secondary font-label-md text-label-md rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+<span>Reassign Deliveries</span>
+</button>
+<button class="flex-1 h-9 px-space-md bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+<span>Edit Profile</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  const staffDatabase = {
+    'STF-104': {
+      name: 'Marcus Vance',
+      initials: 'MV',
+      id: 'STF-104',
+      role: 'Dispatch & Logistics Specialist',
+      status: 'On Delivery',
+      statusClass: 'bg-secondary-container text-on-secondary-container',
+      statusDot: 'bg-secondary',
+      deliveries: '142',
+      onTime: '98.4%',
+      hours: '4.5h',
+      email: 'marcus.v@cornerstone-retail.com',
+      phone: '+1 (555) 345-9012',
+      emergency: 'Clara Vance (Wife)'
+    },
+    'STF-108': {
+      name: 'Elena Rostova',
+      initials: 'ER',
+      id: 'STF-108',
+      role: 'Senior Cashier / POS Lead',
+      status: 'Busy (Shift #1)',
+      statusClass: 'bg-surface-container-high text-on-surface',
+      statusDot: 'bg-secondary',
+      deliveries: '0',
+      onTime: '99.8%',
+      hours: '5.2h',
+      email: 'elena.r@cornerstone-retail.com',
+      phone: '+1 (555) 567-1234',
+      emergency: 'Viktor Rostov (Brother)'
+    },
+    'STF-112': {
+      name: 'David Chen',
+      initials: 'DC',
+      id: 'STF-112',
+      role: 'Inventory Control Lead',
+      status: 'Active',
+      statusClass: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+      statusDot: 'bg-tertiary-container',
+      deliveries: '28',
+      onTime: '97.5%',
+      hours: '6.0h',
+      email: 'david.c@cornerstone-retail.com',
+      phone: '+1 (555) 456-0123',
+      emergency: 'Mei Chen (Spouse)'
+    },
+    'STF-119': {
+      name: 'Samira Khan',
+      initials: 'SK',
+      id: 'STF-119',
+      role: 'Store Associate & Merchandiser',
+      status: 'Available',
+      statusClass: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+      statusDot: 'bg-tertiary-container',
+      deliveries: '12',
+      onTime: '100%',
+      hours: '3.1h',
+      email: 'samira.k@cornerstone-retail.com',
+      phone: '+1 (555) 678-2345',
+      emergency: 'Tariq Khan (Father)'
+    },
+    'STF-122': {
+      name: 'Mike Sullivan',
+      initials: 'MS',
+      id: 'STF-122',
+      role: 'Receiving Dock Clerk',
+      status: 'Active',
+      statusClass: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+      statusDot: 'bg-tertiary-container',
+      deliveries: '86',
+      onTime: '96.2%',
+      hours: '7.0h',
+      email: 'mike.s@cornerstone-retail.com',
+      phone: '+1 (555) 890-4567',
+      emergency: 'Patricia Sullivan (Mother)'
+    }
+  };
+
+  function selectStaff(staffId) {
+    const data = staffDatabase[staffId];
+    if (!data) return;
+
+    document.querySelectorAll('.staff-row').forEach(row => {
+      row.classList.remove('bg-surface-container');
+      row.classList.add('bg-surface-container-lowest');
+    });
+
+    const activeRow = document.querySelector(`[data-staff-id="${staffId}"]`);
+    if (activeRow) {
+      activeRow.classList.remove('bg-surface-container-lowest');
+      activeRow.classList.add('bg-surface-container');
+    }
+
+    document.getElementById('panelAvatar').textContent = data.initials;
+    document.getElementById('panelName').textContent = data.name;
+    document.getElementById('panelIdBadge').textContent = data.id;
+    document.getElementById('panelRole').textContent = data.role;
+    
+    const statusBadge = document.getElementById('panelStatusBadge');
+    statusBadge.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold uppercase ${data.statusClass}`;
+    statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${data.statusDot} animate-pulse"></span>${data.status}`;
+
+    document.getElementById('panelStatDeliveries').textContent = data.deliveries;
+    document.getElementById('panelStatOnTime').textContent = data.onTime;
+    document.getElementById('panelStatHours').textContent = data.hours;
+
+    document.getElementById('panelEmail').textContent = data.email;
+    document.getElementById('panelPhone').textContent = data.phone;
+    document.getElementById('panelEmergency').textContent = data.emergency;
+  }
+
+  function minimizePanel() {
+    const panel = document.getElementById('staffDetailPanel');
+    panel.classList.toggle('opacity-90');
+  }
+
+  document.getElementById('staffSearchInput').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.staff-row').forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(term) ? '' : 'none';
+    });
+  });
+</script></main></div></body></html>
