@@ -23,7 +23,7 @@ console.log('✓ extractBearerToken tests passed');
 // 2. formatReqUser edge cases
 const mockToken = {
   uid: 'user_123',
-  email: 'test@campusiq.edu',
+  email: 'test@gangajamuna.com',
   email_verified: true,
   name: 'John Doe',
   picture: 'https://example.com/photo.jpg',
@@ -35,7 +35,7 @@ const mockToken = {
 
 const user = formatReqUser(mockToken);
 assert.strictEqual(user.uid, 'user_123');
-assert.strictEqual(user.email, 'test@campusiq.edu');
+assert.strictEqual(user.email, 'test@gangajamuna.com');
 assert.strictEqual(user.emailVerified, true);
 assert.strictEqual(user.role, 'faculty');
 assert.strictEqual(user.name, 'John Doe');

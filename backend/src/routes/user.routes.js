@@ -1,34 +1,56 @@
 const express = require('express');
-const userController = require('../controller/userController');
-const { authenticate, requireRole, requireSelfOrAdmin } = require('../middleware/auth');
-const { validateCreateUser, validateUpdateUser, validateQueryUser } = require('../middleware/userValidation');
-
 const router = express.Router();
+const userController = require('../controller/userController');
+const { authenticate } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/rolePermission');
+const { validateRequest, validateQuery, schemas, querySchemas } = require('../middleware/validateRequest');
 
 /**
- * User API Routes
- * Base path: /api/users
+ * User Routes
+ * Base path: /api/v1/users
  */
 
-// Get current authenticated user profile
-router.get('/me', authenticate, userController.getMe);
+// GET /users - Get all users
+router.get(
+  '/',
+  authenticate,
+  requirePermission('users', 'view'),
+  validateQuery(querySchemas.search),
+  userController.getAllUsers
+);
 
-// Idempotent sync of authenticated Firebase user into Postgres database
-router.post('/sync', authenticate, userController.syncUser);
+// GET /users/:id - Get user by ID
+router.get(
+  '/:id',
+  authenticate,
+  requirePermission('users', 'view'),
+  userController.getUserById
+);
 
-// Get paginated list of users (Admin and Faculty access)
-router.get('/', authenticate, requireRole('admin', 'faculty'), validateQueryUser, userController.getAllUsers);
+// POST /users - Create new user
+router.post(
+  '/',
+  authenticate,
+  requirePermission('users', 'create'),
+  validateRequest(schemas.createUser),
+  userController.createUser
+);
 
-// Get user by ID (Self or Admin access)
-router.get('/:id', authenticate, requireSelfOrAdmin('id'), userController.getUser);
+// PUT /users/:id - Update user
+router.put(
+  '/:id',
+  authenticate,
+  requirePermission('users', 'update'),
+  validateRequest(schemas.updateUser),
+  userController.updateUser
+);
 
-// Create user (Admin only)
-router.post('/', authenticate, requireRole('admin'), validateCreateUser, userController.createUser);
-
-// Update user profile by ID (Self or Admin access)
-router.put('/:id', authenticate, requireSelfOrAdmin('id'), validateUpdateUser, userController.updateUser);
-
-// Delete user by ID (Admin only)
-router.delete('/:id', authenticate, requireRole('admin'), userController.deleteUser);
+// DELETE /users/:id - Delete user
+router.delete(
+  '/:id',
+  authenticate,
+  requirePermission('users', 'delete'),
+  userController.deleteUser
+);
 
 module.exports = router;

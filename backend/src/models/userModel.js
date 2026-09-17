@@ -28,7 +28,7 @@ function mapUserRow(row) {
 /**
  * Create a new user record in database
  */
-async function createUser({ firebaseUid, email, name, phone = null, role = 'student', department = null, avatarUrl = null }) {
+async function createUser({ firebaseUid, email, name, phone = null, role = 'buyer', department = null, avatarUrl = null }) {
   const query = `
     INSERT INTO users (firebase_uid, email, name, phone, role, department, avatar_url)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -157,7 +157,7 @@ async function updateUser(id, updateFields) {
 /**
  * Upsert user profile from Firebase sync
  */
-async function upsertFirebaseUser({ firebaseUid, email, name, avatarUrl, role = 'student' }) {
+async function upsertFirebaseUser({ firebaseUid, email, name, avatarUrl, role = 'buyer' }) {
   const query = `
     INSERT INTO users (firebase_uid, email, name, avatar_url, role)
     VALUES ($1, $2, $3, $4, $5)

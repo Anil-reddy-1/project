@@ -68,8 +68,8 @@ async function getOrCreateFirebaseUser(reqUser) {
     // Upsert profile from Firebase
     user = await userModel.upsertFirebaseUser({
       firebaseUid: reqUser.uid,
-      email: reqUser.email || `${reqUser.uid}@campusiq.user`,
-      name: reqUser.name || 'CampusIQ User',
+      email: reqUser.email || `${reqUser.uid}@gangajamuna.user`,
+      name: reqUser.name || 'Ganga Jamuna User',
       avatarUrl: reqUser.picture || null,
       role: reqUser.role || 'student',
     });
