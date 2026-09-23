@@ -19,12 +19,34 @@ import {
   Download,
   Eye,
   Edit,
-  MoreVertical,
   Trash2,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { userService } from '../../services';
 import type { User, CreateUserPayload, UpdateUserPayload } from '../../services';
 import toast from 'react-hot-toast';
+
+/* ─── Reusable form field ─── */
+function FormField({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      {children}
+      {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+    </div>
+  );
+}
+
+const inputCls =
+  'w-full h-10 px-3.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm';
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -33,12 +55,12 @@ export function UserManagement() {
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  
+
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState<CreateUserPayload>({
     name: '',
@@ -61,16 +83,37 @@ export function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await userService.getUsers({
+      const response: any = await userService.getUsers({
         page: currentPage,
         limit: 20,
         search: searchQuery || undefined,
         role: roleFilter || undefined,
         status: statusFilter || undefined,
       });
-      setUsers(response.data.users);
-      setTotalPages(response.data.pagination.totalPages);
-      setTotalUsers(response.data.pagination.total);
+
+      // Handle backend response format: { success: true, data: User[], meta: { pagination: { total, totalPages } } }
+      // or legacy nested { data: { users, pagination } }
+      let userList: User[] = [];
+      let total = 0;
+      let pages = 1;
+
+      if (Array.isArray(response?.data)) {
+        userList = response.data;
+        total = response?.meta?.pagination?.total ?? response.data.length;
+        pages = response?.meta?.pagination?.totalPages ?? Math.max(1, Math.ceil(total / 20));
+      } else if (response?.data?.users && Array.isArray(response.data.users)) {
+        userList = response.data.users;
+        total = response.data.pagination?.total ?? response.data.users.length;
+        pages = response.data.pagination?.totalPages ?? 1;
+      } else if (Array.isArray(response)) {
+        userList = response;
+        total = response.length;
+        pages = 1;
+      }
+
+      setUsers(userList);
+      setTotalPages(pages);
+      setTotalUsers(total);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast.error(error.message || 'Failed to load users');
@@ -94,7 +137,6 @@ export function UserManagement() {
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
-    
     try {
       const updateData: UpdateUserPayload = {
         name: formData.name,
@@ -115,7 +157,6 @@ export function UserManagement() {
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    
     try {
       await userService.deleteUser(userId);
       toast.success('User deleted successfully');
@@ -132,7 +173,7 @@ export function UserManagement() {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      password: '', // Don't populate password
+      password: '',
       role: user.role,
       status: user.status,
     });
@@ -140,14 +181,7 @@ export function UserManagement() {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      role: '',
-      status: 'active',
-    });
+    setFormData({ name: '', email: '', phone: '', password: '', role: '', status: 'active' });
     setSelectedUser(null);
   };
 
@@ -169,14 +203,8 @@ export function UserManagement() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -186,98 +214,96 @@ export function UserManagement() {
   const columns = [
     {
       key: 'name',
-      header: 'Associate / Name',
+      header: 'Associate',
       render: (user: User) => (
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary font-semibold text-sm flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
             {getInitials(user.name)}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="font-semibold text-sm text-on-surface truncate">{user.name}</span>
-            <span className="text-xs text-on-surface-variant font-mono">EMP-{user.id.slice(0, 5)}</span>
+            <span className="font-semibold text-sm text-slate-800 truncate">{user.name}</span>
+            <span className="text-xs text-slate-400 font-mono">EMP-{user.id.slice(0, 5)}</span>
           </div>
         </div>
       ),
     },
     {
       key: 'contact',
-      header: 'Contact Details',
+      header: 'Contact',
       render: (user: User) => (
         <div className="flex flex-col">
-          <span className="text-sm text-on-surface">{user.email}</span>
-          <span className="text-xs text-on-surface-variant font-mono">{user.phone}</span>
+          <span className="text-sm text-slate-700">{user.email}</span>
+          <span className="text-xs text-slate-400 font-mono">{user.phone}</span>
         </div>
       ),
     },
     {
       key: 'station',
-      header: 'Assigned Station',
+      header: 'Station',
       render: (user: User) => (
         <div className="flex items-center gap-2">
-          <Monitor className="w-4 h-4 text-secondary" />
-          <span className="text-sm text-on-surface">
-            Main Store #04 <span className="text-on-surface-variant text-xs">(Terminal {Math.floor(Math.random() * 8) + 1})</span>
-          </span>
+          <Monitor className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="text-sm text-slate-600">Main Store #04</span>
         </div>
       ),
     },
     {
       key: 'role',
-      header: 'System Role',
+      header: 'Role',
       render: (user: User) => (
-        <span className="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary text-xs font-semibold">
+        <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
           {user.role}
         </span>
       ),
     },
     {
       key: 'status',
-      header: 'Access Status',
+      header: 'Status',
       render: (user: User) => (
         <StatusBadge
           status={user.status}
-          variant={user.status === 'active' ? 'success' : 'default'}
+          variant={user.status === 'active' ? 'success' : 'neutral'}
           dot
+          size="sm"
         />
       ),
     },
     {
       key: 'created',
-      header: 'Audit / Created',
+      header: 'Created',
       render: (user: User) => (
-        <div className="flex flex-col">
-          <span className="text-xs text-on-surface">{formatDate(user.createdAt)}</span>
-          <span className="text-xs text-on-surface-variant font-mono">Last: {Math.floor(Math.random() * 60)} mins ago</span>
-        </div>
+        <span className="text-xs text-slate-500 font-medium">
+          {formatDate(user.createdAt)}
+        </span>
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
       headerClassName: 'text-right',
       className: 'text-right',
       render: (user: User) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-0.5">
           <button
-            className="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors"
+            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
             title="View details"
             onClick={() => console.log('View', user.id)}
           >
-            <Eye className="w-[18px] h-[18px]" />
+            <Eye className="w-4 h-4" />
           </button>
           <button
-            className="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors"
-            title="Edit permissions"
+            className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
+            title="Edit"
             onClick={() => openEditModal(user)}
           >
-            <Edit className="w-[18px] h-[18px]" />
+            <Edit className="w-4 h-4" />
           </button>
           <button
-            className="p-1 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors"
-            title="Delete user"
+            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+            title="Delete"
             onClick={() => handleDeleteUser(user.id)}
           >
-            <Trash2 className="w-[18px] h-[18px]" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -288,27 +314,27 @@ export function UserManagement() {
   const inactiveUsers = users.filter((u) => u.status === 'inactive').length;
 
   return (
-    <DashboardLayout title="OPS HUB" subtitle="Console">
+    <DashboardLayout title="OPS HUB" subtitle="Users">
       <div className="flex flex-col gap-6">
         {/* Page Header */}
-        <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-col min-w-0">
+        <section className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold text-on-surface">User Management</h1>
-              <span className="px-2 py-0.5 rounded-lg bg-surface-container-high text-primary text-xs font-mono font-semibold">
+              <h1 className="text-[26px] font-bold text-slate-800">User Management</h1>
+              <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-mono font-bold">
                 {totalUsers} ACCOUNTS
               </span>
             </div>
-            <p className="text-sm text-on-surface-variant mt-0.5">
-              Manage system access, seller credentials, store associates, and administrative accounts.
+            <p className="text-sm text-slate-500 mt-1">
+              Manage system access, credentials, store associates, and admin accounts.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <ActionButton variant="secondary" icon={Download}>
-              Export Directory
+          <div className="flex items-center gap-2.5 shrink-0">
+            <ActionButton variant="secondary" icon={Download} size="md">
+              Export
             </ActionButton>
             <ActionButton variant="primary" icon={UserPlus} onClick={() => setIsCreateModalOpen(true)}>
-              + Add User
+              Add User
             </ActionButton>
           </div>
         </section>
@@ -320,17 +346,18 @@ export function UserManagement() {
             value={totalUsers}
             subtitle="Registered Personnel"
             icon={Users}
-            iconColor="text-secondary"
+            iconColor="text-blue-600"
+            iconBg="bg-blue-50"
           >
-            <div className="flex items-center gap-2 flex-wrap text-xs pt-2">
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-success-100 text-success-700 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-success-700"></span>
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 {activeUsers} Active
               </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-secondary-100 text-secondary-700 font-medium">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 font-semibold">
                 3 Pending
               </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-danger-100 text-danger-700 font-medium">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50 border border-red-100 text-red-600 font-semibold">
                 {inactiveUsers} Suspended
               </span>
             </div>
@@ -340,55 +367,55 @@ export function UserManagement() {
             title="Role Profiles"
             value="5 Active Profiles"
             icon={ShieldCheck}
-            iconColor="text-primary"
+            iconColor="text-purple-600"
+            iconBg="bg-purple-50"
           >
-            <div className="flex flex-wrap items-center gap-1.5 text-xs text-on-surface-variant pt-2">
-              <span className="bg-surface-container px-2 py-0.5 rounded-lg font-mono">Admin</span>
-              <span className="bg-surface-container px-2 py-0.5 rounded-lg font-mono">Manager</span>
-              <span className="bg-surface-container px-2 py-0.5 rounded-lg font-mono">Cashier</span>
-              <span className="bg-surface-container px-2 py-0.5 rounded-lg font-mono">Inventory</span>
-              <span className="bg-surface-container px-2 py-0.5 rounded-lg font-mono">Dispatch</span>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              {['Admin', 'Manager', 'Cashier', 'Inventory', 'Dispatch'].map((r) => (
+                <span key={r} className="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                  {r}
+                </span>
+              ))}
             </div>
           </StatsCard>
 
           <StatsCard
-            title="Active Store Sessions"
+            title="Active Sessions"
             value="14"
             icon={Monitor}
-            iconColor="text-secondary"
+            iconColor="text-emerald-600"
+            iconBg="bg-emerald-50"
           >
-            <div className="flex items-center gap-1 text-xs text-success-700 pt-2 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-success"></span>
-              Live On-Shift
+            <div className="flex items-center gap-1.5 text-xs pt-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold text-emerald-700">Live On-Shift</span>
             </div>
-            <div className="flex items-center justify-between text-on-surface-variant text-xs pt-1">
-              <span>4 Hardware POS Terminals</span>
-              <span className="font-mono font-medium text-on-surface">10 Handheld/Apps</span>
+            <div className="flex items-center justify-between text-slate-500 text-xs mt-1.5">
+              <span>4 Hardware POS</span>
+              <span className="font-mono font-semibold text-slate-600">10 Handheld</span>
             </div>
           </StatsCard>
         </div>
 
-        {/* Filters and Table */}
-        <div className="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
-          {/* Filters */}
-          <div className="p-4 bg-surface-container-lowest flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-            <div className="flex flex-1 items-center gap-3">
+        {/* Table Card */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* Filters Toolbar */}
+          <div className="px-5 py-4 border-b border-slate-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <div className="flex flex-1 items-center gap-2.5 flex-wrap">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Search by name, email, terminal, or employee ID..."
-                className="flex-1 max-w-md"
+                placeholder="Search by name, email, or employee ID…"
+                className="flex-1 min-w-[200px] max-w-sm"
               />
               <FilterSelect
                 value={roleFilter}
                 onChange={setRoleFilter}
                 options={[
                   { value: '', label: 'All Roles' },
-                  { value: 'Admin', label: 'Administrator' },
-                  { value: 'Store Manager', label: 'Store Manager' },
-                  { value: 'Cashier', label: 'Cashier' },
-                  { value: 'Inventory Specialist', label: 'Inventory Clerk' },
-                  { value: 'Dispatch Driver', label: 'Dispatch Driver' },
+                  { value: 'admin', label: 'Administrator' },
+                  { value: 'buyer', label: 'Buyer/Customer' },
+                  { value: 'delivery', label: 'Delivery Partner' },
                 ]}
               />
               <FilterSelect
@@ -402,14 +429,14 @@ export function UserManagement() {
               />
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button className="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-on-surface text-sm rounded-lg flex items-center gap-1 transition-colors">
-                <MoreVertical className="w-4 h-4 text-outline" />
-                <span>Columns</span>
-              </button>
-              <button className="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-on-surface text-sm rounded-lg flex items-center gap-1 transition-colors">
-                <svg className="w-4 h-4 text-outline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+              {selectedRows.size > 0 && (
+                <span className="text-xs text-slate-500 font-medium">
+                  {selectedRows.size} selected
+                </span>
+              )}
+              <button className="h-9 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm rounded-lg flex items-center gap-1.5 transition-all shadow-sm">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                Columns
               </button>
             </div>
           </div>
@@ -417,13 +444,13 @@ export function UserManagement() {
           {/* Data Table */}
           {loading ? (
             <div className="p-12">
-              <LoadingSpinner size="lg" text="Loading users..." />
+              <LoadingSpinner size="lg" text="Loading users…" />
             </div>
           ) : users.length === 0 ? (
             <EmptyState
               icon={Users}
               title="No users found"
-              description="Try adjusting your search or filters"
+              description="Try adjusting your search or filter criteria to find users."
               action={
                 <ActionButton variant="primary" icon={UserPlus} onClick={() => setIsCreateModalOpen(true)}>
                   Add First User
@@ -441,16 +468,42 @@ export function UserManagement() {
               onSelectAll={handleSelectAll}
             />
           )}
+
+          {/* Pagination footer */}
+          {!loading && users.length > 0 && (
+            <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between text-sm">
+              <span className="text-slate-400 text-xs">
+                Showing {users.length} of {totalUsers} users
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="h-8 px-3 text-xs font-medium bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1 text-xs font-semibold text-slate-700 bg-slate-100 rounded-lg">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="h-8 px-3 text-xs font-medium bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Create User Modal */}
         <Modal
           isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            resetForm();
-          }}
+          onClose={() => { setIsCreateModalOpen(false); resetForm(); }}
           title="Create New User"
+          subtitle="Add a new system user and assign their role."
           footer={
             <>
               <ActionButton variant="secondary" onClick={() => setIsCreateModalOpen(false)}>
@@ -463,60 +516,69 @@ export function UserManagement() {
           }
         >
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Full Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter full name"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Full Name">
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputCls}
+                  placeholder="Jane Doe"
+                />
+              </FormField>
+              <FormField label="Phone">
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className={inputCls}
+                  placeholder="+91 98765 43210"
+                />
+              </FormField>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Email</label>
+            <FormField label="Email Address">
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className={inputCls}
                 placeholder="user@example.com"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Phone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="+91 98765 43210"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Password</label>
+            </FormField>
+            <FormField label="Password">
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter password"
+                className={inputCls}
+                placeholder="Enter a strong password"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Role</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">Select a role</option>
-                <option value="Administrator">Administrator</option>
-                <option value="Store Manager">Store Manager</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Inventory Specialist">Inventory Specialist</option>
-                <option value="Delivery Partner">Delivery Partner</option>
-              </select>
+            </FormField>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Role">
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="">Select a role</option>
+                  <option value="admin">Administrator</option>
+                  <option value="buyer">Buyer/Customer</option>
+                  <option value="delivery">Delivery Partner</option>
+                </select>
+              </FormField>
+              <FormField label="Status">
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })
+                  }
+                  className={inputCls}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </FormField>
             </div>
           </div>
         </Modal>
@@ -524,11 +586,9 @@ export function UserManagement() {
         {/* Edit User Modal */}
         <Modal
           isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            resetForm();
-          }}
+          onClose={() => { setIsEditModalOpen(false); resetForm(); }}
           title="Edit User"
+          subtitle={selectedUser ? `Editing account for ${selectedUser.name}` : undefined}
           footer={
             <>
               <ActionButton variant="secondary" onClick={() => setIsEditModalOpen(false)}>
@@ -541,58 +601,57 @@ export function UserManagement() {
           }
         >
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Full Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Full Name">
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputCls}
+                />
+              </FormField>
+              <FormField label="Phone">
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className={inputCls}
+                />
+              </FormField>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Email</label>
+            <FormField label="Email Address">
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`${inputCls} cursor-not-allowed`}
                 disabled
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Phone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Role</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="Administrator">Administrator</option>
-                <option value="Store Manager">Store Manager</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Inventory Specialist">Inventory Specialist</option>
-                <option value="Delivery Partner">Delivery Partner</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <p className="text-xs text-slate-400">Email cannot be changed after account creation.</p>
+            </FormField>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Role">
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="admin">Administrator</option>
+                  <option value="buyer">Buyer/Customer</option>
+                  <option value="delivery">Delivery Partner</option>
+                </select>
+              </FormField>
+              <FormField label="Status">
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })
+                  }
+                  className={inputCls}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </FormField>
             </div>
           </div>
         </Modal>

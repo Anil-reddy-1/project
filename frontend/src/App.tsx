@@ -1,7 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleBasedHome } from "./components/RoleBasedHome";
+import { ToastDemo } from "./components/ToastDemo";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { ForgotPassword } from "./pages/ForgotPassword";
@@ -18,11 +22,28 @@ import { PricingManagement } from "./pages/admin/PricingManagement";
 import { DeliveryManagement } from "./pages/admin/DeliveryManagement";
 import { DebtManagement } from "./pages/admin/DebtManagement";
 import { Reports } from "./pages/admin/Reports";
+import { Orders as AdminOrders } from "./pages/admin/Orders";
+import { OrderDetails as AdminOrderDetails } from "./pages/admin/OrderDetails";
 
 // Buyer Pages
-import { Products } from "./pages/buyer/Products";
-import { ProductDetails } from "./pages/buyer/ProductDetails";
-import { Wishlist } from "./pages/buyer/Wishlist";
+import {
+  BuyerHome,
+  Products,
+  ProductDetails,
+  Wishlist,
+  Cart,
+  Checkout,
+  Orders,
+  OrderDetails,
+  Profile,
+  Addresses,
+} from "./pages/buyer";
+
+// Delivery Partner Pages
+import {
+  Deliveries,
+  DeliveryDetails as DeliveryPartnerDeliveryDetails,
+} from "./pages/delivery";
 
 /**
  * Redirects authenticated users away from auth pages (login/signup) to home.
@@ -48,9 +69,12 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+            <Toaster />
+            <Routes>
           {/* Public auth routes */}
           <Route
             path="/login"
@@ -177,6 +201,22 @@ function App() {
             }
           />
           <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/orders/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminOrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
@@ -186,6 +226,14 @@ function App() {
           />
 
           {/* Buyer Routes */}
+          <Route
+            path="/buyer/home"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <BuyerHome />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/buyer/products"
             element={
@@ -203,6 +251,38 @@ function App() {
             }
           />
           <Route
+            path="/buyer/cart"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/buyer/checkout"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/buyer/orders"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/buyer/orders/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <OrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/buyer/wishlist"
             element={
               <ProtectedRoute allowedRoles={["admin", "buyer"]}>
@@ -211,37 +291,66 @@ function App() {
             }
           />
           <Route
+            path="/buyer/profile"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/buyer/addresses"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+                <Addresses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/buyer"
             element={
               <ProtectedRoute allowedRoles={["admin", "buyer"]}>
-                <Navigate to="/buyer/products" replace />
+                <Navigate to="/buyer/home" replace />
               </ProtectedRoute>
             }
           />
-
-          {/* Legacy buyer route - redirect to new products page */}
+          
+          {/* Delivery Partner Routes */}
           <Route
-            path="/buyer/*"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
-                <Navigate to="/buyer/products" replace />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/delivery/*"
+            path="/delivery/deliveries"
             element={
               <ProtectedRoute allowedRoles={["admin", "delivery"]}>
-                <RoleBasedHome />
+                <Deliveries />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/deliveries/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "delivery"]}>
+                <DeliveryPartnerDeliveryDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "delivery"]}>
+                <Navigate to="/delivery/deliveries" replace />
               </ProtectedRoute>
             }
           />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          {/* Toast Demo - Can be removed after integration */}
+          <Route path="/toast-demo" element={<ToastDemo />} />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
