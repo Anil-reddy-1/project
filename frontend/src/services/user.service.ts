@@ -13,13 +13,16 @@ export interface User {
 
 export interface UsersResponse {
   success: boolean;
-  data: {
-    users: User[];
+  message?: string;
+  data: User[] | { users: User[]; pagination?: any };
+  meta?: {
     pagination: {
       total: number;
       page: number;
       limit: number;
       totalPages: number;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
     };
   };
 }

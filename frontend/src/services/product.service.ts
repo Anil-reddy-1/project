@@ -68,6 +68,29 @@ class ProductService {
       images.forEach((image) => {
         formData.append('images', image);
       });
+      
+      // DEBUG LOGGING - Bug Condition Exploration Test
+      console.log('=== PRODUCT SERVICE DEBUG ===');
+      console.log('FormData constructed with images:', {
+        imageCount: images.length,
+        images: images.map(f => ({
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          lastModified: f.lastModified
+        }))
+      });
+      
+      // Log FormData entries
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
+      console.log('=== END DEBUG ===');
     }
     
     return api.post<ProductResponse>(this.baseUrl, formData);

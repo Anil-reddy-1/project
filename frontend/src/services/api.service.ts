@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+﻿import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { auth } from '../firebase';
 
 // API Base URL - explicitly set to include /v1
@@ -10,12 +10,10 @@ console.log('API Base URL:', API_BASE_URL); // Debug log
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Removed default Content-Type header to allow FormData to set it automatically
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and handle FormData
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
@@ -23,6 +21,12 @@ apiClient.interceptors.request.use(
       if (user) {
         const token = await user.getIdToken();
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      
+      // Let browser set Content-Type for FormData (includes boundary parameter)
+      // For JSON requests, explicitly set Content-Type
+      if (!(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
       }
     } catch (error) {
       console.error('Error getting auth token:', error);
