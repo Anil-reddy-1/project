@@ -1,11 +1,14 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface Column<T> {
   key: string;
-  header: string;
+  // Accept both 'header' (new) and 'label' (legacy)
+  header?: string;
+  label?: string;
   render?: (item: T) => ReactNode;
   className?: string;
   headerClassName?: string;
+  width?: string;
 }
 
 interface DataTableProps<T> {
@@ -18,7 +21,8 @@ interface DataTableProps<T> {
   onSelectAll?: (selected: boolean) => void;
   emptyMessage?: string;
   isLoading?: boolean;
-  keyExtractor: (item: T) => string;
+  // Optional: falls back to index if not provided
+  keyExtractor?: (item: T) => string;
 }
 
 export function DataTable<T>({
@@ -33,7 +37,9 @@ export function DataTable<T>({
   isLoading = false,
   keyExtractor,
 }: DataTableProps<T>) {
-  const allSelected = data.length > 0 && data.every((item) => selectedRows.has(keyExtractor(item)));
+  const getKey = (item: T, idx: number) =>
+    keyExtractor ? keyExtractor(item) : String(idx);
+  const allSelected = data.length > 0 && data.every((item, idx) => selectedRows.has(getKey(item, idx)));
 
   const handleSelectAll = () => {
     if (onSelectAll) {
@@ -42,41 +48,42 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto w-full">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider">
-            <tr>
+    <div className="w-full overflow-hidden">
+      <div className="overflow-x-auto scrollbar-light w-full">
+        <table className="w-full min-w-full text-left text-sm">
+          <thead>
+            <tr className="bg-slate-50 border-y border-slate-100">
               {selectable && (
-                <th className="w-10 px-4 py-3 text-center">
+                <th className="w-10 px-5 py-3.5 text-center">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 rounded-sm accent-primary cursor-pointer"
+                    className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
                   />
                 </th>
               )}
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-4 py-3 font-semibold ${column.headerClassName || ''}`}
+                  style={column.width ? { width: column.width } : undefined}
+                  className={`px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap ${column.headerClassName || ''}`}
                 >
-                  {column.header}
+                  {column.header ?? column.label ?? ''}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-none text-on-surface">
+          <tbody className="divide-y divide-slate-50">
             {isLoading ? (
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-12 text-center text-on-surface-variant"
+                  className="px-5 py-12 text-center text-slate-400"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading...</span>
+                  <div className="flex items-center justify-center gap-2.5">
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-medium">Loading…</span>
                   </div>
                 </td>
               </tr>
@@ -84,42 +91,45 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-12 text-center text-on-surface-variant"
+                  className="px-5 py-12 text-center text-slate-400 text-sm"
                 >
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              data.map((item) => {
-                const key = keyExtractor(item);
+              data.map((item, rowIdx) => {
+                const key = getKey(item, rowIdx);
                 const isSelected = selectedRows.has(key);
                 return (
                   <tr
                     key={key}
                     onClick={() => onRowClick?.(item)}
-                    className={`hover:bg-surface-container-low transition-colors ${
-                      onRowClick ? 'cursor-pointer' : ''
-                    }`}
+                    className={`group transition-colors ${isSelected
+                        ? 'bg-blue-50/70 border-l-2 border-l-blue-500'
+                        : rowIdx % 2 === 0
+                          ? 'bg-white hover:bg-slate-50/80'
+                          : 'bg-slate-50/30 hover:bg-slate-50/80'
+                      } ${onRowClick ? 'cursor-pointer' : ''}`}
                   >
                     {selectable && (
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center w-10">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onSelectRow?.(key)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded-sm accent-primary cursor-pointer"
+                          className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
                         />
                       </td>
                     )}
                     {columns.map((column) => (
                       <td
                         key={`${key}-${column.key}`}
-                        className={`px-4 py-3 ${column.className || ''}`}
+                        className={`px-4 py-3 text-slate-700 ${column.className || ''}`}
                       >
                         {column.render
                           ? column.render(item)
-                          : String((item as any)[column.key] || '-')}
+                          : String((item as any)[column.key] || '—')}
                       </td>
                     ))}
                   </tr>
