@@ -1,6 +1,7 @@
 import { Package, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -23,6 +24,7 @@ export function Navbar() {
               <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
                 {user.role}
               </span>
+              <NotificationBell />
             </>
           )}
           <Button variant="ghost" size="sm" onClick={logout}>

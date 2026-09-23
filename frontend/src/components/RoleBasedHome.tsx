@@ -1,6 +1,6 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { DeliveryDashboard } from "../pages/delivery/Dashboard";
-import { BuyerDashboard } from "../pages/buyer/Dashboard";
 import { Dashboard } from "../pages/admin/Dashboard";
 
 /**
@@ -13,7 +13,7 @@ export function RoleBasedHome() {
     case "admin":
       return <Dashboard />;
     case "buyer":
-      return <BuyerDashboard />;
+      return <Navigate to="/buyer/home" replace />;
     case "delivery":
     default:
       return <DeliveryDashboard />;

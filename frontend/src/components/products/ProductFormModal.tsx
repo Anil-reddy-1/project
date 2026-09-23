@@ -175,6 +175,19 @@ export function ProductFormModal({
       // Upload new images first
       const newImageFiles = images.filter((img) => img.file).map((img) => img.file!);
       
+      // DEBUG LOGGING - Bug Condition Exploration Test
+      console.log('=== PRODUCT FORM DEBUG ===');
+      console.log('Submitting product with images:', {
+        imageCount: newImageFiles.length,
+        files: newImageFiles.map(f => ({
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          constructor: f.constructor.name
+        }))
+      });
+      console.log('=== END DEBUG ===');
+      
       // Prepare product data
       const productData: CreateProductData | UpdateProductData = {
         name: formData.name.trim(),
