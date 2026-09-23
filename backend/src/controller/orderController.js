@@ -1,146 +1,326 @@
-const { success, created, paginated } = require('../utils/response');
-const { NotFoundError } = require('../utils/error');
-const orderModel = require('../models/orderModel');
-const deliveryModel = require('../models/deliveryModel');
+const orderService = require('../services/orderService');
 const logger = require('../utils/logger');
+const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/error');
 
 /**
- * Order Management Controller
+ * Order Controller
+ * Handles order management endpoints
  */
 
-async function getAllOrders(req, res, next) {
+/**
+ * Place a new order from cart
+ * POST /api/v1/orders
+ * Body: { addressId, paymentMethod, notes }
+ */
+async function createOrder(req, res, next) {
   try {
-    const { page = 1, limit = 20, status, dateFrom, dateTo } = req.validatedQuery;
+    const userId = req.user.dbId;
+    const firebaseUid = req.user.uid;
+    const { addressId, paymentMethod, notes } = req.body;
+    
+    // Validate input
+    if (!addressId) {
+      throw new BadRequestError('Delivery address ID is required');
+    }
+    
+    // Place order
+    const order = await orderService.placeOrder(userId, firebaseUid, {
+      addressId,
+      paymentMethod: paymentMethod || 'COD',
+      notes
+    });
+    
+    logger.info('Order created successfully', {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      userId,
+      totalAmount: order.totalAmount
+    });
+    
+    res.status(201).json({
+      success: true,
+      message: 'Order placed successfully',
+      data: {
+        order
+      }
+    });
+  } catch (error) {
+    logger.error('Create order error:', {
+      error: error.message,
+      userId: req.user?.dbId,
+      stack: error.stack
+    });
+    next(error);
+  }
+}
 
-    const { orders, total } = await orderModel.findAllOrders({
+/**
+ * Get user's orders
+ * GET /api/v1/orders/me
+ * Query: page, limit, status, dateFrom, dateTo
+ */
+async function getMyOrders(req, res, next) {
+  try {
+    const userId = req.user.dbId;
+    const { page, limit, status, dateFrom, dateTo } = req.query;
+    
+    const result = await orderService.getUserOrders(userId, {
       page,
       limit,
       status,
       dateFrom,
-      dateTo,
+      dateTo
     });
-
-    return paginated(res, {
-      data: orders.map(order => ({
-        id: order.id,
-        customer: {
-          id: order.customerId,
-          name: order.customerName,
-          email: order.customerEmail,
-        },
-        totalAmount: order.totalAmount,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        deliveryStatus: order.deliveryStatus,
-        createdAt: order.createdAt,
-      })),
-      page,
-      limit,
-      total,
+    
+    res.status(200).json({
+      success: true,
       message: 'Orders retrieved successfully',
+      data: result
     });
   } catch (error) {
+    logger.error('Get my orders error:', {
+      error: error.message,
+      userId: req.user?.dbId
+    });
     next(error);
   }
 }
 
+/**
+ * Get all orders (admin only)
+ * GET /api/v1/orders
+ * Query: page, limit, status, paymentStatus, dateFrom, dateTo, search
+ */
+async function getAllOrders(req, res, next) {
+  try {
+    const { page, limit, status, paymentStatus, dateFrom, dateTo, search } = req.query;
+    
+    const result = await orderService.getAllOrders({
+      page,
+      limit,
+      status,
+      paymentStatus,
+      dateFrom,
+      dateTo,
+      search
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'All orders retrieved successfully',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Get all orders error:', {
+      error: error.message,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Get order by ID
+ * GET /api/v1/orders/:id
+ */
 async function getOrderById(req, res, next) {
   try {
     const { id } = req.params;
-
-    const order = await orderModel.findOrderById(id);
-    if (!order) {
-      throw new NotFoundError('Order not found', 'Order');
-    }
-
-    return success(res, {
+    const userId = req.user.dbId;
+    const userRole = req.user.role;
+    
+    const order = await orderService.getOrderDetails(id, userId, userRole);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order retrieved successfully',
       data: {
-        id: order.id,
-        customer: {
-          id: order.customerId,
-          name: order.customerName,
-          email: order.customerEmail,
-        },
-        totalAmount: order.totalAmount,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        deliveryStatus: order.deliveryStatus,
-        createdAt: order.createdAt,
-      },
+        order
+      }
     });
   } catch (error) {
+    logger.error('Get order by ID error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
     next(error);
   }
 }
 
-async function createOrder(req, res, next) {
+/**
+ * Get order by order number
+ * GET /api/v1/orders/number/:orderNumber
+ */
+async function getOrderByNumber(req, res, next) {
   try {
-    const { customerId, customerName, customerEmail, items, deliveryAddress } = req.validatedBody;
-
-    // Calculate total (in real scenario, validate items exist and get prices)
-    let totalAmount = 0;
-    items.forEach(item => {
-      totalAmount += item.quantity * 100; // Placeholder: 100 per item
-    });
-
-    const order = await orderModel.createOrder({
-      customerId,
-      customerName,
-      customerEmail,
-      totalAmount,
-      deliveryAddress,
-    });
-
-    logger.info(`Order created: ${order.id}`);
-
-    return created(res, {
+    const { orderNumber } = req.params;
+    const userId = req.user.dbId;
+    const userRole = req.user.role;
+    
+    const order = await orderService.getOrderByNumber(orderNumber, userId, userRole);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order retrieved successfully',
       data: {
-        id: order.id,
-        customer: {
-          name: order.customerName,
-          email: order.customerEmail,
-        },
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-      },
-      message: 'Order created successfully',
+        order
+      }
     });
   } catch (error) {
+    logger.error('Get order by number error:', {
+      error: error.message,
+      orderNumber: req.params.orderNumber,
+      userId: req.user?.dbId
+    });
     next(error);
   }
 }
 
+/**
+ * Update order status (admin only)
+ * PATCH /api/v1/orders/:id/status
+ * Body: { status, notes }
+ */
 async function updateOrderStatus(req, res, next) {
   try {
     const { id } = req.params;
-    const { status, notes } = req.validatedBody;
-
-    const order = await orderModel.findOrderById(id);
-    if (!order) {
-      throw new NotFoundError('Order not found', 'Order');
+    const { status, notes } = req.body;
+    const userId = req.user.dbId;
+    const userRole = req.user.role;
+    
+    if (!status) {
+      throw new BadRequestError('Status is required');
     }
-
-    const updated = await orderModel.updateOrderStatus(id, status, notes);
-
-    logger.info(`Order status updated: ${id} -> ${status}`);
-
-    return success(res, {
-      data: {
-        id: updated.id,
-        status: updated.status,
-        updatedAt: updated.updatedAt,
-      },
+    
+    const order = await orderService.updateOrderStatus(id, status, userId, userRole, notes);
+    
+    logger.info('Order status updated', {
+      orderId: id,
+      newStatus: status,
+      updatedBy: userId
+    });
+    
+    res.status(200).json({
+      success: true,
       message: 'Order status updated successfully',
+      data: {
+        order
+      }
     });
   } catch (error) {
+    logger.error('Update order status error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Cancel order
+ * POST /api/v1/orders/:id/cancel
+ * Body: { reason }
+ */
+async function cancelOrder(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.dbId;
+    const userRole = req.user.role;
+    
+    if (!reason) {
+      throw new BadRequestError('Cancellation reason is required');
+    }
+    
+    const order = await orderService.cancelOrder(id, userId, userRole, reason);
+    
+    logger.info('Order cancelled', {
+      orderId: id,
+      cancelledBy: userId,
+      reason
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully',
+      data: {
+        order
+      }
+    });
+  } catch (error) {
+    logger.error('Cancel order error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Get order statistics for current user
+ * GET /api/v1/orders/stats/me
+ */
+async function getMyOrderStats(req, res, next) {
+  try {
+    const userId = req.user.dbId;
+    
+    const stats = await orderService.getUserOrderStatistics(userId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order statistics retrieved successfully',
+      data: stats
+    });
+  } catch (error) {
+    logger.error('Get order stats error:', {
+      error: error.message,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Validate order placement (pre-checkout validation)
+ * POST /api/v1/orders/validate
+ * Body: { addressId }
+ */
+async function validateOrder(req, res, next) {
+  try {
+    const userId = req.user.dbId;
+    const { addressId } = req.body;
+    
+    if (!addressId) {
+      throw new BadRequestError('Address ID is required for validation');
+    }
+    
+    const validation = await orderService.validateOrderPlacement(userId, addressId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order validation completed',
+      data: validation
+    });
+  } catch (error) {
+    logger.error('Validate order error:', {
+      error: error.message,
+      userId: req.user?.dbId
+    });
     next(error);
   }
 }
 
 module.exports = {
+  createOrder,
+  getMyOrders,
   getAllOrders,
   getOrderById,
-  createOrder,
+  getOrderByNumber,
   updateOrderStatus,
+  cancelOrder,
+  getMyOrderStats,
+  validateOrder
 };

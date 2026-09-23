@@ -207,3 +207,229 @@ module.exports = {
   adjustStock,
   getStockHistory,
 };
+
+/**
+ * Validate stock availability for multiple items
+ * Returns array of items with stock validation results
+ */
+async function validateStockAvailability(items) {
+  const results = [];
+  
+  for (const item of items) {
+    const query = `
+      SELECT id, sku, name, quantity, status
+      FROM products
+      WHERE id = $1;
+    `;
+    
+    const result = await pool.query(query, [item.productId]);
+    
+    if (result.rows.length === 0) {
+      results.push({
+        productId: item.productId,
+        requestedQuantity: item.quantity,
+        available: false,
+        reason: 'Product not found'
+      });
+      continue;
+    }
+    
+    const product = result.rows[0];
+    
+    if (product.status !== 'active') {
+      results.push({
+        productId: item.productId,
+        productName: product.name,
+        requestedQuantity: item.quantity,
+        availableQuantity: parseInt(product.quantity, 10),
+        available: false,
+        reason: 'Product is inactive'
+      });
+      continue;
+    }
+    
+    const availableQty = parseInt(product.quantity, 10);
+    const requestedQty = parseInt(item.quantity, 10);
+    
+    results.push({
+      productId: item.productId,
+      productName: product.name,
+      productSku: product.sku,
+      requestedQuantity: requestedQty,
+      availableQuantity: availableQty,
+      available: availableQty >= requestedQty,
+      reason: availableQty >= requestedQty ? null : 'Insufficient stock'
+    });
+  }
+  
+  return results;
+}
+
+/**
+ * Deduct stock for a product (used during order placement)
+ * Must be called within a transaction
+ */
+async function deductStock(productId, quantity, reason, referenceId, client) {
+  // Get current product quantity with row lock
+  const getQuery = `
+    SELECT id, quantity
+    FROM products
+    WHERE id = $1
+    FOR UPDATE;
+  `;
+  
+  const getResult = await client.query(getQuery, [productId]);
+  
+  if (getResult.rows.length === 0) {
+    throw new Error(`Product ${productId} not found`);
+  }
+  
+  const currentQuantity = parseInt(getResult.rows[0].quantity, 10);
+  const newQuantity = currentQuantity - quantity;
+  
+  if (newQuantity < 0) {
+    throw new Error(`Insufficient stock for product ${productId}. Available: ${currentQuantity}, Requested: ${quantity}`);
+  }
+  
+  // Update product quantity
+  const updateQuery = `
+    UPDATE products
+    SET quantity = $1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *;
+  `;
+  
+  await client.query(updateQuery, [newQuantity, productId]);
+  
+  // Create stock transaction record
+  const transactionQuery = `
+    INSERT INTO stock_transactions (
+      product_id, transaction_type, quantity_change, quantity_after,
+      reason, reference_id, reference_type, created_at
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+    RETURNING *;
+  `;
+  
+  const transactionResult = await client.query(transactionQuery, [
+    productId,
+    'sale',
+    -quantity,
+    newQuantity,
+    reason,
+    referenceId,
+    'order'
+  ]);
+  
+  return {
+    productId,
+    previousQuantity: currentQuantity,
+    newQuantity,
+    quantityDeducted: quantity,
+    transactionId: transactionResult.rows[0].id
+  };
+}
+
+/**
+ * Restore stock for a product (used for order cancellation/returns)
+ * Must be called within a transaction
+ */
+async function restoreStock(productId, quantity, reason, referenceId, client) {
+  // Get current product quantity with row lock
+  const getQuery = `
+    SELECT id, quantity
+    FROM products
+    WHERE id = $1
+    FOR UPDATE;
+  `;
+  
+  const getResult = await client.query(getQuery, [productId]);
+  
+  if (getResult.rows.length === 0) {
+    throw new Error(`Product ${productId} not found`);
+  }
+  
+  const currentQuantity = parseInt(getResult.rows[0].quantity, 10);
+  const newQuantity = currentQuantity + quantity;
+  
+  // Update product quantity
+  const updateQuery = `
+    UPDATE products
+    SET quantity = $1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *;
+  `;
+  
+  await client.query(updateQuery, [newQuantity, productId]);
+  
+  // Create stock transaction record
+  const transactionQuery = `
+    INSERT INTO stock_transactions (
+      product_id, transaction_type, quantity_change, quantity_after,
+      reason, reference_id, reference_type, created_at
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+    RETURNING *;
+  `;
+  
+  const transactionResult = await client.query(transactionQuery, [
+    productId,
+    'return',
+    quantity,
+    newQuantity,
+    reason,
+    referenceId,
+    'order'
+  ]);
+  
+  return {
+    productId,
+    previousQuantity: currentQuantity,
+    newQuantity,
+    quantityRestored: quantity,
+    transactionId: transactionResult.rows[0].id
+  };
+}
+
+/**
+ * Get stock transaction history for an order
+ */
+async function getStockTransactionsByOrder(orderId) {
+  const query = `
+    SELECT 
+      st.*,
+      p.name as product_name,
+      p.sku as product_sku
+    FROM stock_transactions st
+    INNER JOIN products p ON st.product_id = p.id
+    WHERE st.reference_id = $1 AND st.reference_type = 'order'
+    ORDER BY st.created_at;
+  `;
+  
+  const result = await pool.query(query, [orderId]);
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    productId: row.product_id,
+    productName: row.product_name,
+    productSku: row.product_sku,
+    transactionType: row.transaction_type,
+    quantityChange: parseInt(row.quantity_change, 10),
+    quantityAfter: parseInt(row.quantity_after, 10),
+    reason: row.reason,
+    createdAt: row.created_at
+  }));
+}
+
+module.exports = {
+  createStock,
+  findStockById,
+  findAllStock,
+  updateStock,
+  adjustStock,
+  getStockHistory,
+  validateStockAvailability,
+  deductStock,
+  restoreStock,
+  getStockTransactionsByOrder
+};

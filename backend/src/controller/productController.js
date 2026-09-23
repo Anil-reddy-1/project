@@ -173,6 +173,13 @@ async function createProduct(req, res) {
   try {
     const productData = req.body;
     
+    logger.info('Creating product:', { 
+      sku: productData.sku, 
+      name: productData.name,
+      hasFiles: !!req.files,
+      fileCount: req.files?.length || 0
+    });
+    
     // Parse categoryTags if it's a string
     if (typeof productData.categoryTags === 'string') {
       try {
@@ -185,12 +192,25 @@ async function createProduct(req, res) {
     // Handle image uploads if files provided
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
+      logger.info(`Uploading ${req.files.length} images to Cloudinary...`);
       const fileBuffers = req.files.map(file => file.buffer);
       const uploadResults = await uploadMultipleToCloudinary(fileBuffers, 'products');
       imageUrls = uploadResults;
+      logger.info('Images uploaded successfully:', { 
+        count: uploadResults.length,
+        urls: uploadResults.map(r => r.url)
+      });
+    } else {
+      logger.warn('No files provided in request');
     }
     
+    logger.info('Saving product to database with images:', { imageCount: imageUrls.length });
     const product = await productModel.createProduct(productData, imageUrls);
+    
+    logger.info('Product created successfully:', { 
+      productId: product.id,
+      imageCount: product.images?.length || 0
+    });
     
     res.status(201).json({
       success: true,
@@ -198,7 +218,12 @@ async function createProduct(req, res) {
       data: product
     });
   } catch (error) {
-    logger.error('Create product error:', { error: error.message });
+    logger.error('Create product error:', { 
+      error: error.message,
+      stack: error.stack,
+      hasFiles: !!req.files,
+      fileCount: req.files?.length || 0
+    });
     
     if (error.code === '23505') { // Unique constraint violation (duplicate SKU)
       return res.status(409).json({

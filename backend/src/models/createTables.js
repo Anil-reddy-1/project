@@ -183,7 +183,7 @@ async function initializeTables() {
 
     await client.query(createDebtsTableQuery);
 
-    // Create Debt Payments table
+    // Create debt_payments table
     const createDebtPaymentsTableQuery = `
       CREATE TABLE IF NOT EXISTS debt_payments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -198,6 +198,55 @@ async function initializeTables() {
     `;
 
     await client.query(createDebtPaymentsTableQuery);
+
+    // Create cart_items table
+    const createCartItemsTableQuery = `
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id)
+      );
+    `;
+
+    await client.query(createCartItemsTableQuery);
+
+    // Create saved_for_later table
+    const createSavedForLaterTableQuery = `
+      CREATE TABLE IF NOT EXISTS saved_for_later (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id)
+      );
+    `;
+
+    await client.query(createSavedForLaterTableQuery);
+
+    // Create user_addresses table
+    const createUserAddressesTableQuery = `
+      CREATE TABLE IF NOT EXISTS user_addresses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(30) NOT NULL,
+        address_line1 TEXT NOT NULL,
+        address_line2 TEXT,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(100) NOT NULL,
+        postal_code VARCHAR(20) NOT NULL,
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createUserAddressesTableQuery);
 
     // Create Indexes for performance
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);');
@@ -215,6 +264,13 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_status ON debts(status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_due_date ON debts(due_date);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON cart_items(product_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_user_product ON cart_items(user_id, product_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_saved_for_later_user_id ON saved_for_later(user_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_saved_for_later_product_id ON saved_for_later(product_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses(user_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_is_default ON user_addresses(user_id, is_default);');
 
     await client.query('COMMIT');
     logger.info('Database tables initialized successfully');

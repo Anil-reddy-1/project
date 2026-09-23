@@ -13,7 +13,7 @@ const logger = require('../utils/logger');
  */
 async function addToWishlist(req, res) {
   try {
-    const userId = req.user.uid; // From authenticate middleware
+    const userId = req.user.dbId; // Database UUID from ensureUser middleware
     const { productId } = req.body;
     
     if (!productId) {
@@ -70,7 +70,7 @@ async function addToWishlist(req, res) {
  */
 async function removeFromWishlist(req, res) {
   try {
-    const userId = req.user.uid;
+    const userId = req.user.dbId;
     const { productId } = req.params;
     
     const result = await wishlistModel.removeFromWishlist(userId, productId);
@@ -103,7 +103,7 @@ async function removeFromWishlist(req, res) {
  */
 async function getWishlist(req, res) {
   try {
-    const userId = req.user.uid;
+    const userId = req.user.dbId;
     
     const wishlist = await wishlistModel.getUserWishlist(userId);
     
@@ -129,7 +129,7 @@ async function getWishlist(req, res) {
  */
 async function checkWishlist(req, res) {
   try {
-    const userId = req.user.uid;
+    const userId = req.user.dbId;
     const { productId } = req.params;
     
     const isInWishlist = await wishlistModel.isInWishlist(userId, productId);
@@ -154,7 +154,7 @@ async function checkWishlist(req, res) {
  */
 async function getWishlistCount(req, res) {
   try {
-    const userId = req.user.uid;
+    const userId = req.user.dbId;
     
     const count = await wishlistModel.getWishlistCount(userId);
     
@@ -178,7 +178,7 @@ async function getWishlistCount(req, res) {
  */
 async function clearWishlist(req, res) {
   try {
-    const userId = req.user.uid;
+    const userId = req.user.dbId;
     
     const result = await wishlistModel.clearWishlist(userId);
     
