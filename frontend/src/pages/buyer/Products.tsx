@@ -1,9 +1,10 @@
 /**
  * Products Catalog Page (Buyer)
- * Browse and search products with category filtering
+ * Browse and search products with category filtering and cart integration
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid, List, Search } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { ProductCard } from '../../components/products';
@@ -15,9 +16,11 @@ import {
 } from '../../components/ui';
 import { useProducts } from '../../hooks/useProducts';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useCart } from '../../hooks/useCart';
 import type { ProductFilters } from '../../types';
 
 export function Products() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<ProductFilters>({
     page: 1,
     limit: 12,
@@ -35,6 +38,7 @@ export function Products() {
     false // Buyer view - active products only
   );
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { cartItems, addToCart, isInCart } = useCart();
 
   // Fetch available categories from products
   useEffect(() => {
@@ -78,11 +82,20 @@ export function Products() {
     await toggleWishlist(productId, currentlyInWishlist);
   };
 
-  // Handle add to cart (placeholder)
-  const handleAddToCart = async (productId: string) => {
-    // TODO: Implement cart functionality
-    console.log('Add to cart:', productId);
-    alert('Cart functionality will be implemented soon!');
+  // Handle add to cart
+  const handleAddToCart = async (productId: string, quantity?: number) => {
+    await addToCart(productId, quantity);
+  };
+
+  // Handle view cart
+  const handleViewCart = () => {
+    navigate('/buyer/cart');
+  };
+
+  // Get cart quantity for a product
+  const getCartQuantity = (productId: string): number => {
+    const cartItem = cartItems.find(item => item.productId === productId);
+    return cartItem?.quantity || 0;
   };
 
   // Handle page change
@@ -211,8 +224,11 @@ export function Products() {
                   key={product.id}
                   product={product}
                   isInWishlist={isInWishlist(product.id)}
+                  isInCart={isInCart(product.id)}
+                  cartQuantity={getCartQuantity(product.id)}
                   onWishlistToggle={handleWishlistToggle}
                   onAddToCart={handleAddToCart}
+                  onViewCart={handleViewCart}
                 />
               ))}
             </div>

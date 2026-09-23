@@ -1,11 +1,11 @@
 /**
  * ProductDetails Page (Buyer)
- * Detailed product view with image gallery and purchase actions
+ * Detailed product view with image gallery and cart integration
  */
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, ArrowLeft, AlertCircle, Package } from 'lucide-react';
+import { Heart, ShoppingCart, ArrowLeft, AlertCircle, Package, Check } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { ImageGallery } from '../../components/products';
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../components/ui';
 import { productService } from '../../services';
 import { useWishlistStatus } from '../../hooks/useWishlist';
+import { useCart } from '../../hooks/useCart';
 import type { Product } from '../../types';
 import {
   formatPrice,
@@ -32,9 +33,16 @@ export function ProductDetails() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [showAddedFeedback, setShowAddedFeedback] = useState(false);
 
   const { isInWishlist, loading: wishlistLoading, toggle: toggleWishlist } =
     useWishlistStatus(id || '');
+  
+  const { addToCart, isInCart, cartItems } = useCart();
+
+  // Get current cart quantity for this product
+  const cartQuantity = cartItems.find(item => item.productId === id)?.quantity || 0;
+  const productIsInCart = isInCart(id || '');
 
   // Fetch product details
   useEffect(() => {
@@ -70,14 +78,11 @@ export function ProductDetails() {
   };
 
   const handleAddToCart = async () => {
-    if (!product) return;
+    if (!product || !id) return;
     
-    // TODO: Implement cart functionality
     setAddingToCart(true);
     
     try {
-      console.log('Add to cart:', { productId: product.id, quantity });
-      
       // Show MOQ warning if quantity is less than minimum
       if (quantity < product.minOrderQuantity) {
         const proceed = window.confirm(
@@ -89,10 +94,18 @@ export function ProductDetails() {
         }
       }
       
-      alert(`Added ${quantity} ${product.unit} of "${product.name}" to cart!`);
+      await addToCart(id, quantity);
+      
+      // Show success feedback
+      setShowAddedFeedback(true);
+      setTimeout(() => setShowAddedFeedback(false), 3000);
     } finally {
       setAddingToCart(false);
     }
+  };
+
+  const handleViewCart = () => {
+    navigate('/buyer/cart');
   };
 
   const handleWishlistToggle = async () => {
@@ -305,36 +318,97 @@ export function ProductDetails() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-6">
-              <ActionButton
-                variant="primary"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || addingToCart}
-                className="flex-1"
-              >
-                {addingToCart ? (
-                  'Adding...'
-                ) : (
-                  <>
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                  </>
-                )}
-              </ActionButton>
+            <div className="space-y-3 pt-6">
+              {/* Cart Status Info */}
+              {productIsInCart && cartQuantity > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
+                    <Check className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-900">
+                      Already in cart
+                    </p>
+                    <p className="text-sm text-green-700">
+                      You have {cartQuantity} {product.unit} in your cart
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <ActionButton
-                variant="secondary"
-                onClick={handleWishlistToggle}
-                disabled={wishlistLoading}
-                className="px-6"
-                title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isInWishlist ? 'fill-red-500 text-red-500' : ''
-                  }`}
-                />
-              </ActionButton>
+              {/* Success Feedback */}
+              {showAddedFeedback && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
+                    <Check className="w-5 h-5 text-green-600" />
+                  </div>
+                  <p className="text-sm font-medium text-green-900">
+                    Added {quantity} {product.unit} to cart!
+                  </p>
+                </div>
+              )}
+
+              {/* Button Group */}
+              <div className="flex gap-3">
+                {productIsInCart ? (
+                  <>
+                    <ActionButton
+                      variant="secondary"
+                      onClick={handleAddToCart}
+                      disabled={isOutOfStock || addingToCart}
+                      className="flex-1"
+                    >
+                      {addingToCart ? (
+                        'Adding...'
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-5 h-5 mr-2" />
+                          Add More
+                        </>
+                      )}
+                    </ActionButton>
+                    
+                    <ActionButton
+                      variant="primary"
+                      onClick={handleViewCart}
+                      className="flex-1"
+                    >
+                      <Check className="w-5 h-5 mr-2" />
+                      View Cart
+                    </ActionButton>
+                  </>
+                ) : (
+                  <ActionButton
+                    variant="primary"
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || addingToCart}
+                    className="flex-1"
+                  >
+                    {addingToCart ? (
+                      'Adding...'
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-5 h-5 mr-2" />
+                        {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                      </>
+                    )}
+                  </ActionButton>
+                )}
+
+                <ActionButton
+                  variant="secondary"
+                  onClick={handleWishlistToggle}
+                  disabled={wishlistLoading}
+                  className="px-6"
+                  title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${
+                      isInWishlist ? 'fill-red-500 text-red-500' : ''
+                    }`}
+                  />
+                </ActionButton>
+              </div>
             </div>
 
             {/* Out of Stock Notice */}

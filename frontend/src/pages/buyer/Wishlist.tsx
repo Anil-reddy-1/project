@@ -7,7 +7,9 @@ import { DashboardLayout } from '../../components/layout';
 import { ProductCard } from '../../components/products';
 import { LoadingSpinner, EmptyState, ActionButton } from '../../components/ui';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useCart } from '../../context/CartContext';
 import { Heart } from 'lucide-react';
+import { showSuccessToast, showErrorToast } from '../../utils/toast';
 
 export function Wishlist() {
   const {
@@ -20,6 +22,8 @@ export function Wishlist() {
     refetch,
   } = useWishlist();
 
+  const { addToCart, isInCart } = useCart();
+
   // Handle remove from wishlist
   const handleRemoveFromWishlist = async (productId: string) => {
     const success = await removeFromWishlist(productId);
@@ -30,9 +34,20 @@ export function Wishlist() {
 
   // Handle add to cart
   const handleAddToCart = async (productId: string) => {
-    // TODO: Implement cart functionality
-    console.log('Add to cart:', productId);
-    alert('Cart functionality will be implemented soon!');
+    try {
+      // Check if already in cart
+      if (isInCart(productId)) {
+        showErrorToast('This product is already in your cart');
+        return;
+      }
+
+      // Add to cart with default quantity of 1
+      await addToCart(productId, 1);
+      showSuccessToast('Product added to cart successfully!');
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      showErrorToast('Failed to add product to cart');
+    }
   };
 
   // Handle clear all
@@ -109,7 +124,7 @@ export function Wishlist() {
         {/* Empty State */}
         {wishlistCount === 0 && !loading ? (
           <EmptyState
-            icon={<Heart className="w-16 h-16 text-gray-300" />}
+            icon={Heart}
             title="Your wishlist is empty"
             description="Start adding products to your wishlist to save them for later"
             action={
