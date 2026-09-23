@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const wishlistController = require('../controller/wishlistController');
 const { authenticate } = require('../middleware/auth');
+const { ensureUser } = require('../middleware/ensureUser');
 const { validateAddToWishlist } = require('../middleware/productValidation');
 
 /**
@@ -9,8 +10,9 @@ const { validateAddToWishlist } = require('../middleware/productValidation');
  * User wishlist management endpoints
  */
 
-// All wishlist routes require authentication
+// All wishlist routes require authentication and ensure user exists in DB
 router.use(authenticate);
+router.use(ensureUser);
 
 /**
  * @route   GET /api/v1/wishlist

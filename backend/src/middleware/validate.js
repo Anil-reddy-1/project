@@ -1,28 +1,34 @@
-const { ValidationError } = require('../utils/error');
+/**
+ * Validation Middleware
+ * Validates request body, query, and params against Joi schemas
+ */
+
+const { BadRequestError } = require('../utils/error');
 
 /**
- * Express Request Validation Middleware using Joi
- * 
- * @param {import('joi').ObjectSchema} schema - Joi validation schema
- * @param {'body'|'query'|'params'} property - Request property to validate (default: 'body')
+ * Validate request data against a Joi schema
+ * @param {Object} schema - Joi schema object
+ * @param {string} property - Property to validate (body, query, params)
  */
 function validate(schema, property = 'body') {
   return (req, res, next) => {
     const { error, value } = schema.validate(req[property], {
-      abortEarly: false,
-      stripUnknown: true,
+      abortEarly: false, // Return all errors
+      stripUnknown: true, // Remove unknown properties
+      convert: true // Convert types (e.g., string to number)
     });
 
     if (error) {
-      const details = error.details.map((detail) => ({
-        field: detail.path.join('.'),
-        message: detail.message.replace(/"/g, ''),
-      }));
-      return next(new ValidationError('Validation failed', details));
+      const errorMessage = error.details
+        .map(detail => detail.message)
+        .join(', ');
+      
+      return next(new BadRequestError(errorMessage));
     }
 
+    // Replace request property with validated and sanitized value
     req[property] = value;
-    return next();
+    next();
   };
 }
 

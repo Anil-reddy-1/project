@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controller/userController');
-const { authenticate } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/rolePermission');
+const { authenticate, requireRole } = require('../middleware/auth');
 const { validateRequest, validateQuery, schemas, querySchemas } = require('../middleware/validateRequest');
 
 /**
@@ -14,7 +13,7 @@ const { validateRequest, validateQuery, schemas, querySchemas } = require('../mi
 router.get(
   '/',
   authenticate,
-  requirePermission('users', 'view'),
+  requireRole('admin'),
   validateQuery(querySchemas.search),
   userController.getAllUsers
 );
@@ -23,7 +22,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  requirePermission('users', 'view'),
+  requireRole('admin'),
   userController.getUserById
 );
 
@@ -31,7 +30,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  requirePermission('users', 'create'),
+  requireRole('admin'),
   validateRequest(schemas.createUser),
   userController.createUser
 );
@@ -40,7 +39,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  requirePermission('users', 'update'),
+  requireRole('admin'),
   validateRequest(schemas.updateUser),
   userController.updateUser
 );
@@ -49,7 +48,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requirePermission('users', 'delete'),
+  requireRole('admin'),
   userController.deleteUser
 );
 

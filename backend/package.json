@@ -9,6 +9,8 @@
     "dev": "nodemon src/index.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "migrate": "node scripts/runMigration.js",
+    "migrate:products": "node scripts/runMigration.js 001_unified_products_migration.sql",
+    "migrate:cart": "node scripts/migrateCart.js",
     "test:cloudinary": "node scripts/testCloudinary.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Product Image Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .file-list {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Product Image Upload</h1>
+  <p>This page tests the product creation with image uploads.</p>
+  
+  <form id="productForm">
+    <div class="form-group">
+      <label for="sku">SKU *</label>
+      <input type="text" id="sku" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="name">Product Name *</label>
+      <input type="text" id="name" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" rows="3"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="price">Price *</label>
+      <input type="number" id="price" step="0.01" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="quantity">Quantity *</label>
+      <input type="number" id="quantity" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="minStock">Min Stock *</label>
+      <input type="number" id="minStock" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="images">Product Images (Max 10)</label>
+      <input type="file" id="images" accept="image/*" multiple />
+      <div id="fileList" class="file-list" style="display:none;"></div>
+    </div>
+    
+    <button type="submit">Create Product</button>
+  </form>
+  
+  <div id="result"></div>
+  
+  <script>
+    const form = document.getElementById('productForm');
+    const imagesInput = document.getElementById('images');
+    const fileList = document.getElementById('fileList');
+    const resultDiv = document.getElementById('result');
+    
+    // Generate random SKU
+    document.getElementById('sku').value = 'TEST-' + Date.now();
+    
+    // Show selected files
+    imagesInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length > 0) {
+        fileList.style.display = 'block';
+        fileList.innerHTML = '<strong>Selected files:</strong><ul>' + 
+          files.map(f => `<li>${f.name} (${(f.size / 1024).toFixed(2)} KB)</li>`).join('') +
+          '</ul>';
+      } else {
+        fileList.style.display = 'none';
+      }
+    });
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      resultDiv.innerHTML = '<p>Uploading...</p>';
+      resultDiv.className = '';
+      
+      const formData = new FormData();
+      
+      // Add text fields
+      formData.append('sku', document.getElementById('sku').value);
+      formData.append('name', document.getElementById('name').value);
+      formData.append('description', document.getElementById('description').value);
+      formData.append('price', document.getElementById('price').value);
+      formData.append('quantity', document.getElementById('quantity').value);
+      formData.append('unit', 'pcs');
+      formData.append('minStock', document.getElementById('minStock').value);
+      formData.append('maxStock', '1000');
+      formData.append('minOrderQuantity', '1');
+      formData.append('status', 'active');
+      formData.append('categoryTags', JSON.stringify(['test']));
+      
+      // Add images
+      const files = imagesInput.files;
+      console.log('Adding files to FormData:', files.length);
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+        console.log('Added file:', files[i].name);
+      }
+      
+      try {
+        console.log('Sending request...');
+        const response = await fetch('http://localhost:5000/api/v1/products', {
+          method: 'POST',
+          body: formData,
+          // Note: Don't set Content-Type header, let browser set it with boundary
+        });
+        
+        const data = await response.json();
+        console.log('Response:', data);
+        
+        if (response.ok) {
+          resultDiv.className = 'success';
+          resultDiv.innerHTML = `
+            <h3>✅ Product Created Successfully!</h3>
+            <p><strong>Product ID:</strong> ${data.data.id}</p>
+            <p><strong>SKU:</strong> ${data.data.sku}</p>
+            <p><strong>Name:</strong> ${data.data.name}</p>
+            <p><strong>Images Uploaded:</strong> ${data.data.images?.length || 0}</p>
+            ${data.data.images?.length > 0 ? '<div><strong>Image URLs:</strong><ul>' + 
+              data.data.images.map(img => `<li><a href="${img.url}" target="_blank">${img.url}</a></li>`).join('') +
+              '</ul></div>' : '<p style="color: orange;">⚠️ WARNING: No images were saved!</p>'}
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          resultDiv.className = 'error';
+          resultDiv.innerHTML = `
+            <h3>❌ Error Creating Product</h3>
+            <p>${data.message || 'Unknown error'}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `
+          <h3>❌ Request Failed</h3>
+          <p>${error.message}</p>
+          <p>Make sure the backend server is running on http://localhost:5000</p>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
