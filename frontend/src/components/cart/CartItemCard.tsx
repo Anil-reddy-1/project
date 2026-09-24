@@ -4,13 +4,13 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Minus, Plus, Trash2, Heart, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { CartItem } from '../../types/cart.types';
 import { formatPrice, getPrimaryImageUrl } from '../../utils/productUtils';
 import { StockWarning, MOQWarning, StockBadge } from './StockWarning';
-import { fadeVariants, buttonVariants, transitions } from '../../utils/animations';
+import { fadeVariants, transitions } from '../../utils/animations';
 
 interface CartItemCardProps {
   item: CartItem;
@@ -37,8 +37,6 @@ export function CartItemCard({
   const isBelowMOQ = quantity < product.minOrderQuantity;
   const hasStockIssue = product.hasStockIssue;
   const isOutOfStock = product.stockStatus === 'out';
-  const isInsufficientStock = product.stockStatus === 'insufficient';
-  const isLowStock = product.stockStatus === 'low';
 
   /**
    * Handle quantity increment
@@ -199,10 +197,10 @@ export function CartItemCard({
             </div>
 
             {/* Stock Issue Message */}
-            {hasStockIssue && product.stockIssue && (
+            {hasStockIssue && (
               <div className="mb-3 p-2 rounded-md bg-red-50 border border-red-200">
                 <p className="text-xs text-red-700 font-medium">
-                  {product.stockIssue}
+                  Stock issue detected
                 </p>
               </div>
             )}

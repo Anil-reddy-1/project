@@ -1,4 +1,4 @@
-import { ReactNode, ComponentType } from 'react';
+import type { ReactNode, ComponentType } from 'react';
 import { ActionButton } from './ActionButton';
 
 interface EmptyStateProps {

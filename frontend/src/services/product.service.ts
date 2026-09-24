@@ -5,13 +5,11 @@
 
 import { api } from './api.service';
 import type {
-  Product,
   CreateProductData,
   UpdateProductData,
   ProductFilters,
   ProductListResponse,
   ProductResponse,
-  ProductStats,
   ProductStatsResponse,
   BulkStatusUpdate,
   BulkStatusResponse,

@@ -14,7 +14,7 @@ import {
   getCheckoutBlockReason,
 } from '../../utils/cartCalculations';
 import { Separator } from '../ui';
-import { fadeVariants, buttonVariants, transitions } from '../../utils/animations';
+
 
 interface InvoiceSidebarProps {
   cartItems: CartItem[];

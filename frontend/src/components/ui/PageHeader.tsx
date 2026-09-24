@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
   title: string;
@@ -6,6 +6,7 @@ interface PageHeaderProps {
   description?: string; // Legacy alias for subtitle
   badge?: string;
   actions?: ReactNode;
+  children?: ReactNode;
 }
 
 export function PageHeader({ title, subtitle, description, badge, actions }: PageHeaderProps) {

@@ -10,7 +10,6 @@ import {
   DataTable,
   StatusBadge,
   SearchBar,
-  FilterSelect,
   PageHeader,
   ActionButton,
   LoadingSpinner,
@@ -18,7 +17,7 @@ import {
 } from '../../components/ui';
 import { useProducts, useProductStats } from '../../hooks';
 import { productService } from '../../services';
-import type { Product, ProductFilters, ProductStatus, StockStatus } from '../../types';
+import type { Product, ProductFilters, ProductStatus } from '../../types';
 import { 
   formatPrice, 
   formatNumber, 

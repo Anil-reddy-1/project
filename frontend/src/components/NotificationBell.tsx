@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCheck, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService, type Notification } from '../services/notification.service';
-import { Badge, Button } from './ui';
+import { Button } from './ui';
 import { formatRelativeTime } from '../utils/date';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
 
@@ -97,7 +97,7 @@ export function NotificationBell() {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (_type: string) => {
     // You can customize icons based on notification type
     return '📦';
   };

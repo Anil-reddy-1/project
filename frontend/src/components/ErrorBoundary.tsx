@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
@@ -38,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
 
@@ -83,7 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </AlertTitle>
               <AlertDescription className="mt-2">
                 An unexpected error occurred. Please try refreshing the page.
-                {process.env.NODE_ENV === 'development' && this.state.error && (
+                {import.meta.env.DEV && this.state.error && (
                   <details className="mt-4 text-sm">
                     <summary className="cursor-pointer font-medium">
                       Error details (development only)
@@ -143,7 +144,7 @@ export function ErrorFallback({
       <AlertTitle>Error</AlertTitle>
       <AlertDescription>
         {message}
-        {error && process.env.NODE_ENV === 'development' && (
+        {error && import.meta.env.DEV && (
           <pre className="mt-2 text-xs">{error.message}</pre>
         )}
         {resetError && (

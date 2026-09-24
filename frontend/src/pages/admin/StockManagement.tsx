@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
-import { ActionButton } from '../../components/ui';
 import { Package, ArrowRight } from 'lucide-react';
 
 /**

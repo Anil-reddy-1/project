@@ -11,8 +11,10 @@ export interface DeliveryStatusHistory {
 
 export interface Delivery {
   id: string;
+  deliveryId?: string;
   orderId: string;
   deliveryPartnerId?: string;
+  deliveryType?: string;
   customerName: string;
   customerPhone: string;
   deliveryAddress: {
@@ -24,6 +26,10 @@ export interface Delivery {
     state: string;
     postalCode: string;
   };
+  origin?: string;
+  destination?: string;
+  packageCount?: number;
+  scheduledDate?: string;
   status: 'pending' | 'assigned' | 'accepted' | 'in_transit' | 'delivered' | 'failed';
   assignedAt?: string;
   acceptedAt?: string;
@@ -36,6 +42,7 @@ export interface Delivery {
   orderAmount?: number;
   partnerName?: string;
   partnerPhone?: string;
+  partnerContact?: string;
 }
 
 export interface DeliveriesListResponse {
@@ -66,7 +73,9 @@ export interface DeliveryHistoryResponse {
 }
 
 export interface AssignDeliveryPayload {
-  deliveryPartnerId: string;
+  deliveryPartnerId?: string;
+  partnerId?: string;
+  deliveryId?: string;
   notes?: string;
 }
 
@@ -82,6 +91,20 @@ export const deliveryService = {
     status?: string;
     partnerId?: string;
   }) => api.get<DeliveriesListResponse>('/deliveries', params),
+
+  getAllDeliveries: async (): Promise<Delivery[]> => {
+    const res = await api.get<DeliveriesListResponse>('/deliveries');
+    return res.data.deliveries;
+  },
+
+  getAvailablePartners: async (): Promise<any[]> => {
+    try {
+      const res = await api.get<{ success: boolean; data: { staff: any[] } }>('/staff', { role: 'Delivery Partner', status: 'active' });
+      return res.data.staff;
+    } catch {
+      return [];
+    }
+  },
 
   // Get delivery by order ID
   getDeliveryByOrderId: (orderId: string) =>
@@ -103,8 +126,11 @@ export const deliveryService = {
     api.get<DeliveryHistoryResponse>(`/deliveries/${id}/history`),
 
   // Assign delivery to partner (admin only)
-  assignDelivery: (id: string, payload: AssignDeliveryPayload) =>
-    api.post<DeliveryResponse>(`/deliveries/${id}/assign`, payload),
+  assignDelivery: async (payload: AssignDeliveryPayload): Promise<Delivery> => {
+    const id = payload.deliveryId || '';
+    const res = await api.post<DeliveryResponse>(`/deliveries/${id}/assign`, payload);
+    return res.data.delivery;
+  },
 
   // Accept delivery assignment (delivery partner)
   acceptDelivery: (id: string, payload?: UpdateDeliveryStatusPayload) =>

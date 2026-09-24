@@ -21,7 +21,7 @@ export const StockWarning: React.FC<StockWarningProps> = ({
   stockStatus,
   availableQuantity,
   requestedQuantity,
-  minOrderQuantity,
+  minOrderQuantity: _minOrderQuantity,
   productName,
   variant = 'alert',
   className = '',
@@ -280,7 +280,7 @@ export function calculateStockStats(cartItems: any[]) {
   let hasMOQViolations = false;
 
   cartItems.forEach(item => {
-    const { stockStatus, availableQuantity } = item.product;
+    const { stockStatus, availableQuantity: _availableQuantity } = item.product;
     const { quantity } = item;
     const moq = item.product.minOrderQuantity || 0;
 

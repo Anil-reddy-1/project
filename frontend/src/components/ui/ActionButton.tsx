@@ -10,6 +10,7 @@ interface ActionButtonProps {
   type?: 'button' | 'submit' | 'reset';
   className?: string;
   size?: 'sm' | 'md';
+  title?: string;
 }
 
 export function ActionButton({
@@ -22,6 +23,7 @@ export function ActionButton({
   type = 'button',
   className = '',
   size = 'md',
+  title,
 }: ActionButtonProps) {
   const sizeStyles = {
     sm: 'h-8 px-3 text-xs gap-1.5',
@@ -46,6 +48,7 @@ export function ActionButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={`inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
     >
       {Icon && iconPosition === 'left' && <Icon className={iconSize} />}

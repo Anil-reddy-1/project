@@ -3,11 +3,11 @@
  * View and manage all orders in the system
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Package, Search, Filter, Calendar, ChevronRight, 
+  Package, Search, Filter, ChevronRight, 
   Clock, CheckCircle, Truck, XCircle, AlertCircle, Download 
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';

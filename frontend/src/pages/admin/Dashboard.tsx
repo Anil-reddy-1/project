@@ -21,7 +21,7 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [_stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [alertVisible, setAlertVisible] = useState(true);
 

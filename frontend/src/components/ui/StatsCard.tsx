@@ -1,4 +1,5 @@
-import { ReactNode, ComponentType, isValidElement } from 'react';
+import { isValidElement } from 'react';
+import type { ReactNode, ComponentType } from 'react';
 
 interface StatsCardProps {
   title: string;

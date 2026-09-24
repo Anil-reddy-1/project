@@ -41,7 +41,7 @@ export function ProductDetails() {
   const { addToCart, isInCart, cartItems } = useCart();
 
   // Get current cart quantity for this product
-  const cartQuantity = cartItems.find(item => item.productId === id)?.quantity || 0;
+  const cartQuantity = cartItems.find(item => item.product.id === id)?.quantity || 0;
   const productIsInCart = isInCart(id || '');
 
   // Fetch product details

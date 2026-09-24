@@ -154,7 +154,7 @@ export function DebtManagement() {
     {
       key: 'select',
       label: '',
-      render: (debt: Debt) => (
+      render: (_debt: Debt) => (
         <input
           type="checkbox"
           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -234,7 +234,7 @@ export function DebtManagement() {
     {
       key: 'priority',
       label: 'PRIORITY',
-      render: (debt: Debt) => getPriorityBadge(debt.priority),
+      render: (debt: Debt) => getPriorityBadge(debt.priority ?? ''),
     },
     {
       key: 'actions',
@@ -421,7 +421,7 @@ export function DebtManagement() {
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
           title="Record Payment"
-          size="medium"
+          size="md"
         >
           <div className="space-y-4">
             {selectedDebt && (

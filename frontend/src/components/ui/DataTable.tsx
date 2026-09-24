@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 interface Column<T> {
   key: string;
   // Accept both 'header' (new) and 'label' (legacy)
-  header?: string;
-  label?: string;
+  header?: string | ReactNode;
+  label?: string | ReactNode;
   render?: (item: T) => ReactNode;
   className?: string;
   headerClassName?: string;

@@ -9,13 +9,13 @@ export type { Role, Permission, CreateRolePayload, UpdateRolePayload } from './r
 export { staffService } from './staff.service';
 export type { Staff, CreateStaffPayload, UpdateStaffPayload } from './staff.service';
 export { stockService } from './stock.service';
-export type { StockItem, AdjustStockPayload } from './stock.service';
+export type { StockItem, StockAdjustPayload } from './stock.service';
 export { pricingService } from './pricing.service';
-export type { PriceItem, UpdatePricePayload } from './pricing.service';
+export type { PriceData, ProductPricing, UpdatePricePayload } from './pricing.service';
 export { orderService } from './order.service';
-export type { Order, CreateOrderPayload, UpdateOrderPayload } from './order.service';
+export type { Order, CreateOrderPayload, UpdateOrderStatusPayload } from './order.service';
 export { deliveryService } from './delivery.service';
-export type { Delivery, DeliveryPartner, AssignDeliveryPayload } from './delivery.service';
+export type { Delivery, AssignDeliveryPayload } from './delivery.service';
 export { debtService } from './debt.service';
 export type { Debt, RecordPaymentPayload } from './debt.service';
 export { reportService } from './report.service';
@@ -23,4 +23,3 @@ export type { Report, GenerateReportPayload } from './report.service';
 export { productService } from './product.service';
 export { wishlistService } from './wishlist.service';
 export { uploadService } from './upload.service';
-

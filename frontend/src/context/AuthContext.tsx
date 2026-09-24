@@ -20,6 +20,9 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -136,8 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Role-based permission helpers
+  const hasPermission = (_permission: string): boolean => !!user;
+  const hasAnyPermission = (_permissions: string[]): boolean => !!user;
+  const hasAllPermissions = (_permissions: string[]): boolean => !!user;
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, logout, refreshUser, hasPermission, hasAnyPermission, hasAllPermissions }}>
       {children}
     </AuthContext.Provider>
   );

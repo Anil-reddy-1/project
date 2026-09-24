@@ -98,7 +98,7 @@ export function StaffManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role,
+        role: formData.role as CreateStaffPayload['role'],
         department: formData.department,
         status: formData.status,
       };
@@ -123,7 +123,7 @@ export function StaffManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role,
+        role: formData.role as UpdateStaffPayload['role'],
         department: formData.department,
         status: formData.status,
       };
@@ -425,7 +425,7 @@ export function StaffManagement() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           title="Add Staff Member"
-          size="medium"
+          size="md"
         >
           <div className="space-y-4">
             <div>
@@ -546,7 +546,7 @@ export function StaffManagement() {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           title="Edit Staff Member"
-          size="medium"
+          size="md"
         >
           <div className="space-y-4">
             <div>

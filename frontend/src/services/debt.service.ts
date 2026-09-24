@@ -2,11 +2,15 @@ import { api } from './api.service';
 
 export interface Debt {
   id: string;
-  description: string;
+  description?: string;
+  creditorName: string;
+  invoiceNumber?: string;
+  referenceNumber?: string;
   originalAmount: number;
   paidAmount: number;
   remainingAmount: number;
-  status: 'pending' | 'partial' | 'cleared';
+  status: 'pending' | 'partial' | 'cleared' | 'overdue';
+  priority?: 'high' | 'medium' | 'low';
   dueDate: string;
   createdAt: string;
 }
@@ -43,25 +47,29 @@ export interface DebtPayment {
 }
 
 export interface RecordPaymentPayload {
+  debtId?: string;
   amount: number;
-  paymentDate: string;
+  paymentDate?: string;
   paymentMethod: string;
   referenceNumber?: string;
   notes?: string;
 }
 
 export const debtService = {
-  getDebts: (params?: {
-    status?: string;
-    overdue?: boolean;
-  }) => api.get<DebtsResponse>('/debts', params),
+  getAllDebts: async (): Promise<Debt[]> => {
+    const res = await api.get<DebtsResponse>('/debts');
+    return res.data.debts;
+  },
 
   createDebt: (payload: CreateDebtPayload) =>
     api.post<{ success: boolean; data: { debt: Debt } }>('/debts', payload),
 
-  recordPayment: (id: string, payload: RecordPaymentPayload) =>
-    api.post<{ success: boolean; data: { payment: DebtPayment } }>(
+  recordPayment: async (payload: RecordPaymentPayload): Promise<Debt> => {
+    const id = payload.debtId || '';
+    const res = await api.post<{ success: boolean; data: { debt: Debt } }>(
       `/debts/${id}/payment`,
       payload
-    ),
+    );
+    return res.data.debt;
+  },
 };

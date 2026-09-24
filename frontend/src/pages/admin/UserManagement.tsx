@@ -240,7 +240,7 @@ export function UserManagement() {
     {
       key: 'station',
       header: 'Station',
-      render: (user: User) => (
+      render: (_user: User) => (
         <div className="flex items-center gap-2">
           <Monitor className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-sm text-slate-600">Main Store #04</span>

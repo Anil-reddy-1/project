@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
 import { LoadingSpinner } from '../../components/ui';
@@ -192,7 +192,7 @@ export function BuyerHome() {
             <h2 className="text-lg font-bold text-slate-800">Browse by Category</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map(({ label, value, color }) => {
+            {CATEGORIES.map(({ label, value, color: _color }) => {
               const isActive = selectedCategory === value;
               return (
                 <button

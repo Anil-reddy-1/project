@@ -18,7 +18,7 @@ import {
   Button, Card, Badge, Skeleton, Alert, Separator 
 } from '../../components/ui';
 import { fadeVariants } from '../../utils/animations';
-import { formatDate, formatDateTime } from '../../utils/date';
+import { formatDateTime } from '../../utils/date';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 
 const ORDER_STATUS_CONFIG = {
@@ -53,7 +53,7 @@ export function OrderDetails() {
   const [order, setOrder] = useState<Order | null>(null);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingDelivery, setLoadingDelivery] = useState(false);
+  const [_loadingDelivery, setLoadingDelivery] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showStatusUpdate, setShowStatusUpdate] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -143,7 +143,7 @@ export function OrderDetails() {
     return (
       <DashboardLayout title="Order Details" subtitle="View order information">
         <div className="max-w-5xl mx-auto py-8">
-          <Alert variant="error">
+          <Alert variant="destructive">
             Order not found.
           </Alert>
           <Button
@@ -513,7 +513,7 @@ export function OrderDetails() {
                   <Separator />
                   <div>
                     <p className="text-sm text-slate-500">Delivery Status</p>
-                    <Badge variant={delivery.status === 'delivered' ? 'green' : 'blue'} className="mt-1">
+                    <Badge variant={delivery.status === 'delivered' ? 'success' : 'default'} className="mt-1">
                       {delivery.status.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>

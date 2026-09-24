@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -31,7 +32,6 @@ export function Modal({
   footer,
   size = 'md',
 }: ModalProps) {
-  const sizeKey = (size as string) in sizeClasses ? size as keyof typeof sizeClasses : 'md';
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape key

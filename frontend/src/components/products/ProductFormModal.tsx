@@ -73,7 +73,7 @@ export function ProductFormModal({
       setCategoryTags(product.categoryTags || []);
       
       // Load existing images
-      const existingImages: ImageItem[] = product.images.map((img, idx) => ({
+      const existingImages: ImageItem[] = product.images.map((img, _idx) => ({
         id: img.id,
         url: img.url,
         isPrimary: img.isPrimary,

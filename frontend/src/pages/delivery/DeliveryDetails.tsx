@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, Package, MapPin, Phone, User, 
+  ArrowLeft, MapPin, Phone, User, 
   Clock, CheckCircle, Truck, FileText 
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
@@ -116,7 +116,7 @@ export function DeliveryDetails() {
     return (
       <DashboardLayout title="Delivery Details" subtitle="View delivery information">
         <div className="max-w-5xl mx-auto py-8">
-          <Alert variant="error">
+          <Alert variant="destructive">
             Delivery not found or you don't have permission to view it.
           </Alert>
           <Button
@@ -132,7 +132,6 @@ export function DeliveryDetails() {
   }
 
   const statusConfig = DELIVERY_STATUS_CONFIG[delivery.status];
-  const StatusIcon = statusConfig.icon;
 
   // Determine available actions based on current status
   const canAccept = delivery.status === 'assigned';

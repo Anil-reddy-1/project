@@ -169,7 +169,8 @@ export async function withRetry<T>(
       lastError = error;
       
       // Don't retry client errors (4xx)
-      if (error.response?.status && error.response.status < 500) {
+      const err = error as { response?: { status?: number } };
+      if (err.response?.status && err.response.status < 500) {
         throw error;
       }
       

@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { userService, type User } from '../services/user.service';
-import { deliveryService, type AssignDeliveryPayload } from '../services/delivery.service';
+import { deliveryService } from '../services/delivery.service';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 interface UseDeliveryPartnersReturn {
@@ -68,12 +68,7 @@ export function useDeliveryPartners(): UseDeliveryPartnersReturn {
       setAssigning(true);
       setError(null);
       
-      const payload: AssignDeliveryPayload = {
-        deliveryPartnerId: partnerId,
-        notes,
-      };
-      
-      await deliveryService.assignDelivery(deliveryId, payload);
+      await deliveryService.assignDelivery({ deliveryPartnerId: partnerId, deliveryId, notes });
       
       showSuccessToast('Delivery assigned successfully');
       return true;

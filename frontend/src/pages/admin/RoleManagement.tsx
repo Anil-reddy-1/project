@@ -269,7 +269,7 @@ export function RoleManagement() {
     {
       key: 'status',
       label: 'Status',
-      render: (role: Role) => <StatusBadge status="active" label="Active" />,
+      render: (_role: Role) => <StatusBadge status="active" label="Active" />,
     },
     {
       key: 'actions',
@@ -396,7 +396,7 @@ export function RoleManagement() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           title="Create New Role"
-          size="large"
+          size="lg"
         >
           <div className="space-y-6">
             <div>
@@ -554,7 +554,7 @@ export function RoleManagement() {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           title="Edit Role"
-          size="large"
+          size="lg"
         >
           <div className="space-y-6">
             <div>

@@ -20,7 +20,7 @@ class UploadService {
   async uploadImage(
     file: File, 
     folder: string = 'products',
-    onProgress?: UploadProgressCallback
+    _onProgress?: UploadProgressCallback
   ): Promise<UploadImageResponse> {
     const formData = new FormData();
     formData.append('image', file);
@@ -35,7 +35,7 @@ class UploadService {
   async uploadMultipleImages(
     files: File[], 
     folder: string = 'products',
-    onProgress?: UploadProgressCallback
+    _onProgress?: UploadProgressCallback
   ): Promise<UploadMultipleImagesResponse> {
     if (files.length > 10) {
       throw new Error('Maximum 10 images allowed');

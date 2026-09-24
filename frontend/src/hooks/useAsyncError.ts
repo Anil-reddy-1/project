@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { handleError, AppError } from '../utils/errorHandler';
+import { handleError } from '../utils/errorHandler';
+import type { AppError } from '../utils/errorHandler';
 
 interface UseAsyncErrorOptions {
   operation: string;

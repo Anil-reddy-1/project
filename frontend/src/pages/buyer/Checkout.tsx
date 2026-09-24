@@ -7,7 +7,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  CreditCard, MapPin, Package, ShoppingCart, AlertCircle, 
+  CreditCard, MapPin, Package, AlertCircle, 
   CheckCircle, ArrowRight, ArrowLeft, Loader2 
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
@@ -197,7 +197,7 @@ export function Checkout() {
 
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
-          <Alert variant="error">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <div>
               <p className="font-semibold">Cannot proceed with checkout</p>

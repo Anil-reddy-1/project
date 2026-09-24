@@ -16,7 +16,7 @@ import {
   Button, Card, Badge, Skeleton, Alert, Separator 
 } from '../../components/ui';
 import { fadeVariants } from '../../utils/animations';
-import { formatDate, formatDateTime } from '../../utils/date';
+import { formatDateTime } from '../../utils/date';
 import type { Order } from '../../services/order.service';
 
 const ORDER_STATUS_CONFIG = {
@@ -79,7 +79,7 @@ export function OrderDetails() {
     return (
       <DashboardLayout title="Order Details" subtitle="View order information">
         <div className="max-w-5xl mx-auto py-8">
-          <Alert variant="error">
+          <Alert variant="destructive">
             Order not found or you don't have permission to view it.
           </Alert>
           <Button

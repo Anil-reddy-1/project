@@ -51,7 +51,7 @@ export function DeliveryManagement() {
   const filteredDeliveries = deliveries.filter((delivery) => {
     const matchesSearch =
       delivery.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      delivery.deliveryId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      delivery.deliveryId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       delivery.orderId.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || delivery.status === statusFilter;
     const matchesType = deliveryTypeFilter === 'all' || delivery.deliveryType === deliveryTypeFilter;
@@ -95,22 +95,6 @@ export function DeliveryManagement() {
     setSelectedDelivery(null);
   };
 
-  const getStatusBadgeProps = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { status: 'warning' as const, label: 'Pending Assignment' };
-      case 'assigned':
-        return { status: 'info' as const, label: 'Assigned' };
-      case 'in_transit':
-        return { status: 'info' as const, label: 'In Transit' };
-      case 'delivered':
-        return { status: 'success' as const, label: 'Completed Today' };
-      case 'failed':
-        return { status: 'danger' as const, label: 'Failed' };
-      default:
-        return { status: 'neutral' as const, label: status };
-    }
-  };
 
   const columns = [
     {
@@ -375,7 +359,7 @@ export function DeliveryManagement() {
           isOpen={isAssignModalOpen}
           onClose={() => setIsAssignModalOpen(false)}
           title="Assign Delivery Partner"
-          size="medium"
+          size="md"
         >
           <div className="space-y-4">
             {selectedDelivery && (

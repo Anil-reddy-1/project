@@ -7,18 +7,17 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Package, Search, Filter, Calendar, ChevronRight, 
+  Package, Search, Filter, ChevronRight, 
   Clock, CheckCircle, Truck, XCircle, AlertCircle 
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useOrders } from '../../hooks/useOrders';
 import { 
-  Button, EmptyState, LoadingSpinner, Badge, 
+  Button, EmptyState, Badge, 
   Skeleton, Card 
 } from '../../components/ui';
 import { fadeVariants, listContainerVariants, listItemVariants } from '../../utils/animations';
 import { formatDate } from '../../utils/date';
-import type { Order } from '../../services/order.service';
 
 const ORDER_STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'yellow', icon: Clock },
@@ -41,7 +40,7 @@ export function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { orders, loading, total, refreshOrders } = useOrders({
+  const { orders, loading } = useOrders({
     autoLoad: true,
     limit: 20,
   });

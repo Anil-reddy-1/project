@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import type { CartItem, SavedItem } from '../types/cart.types';
 import { cartService } from '../services/cart.service';
 import { toast } from '../utils/toast';
@@ -273,7 +274,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             quantity: itemToMove.quantity,
             addedAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            product: itemToMove.product
+            product: { ...itemToMove.product, hasStockIssue: false }
           }]);
         }
       }

@@ -22,7 +22,7 @@ export function PricingManagement() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [changeFilter, setChangeFilter] = useState<string>('all');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+  const [_isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PriceData | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [priceData, setPriceData] = useState<{
@@ -111,7 +111,7 @@ export function PricingManagement() {
     setSelectedItem(item);
     setPriceData({
       retailPrice: item.retailPrice.toString(),
-      wholesalePrice: item.wholesalePrice.toString(),
+      wholesalePrice: (item.wholesalePrice ?? 0).toString(),
       costPrice: item.costPrice?.toString() || '',
       margin: item.margin?.toString() || '',
     });
@@ -212,7 +212,7 @@ export function PricingManagement() {
       key: 'wholesale',
       label: 'WHOLESALE',
       render: (item: PriceData) => (
-        <div className="font-semibold text-gray-900">₹{item.wholesalePrice.toFixed(2)}</div>
+        <div className="font-semibold text-gray-900">₹{(item.wholesalePrice ?? 0).toFixed(2)}</div>
       ),
     },
     {
@@ -386,7 +386,7 @@ export function PricingManagement() {
               onChange={setCategoryFilter}
               options={[
                 { value: 'all', label: 'All Categories' },
-                ...categories.map((cat) => ({ value: cat, label: cat })),
+                ...categories.filter(Boolean).map((cat) => ({ value: cat as string, label: cat as string })),
               ]}
             />
             <FilterSelect
@@ -426,7 +426,7 @@ export function PricingManagement() {
           isOpen={isUpdateModalOpen}
           onClose={() => setIsUpdateModalOpen(false)}
           title="Update Pricing"
-          size="medium"
+          size="md"
         >
           <div className="space-y-4">
             {selectedItem && (

@@ -18,8 +18,8 @@ import {
 } from '../../components/cart';
 import { CartStockSummary, calculateStockStats } from '../../components/cart/StockWarning';
 import { Alert } from '../../components/ui';
-import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toast';
-import { listContainerVariants, listItemVariants, fadeVariants, transitions } from '../../utils/animations';
+import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import { listContainerVariants, fadeVariants, transitions } from '../../utils/animations';
 
 export function Cart() {
   const navigate = useNavigate();
