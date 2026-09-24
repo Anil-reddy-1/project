@@ -249,6 +249,15 @@ async function initializeTables() {
     await client.query(createUserAddressesTableQuery);
 
     // Create Indexes for performance
+    // Ensure newly added columns exist in case tables were created previously
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID;');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_id UUID;');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(30);');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_address TEXT;');
+
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);');

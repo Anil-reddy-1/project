@@ -19,6 +19,11 @@ const logger = require('../utils/logger');
  */
 async function ensureUser(req, res, next) {
   try {
+    // Skip in test environment - test users are already created
+    if (process.env.NODE_ENV === 'test') {
+      return next();
+    }
+    
     // Skip if no authenticated user
     if (!req.user || !req.user.uid) {
       return next();

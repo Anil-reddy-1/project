@@ -7,7 +7,7 @@ const Joi = require('joi');
 
 // Assign delivery schema
 const assignDeliverySchema = Joi.object({
-  deliveryPartnerId: Joi.string().required().messages({
+  partnerId: Joi.string().required().messages({ // Changed from deliveryPartnerId to partnerId
     'any.required': 'Delivery partner ID is required',
     'string.empty': 'Delivery partner ID cannot be empty'
   }),

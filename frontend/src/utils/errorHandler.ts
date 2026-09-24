@@ -3,11 +3,56 @@
  * Parse and format API errors for user-friendly display
  */
 
+import { toast } from './toast';
+
 export interface ApiError {
   message: string;
   code?: string;
   field?: string;
   statusCode?: number;
+}
+
+export interface AppError extends ApiError {}
+
+export interface HandleErrorOptions {
+  showToast?: boolean;
+  logToConsole?: boolean;
+  throwError?: boolean;
+}
+
+export function validateQuantity(quantity: number): string | null {
+  if (quantity < 1) return 'Quantity must be at least 1';
+  if (quantity > 99) return 'Quantity cannot exceed 99';
+  if (!Number.isInteger(quantity)) return 'Quantity must be a whole number';
+  return null;
+}
+
+export function handleError(
+  error: any,
+  action: string,
+  metadata?: any,
+  options?: HandleErrorOptions
+): AppError {
+  const message = getErrorMessage(error);
+  const statusCode = error.response?.status;
+  const code = error.response?.data?.code;
+  const field = error.response?.data?.field;
+  
+  const appError: AppError = { message, code, field, statusCode };
+
+  if (options?.logToConsole !== false) {
+    console.error(`[${action}] Error:`, error, metadata);
+  }
+
+  if (options?.showToast !== false) {
+    toast.error(message);
+  }
+
+  if (options?.throwError) {
+    throw error;
+  }
+
+  return appError;
 }
 
 /**

@@ -70,6 +70,7 @@ function formatReqUser(decodedToken) {
 /**
  * Primary Authentication Middleware:
  * Verifies Firebase ID Token and attaches req.user.
+ * In test environment, accepts mock JWT tokens.
  * 
  * Edge cases handled:
  * - Missing or malformed Authorization headers
@@ -99,6 +100,33 @@ async function authenticate(req, res, next) {
         'Authentication required. Missing Bearer token in Authorization header.',
         'MISSING_TOKEN'
       );
+    }
+
+    // In test environment, use mock token verification
+    if (process.env.NODE_ENV === 'test') {
+      try {
+        const jwt = require('jsonwebtoken');
+        const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
+        const decoded = jwt.verify(token, TEST_JWT_SECRET);
+        
+        req.user = {
+          uid: decoded.uid,
+          email: decoded.email,
+          emailVerified: true, // Auto-verified in tests
+          role: decoded.role || 'buyer',
+          userId: decoded.userId,
+          dbId: decoded.userId, // Set dbId for test compatibility
+          dbRole: decoded.role || 'buyer',
+          claims: decoded,
+          authTime: Math.floor(Date.now() / 1000),
+          tokenIssuedAt: decoded.iat,
+          tokenExpiresAt: decoded.exp,
+        };
+        req.token = token;
+        return next();
+      } catch (jwtError) {
+        throw new UnauthorizedError('Invalid test authentication token.', 'INVALID_TOKEN');
+      }
     }
 
     const firebaseAuth = getAuth();

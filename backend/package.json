@@ -6,13 +6,26 @@
   "author": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "migrate": "node scripts/runMigration.js",
     "migrate:products": "node scripts/runMigration.js 001_unified_products_migration.sql",
     "migrate:cart": "node scripts/migrateCart.js",
     "test:cloudinary": "node scripts/testCloudinary.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   },
   "dependencies": {
     "cloudinary": "^2.11.0",
@@ -29,6 +42,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
-    "nodemon": "^3.1.14"
+    "jest": "^30.5.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.0"
   }
 }

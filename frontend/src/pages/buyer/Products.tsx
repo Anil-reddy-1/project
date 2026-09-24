@@ -3,7 +3,7 @@
  * Browse and search products with category filtering and cart integration
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, List, Search } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
@@ -28,9 +28,17 @@ export function Products() {
     sortOrder: 'DESC',
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  const selectedCategory = filters.categoryTags?.[0] || null;
+
+  const handleCategorySelect = (category: string | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      categoryTags: category ? [category] : undefined,
+      page: 1,
+    }));
+  };
 
   // Hooks
   const { products, loading, error, pagination, fetchProducts } = useProducts(
@@ -40,15 +48,14 @@ export function Products() {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { cartItems, addToCart, isInCart } = useCart();
 
-  // Fetch available categories from products
-  useEffect(() => {
-    if (products.length > 0) {
-      const categories = new Set<string>();
-      products.forEach((product) => {
-        product.categoryTags?.forEach((tag) => categories.add(tag));
-      });
-      setAvailableCategories(Array.from(categories).sort());
-    }
+  // Derive available categories from products
+  const availableCategories = useMemo(() => {
+    if (products.length === 0) return [];
+    const categories = new Set<string>();
+    products.forEach((product) => {
+      product.categoryTags?.forEach((tag) => categories.add(tag));
+    });
+    return Array.from(categories).sort();
   }, [products]);
 
   // Apply search with debounce
@@ -63,14 +70,7 @@ export function Products() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Apply category filter
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      categoryTags: selectedCategory ? [selectedCategory] : undefined,
-      page: 1,
-    }));
-  }, [selectedCategory]);
+
 
   // Fetch products when filters change
   useEffect(() => {
@@ -94,7 +94,7 @@ export function Products() {
 
   // Get cart quantity for a product
   const getCartQuantity = (productId: string): number => {
-    const cartItem = cartItems.find(item => item.productId === productId);
+    const cartItem = cartItems.find(item => item.product.id === productId);
     return cartItem?.quantity || 0;
   };
 
@@ -167,7 +167,7 @@ export function Products() {
             <h3 className="text-sm font-medium text-gray-700 mb-3">Categories</h3>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => handleCategorySelect(null)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === null
                     ? 'bg-blue-500 text-white'
@@ -179,7 +179,7 @@ export function Products() {
               {availableCategories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategorySelect(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
                       ? 'bg-blue-500 text-white'
