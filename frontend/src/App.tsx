@@ -24,6 +24,7 @@ import { DebtManagement } from "./pages/admin/DebtManagement";
 import { Reports } from "./pages/admin/Reports";
 import { Orders as AdminOrders } from "./pages/admin/Orders";
 import { OrderDetails as AdminOrderDetails } from "./pages/admin/OrderDetails";
+import { FullScreenLoader } from "./components/ui/FullScreenLoader";
 
 // Buyer Pages
 import {
@@ -53,12 +54,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner" />
-        Loading...
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   if (user) {
