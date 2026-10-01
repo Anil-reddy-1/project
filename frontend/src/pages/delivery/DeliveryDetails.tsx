@@ -3,7 +3,7 @@
  * View and manage individual delivery
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -40,18 +40,29 @@ export function DeliveryDetails() {
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState('');
 
-  useEffect(() => {
-    loadDelivery();
-  }, [id]);
-
-  const loadDelivery = async () => {
+  const loadDelivery = useCallback(async () => {
     if (!id) return;
     
     setLoading(true);
     const deliveryData = await getDeliveryById(id);
     setDelivery(deliveryData);
     setLoading(false);
-  };
+  }, [id, getDeliveryById]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchDelivery = async () => {
+      if (!id) return;
+      if (mounted) setLoading(true);
+      const deliveryData = await getDeliveryById(id);
+      if (mounted) {
+        setDelivery(deliveryData);
+        setLoading(false);
+      }
+    };
+    fetchDelivery();
+    return () => { mounted = false; };
+  }, [id, getDeliveryById]);
 
   const handleAccept = async () => {
     if (!delivery) return;
