@@ -41,7 +41,8 @@ export const reportService = {
     api.post<GenerateReportResponse>('/reports/generate', payload).then(res => res.data),
 
   downloadReport: (reportId: string) => {
-    window.open(`http://localhost:5000/api/v1/reports/${reportId}/download`, '_blank');
+    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
+    window.open(`${baseUrl}/reports/${reportId}/download`, '_blank');
     return Promise.resolve();
   },
 };
