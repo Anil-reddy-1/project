@@ -2,7 +2,7 @@
 import { auth } from '../firebase';
 
 // API Base URL - explicitly set to include /v1
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
 
 console.log('API Base URL:', API_BASE_URL); // Debug log
 

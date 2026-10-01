@@ -27,7 +27,7 @@ async function getDashboardStats(req, res, next) {
     const ordersQuery = `
       SELECT 
         COUNT(*) as total,
-        COUNT(CASE WHEN status = 'pending' OR status = 'confirmed' THEN 1 END) as pending
+        COUNT(CASE WHEN order_status = 'pending' OR order_status = 'confirmed' THEN 1 END) as pending
       FROM orders;
     `;
     const ordersResult = await pool.query(ordersQuery);
@@ -50,7 +50,7 @@ async function getDashboardStats(req, res, next) {
     const deliveriesQuery = `
       SELECT COUNT(*) as count
       FROM deliveries
-      WHERE status IN ('assigned', 'accepted', 'started');
+      WHERE status IN ('assigned', 'accepted', 'in_transit');
     `;
     const deliveriesResult = await pool.query(deliveriesQuery);
     const activeDeliveries = parseInt(deliveriesResult.rows[0].count, 10) || 0;
