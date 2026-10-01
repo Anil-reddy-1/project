@@ -24,25 +24,25 @@ router.use(ensureUser);
 /**
  * @route   POST /api/v1/orders/validate
  * @desc    Validate order before placement (check cart, stock, address)
- * @access  Private (buyer)
+ * @access  Private
  * @body    { addressId: string }
  */
-router.post('/validate', requireRole('buyer'), validate(validateOrderSchema), orderController.validateOrder);
+router.post('/validate', validate(validateOrderSchema), orderController.validateOrder);
 
 /**
  * @route   GET /api/v1/orders/stats/me
  * @desc    Get order statistics for current user
- * @access  Private (buyer)
+ * @access  Private
  */
-router.get('/stats/me', requireRole('buyer'), orderController.getMyOrderStats);
+router.get('/stats/me', orderController.getMyOrderStats);
 
 /**
  * @route   GET /api/v1/orders/me
  * @desc    Get current user's orders
- * @access  Private (buyer)
+ * @access  Private
  * @query   { page, limit, status, dateFrom, dateTo }
  */
-router.get('/me', requireRole('buyer'), orderController.getMyOrders);
+router.get('/me', orderController.getMyOrders);
 
 /**
  * @route   GET /api/v1/orders/number/:orderNumber
@@ -69,10 +69,10 @@ router.get('/', requireRole('admin'), validate(orderQuerySchema, 'query'), order
 /**
  * @route   POST /api/v1/orders
  * @desc    Place a new order from cart
- * @access  Private (buyer)
+ * @access  Private
  * @body    { addressId: string, paymentMethod?: string, notes?: string }
  */
-router.post('/', requireRole('buyer'), validate(createOrderSchema), orderController.createOrder);
+router.post('/', validate(createOrderSchema), orderController.createOrder);
 
 /**
  * @route   PATCH /api/v1/orders/:id/status

@@ -1579,3 +1579,614 @@ Delete image from Cloudinary.
   "error": "Error details..."
 }
 ```
+
+
+---
+
+## 10. Address Management
+
+### Overview
+The Address Management API allows users to manage delivery addresses with support for:
+- Multiple addresses per user
+- Default address selection
+- Geolocation coordinates (latitude/longitude)
+- Shop/location images for easy identification
+- Complete address validation
+
+### GET /addresses
+Retrieve all delivery addresses for the authenticated user.
+
+**Authentication Required:** Yes
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Addresses retrieved successfully",
+  "data": {
+    "addresses": [
+      {
+        "id": "addr_123abc",
+        "userId": "user_456def",
+        "name": "John Doe",
+        "phone": "9876543210",
+        "addressLine1": "123 Main Street",
+        "addressLine2": "Near Central Park",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "postalCode": "400001",
+        "isDefault": true,
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+        "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg",
+        "createdAt": "2026-09-15T10:30:00.000Z",
+        "updatedAt": "2026-09-20T14:25:00.000Z"
+      }
+    ],
+    "count": 1
+  }
+}
+```
+
+**Notes:**
+- Addresses are ordered with default address first, then by creation date (newest first)
+- `latitude`, `longitude`, and `imageUrl` are optional fields
+- `addressLine2` is optional
+
+---
+
+### GET /addresses/:id
+Retrieve a specific address by ID.
+
+**Authentication Required:** Yes
+
+**Path Parameters:**
+- `id` (string, required): Address ID
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Address retrieved successfully",
+  "data": {
+    "id": "addr_123abc",
+    "userId": "user_456def",
+    "name": "John Doe",
+    "phone": "9876543210",
+    "addressLine1": "123 Main Street",
+    "addressLine2": "Near Central Park",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "postalCode": "400001",
+    "isDefault": true,
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg",
+    "createdAt": "2026-09-15T10:30:00.000Z",
+    "updatedAt": "2026-09-20T14:25:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `404 Not Found`: Address not found or doesn't belong to user
+
+---
+
+### GET /addresses/default
+Retrieve the user's default delivery address.
+
+**Authentication Required:** Yes
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Default address retrieved successfully",
+  "data": {
+    "id": "addr_123abc",
+    "userId": "user_456def",
+    "name": "John Doe",
+    "phone": "9876543210",
+    "addressLine1": "123 Main Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "postalCode": "400001",
+    "isDefault": true,
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg",
+    "createdAt": "2026-09-15T10:30:00.000Z",
+    "updatedAt": "2026-09-20T14:25:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `404 Not Found`: No default address found
+
+---
+
+### POST /addresses
+Create a new delivery address.
+
+**Authentication Required:** Yes
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "phone": "9876543210",
+  "addressLine1": "123 Main Street",
+  "addressLine2": "Near Central Park",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "postalCode": "400001",
+  "isDefault": false,
+  "latitude": 19.0760,
+  "longitude": 72.8777,
+  "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg"
+}
+```
+
+**Required Fields:**
+- `name` (string): Recipient name
+- `phone` (string): 10-digit phone number
+- `addressLine1` (string): Primary address line
+- `city` (string): City name
+- `state` (string): State name (from Indian states list)
+- `postalCode` (string): 6-digit PIN code
+
+**Optional Fields:**
+- `addressLine2` (string): Secondary address line
+- `isDefault` (boolean): Set as default address (default: false for subsequent addresses, true for first address)
+- `latitude` (number): Latitude coordinate (-90 to 90)
+- `longitude` (number): Longitude coordinate (-180 to 180)
+- `imageUrl` (string): Shop/location image URL (must be valid HTTP/HTTPS URL)
+
+**Validation Rules:**
+- Phone: Must be exactly 10 digits
+- Postal Code: Must be exactly 6 digits
+- Geolocation: Both latitude and longitude must be provided together
+- Image URL: Must be a valid HTTP/HTTPS URL if provided
+- First address: Automatically set as default regardless of `isDefault` value
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Address created successfully",
+  "data": {
+    "id": "addr_789xyz",
+    "userId": "user_456def",
+    "name": "John Doe",
+    "phone": "9876543210",
+    "addressLine1": "123 Main Street",
+    "addressLine2": "Near Central Park",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "postalCode": "400001",
+    "isDefault": true,
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg",
+    "createdAt": "2026-10-01T15:45:00.000Z",
+    "updatedAt": "2026-10-01T15:45:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Validation errors
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    "Phone number must be valid (10 digits)",
+    "Postal code must be 6 digits",
+    "Both latitude and longitude must be provided together"
+  ]
+}
+```
+
+**Example: Upload Image First**
+```bash
+# Step 1: Upload shop image
+POST /uploads/image
+Content-Type: multipart/form-data
+
+Form Data:
+- image: [file]
+- folder: "addresses"
+
+Response:
+{
+  "success": true,
+  "data": {
+    "url": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop123.jpg"
+  }
+}
+
+# Step 2: Create address with image URL
+POST /addresses
+{
+  "name": "Shop Name",
+  "phone": "9876543210",
+  "addressLine1": "123 Market Road",
+  "city": "Delhi",
+  "state": "Delhi",
+  "postalCode": "110001",
+  "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop123.jpg"
+}
+```
+
+---
+
+### PUT /addresses/:id
+Update an existing address. Supports partial updates.
+
+**Authentication Required:** Yes
+
+**Path Parameters:**
+- `id` (string, required): Address ID
+
+**Request Body (all fields optional):**
+```json
+{
+  "name": "Updated Name",
+  "phone": "9999999999",
+  "addressLine1": "456 New Street",
+  "addressLine2": "Updated Landmark",
+  "city": "Bangalore",
+  "state": "Karnataka",
+  "postalCode": "560001",
+  "isDefault": false,
+  "latitude": 12.9716,
+  "longitude": 77.5946,
+  "imageUrl": "https://res.cloudinary.com/demo/image/upload/v2/addresses/updated.jpg"
+}
+```
+
+**Notes:**
+- Only provided fields will be updated
+- Validation applies to provided fields only
+- Setting `isDefault: true` will unset other default addresses
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Address updated successfully",
+  "data": {
+    "id": "addr_123abc",
+    "userId": "user_456def",
+    "name": "Updated Name",
+    "phone": "9999999999",
+    "addressLine1": "456 New Street",
+    "addressLine2": "Updated Landmark",
+    "city": "Bangalore",
+    "state": "Karnataka",
+    "postalCode": "560001",
+    "isDefault": false,
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v2/addresses/updated.jpg",
+    "createdAt": "2026-09-15T10:30:00.000Z",
+    "updatedAt": "2026-10-01T16:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Validation errors
+- `404 Not Found`: Address not found or doesn't belong to user
+
+---
+
+### PATCH /addresses/:id/default
+Set an address as the default delivery address.
+
+**Authentication Required:** Yes
+
+**Path Parameters:**
+- `id` (string, required): Address ID
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Default address updated successfully",
+  "data": {
+    "id": "addr_123abc",
+    "userId": "user_456def",
+    "name": "John Doe",
+    "phone": "9876543210",
+    "addressLine1": "123 Main Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "postalCode": "400001",
+    "isDefault": true,
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg",
+    "createdAt": "2026-09-15T10:30:00.000Z",
+    "updatedAt": "2026-10-01T16:15:00.000Z"
+  }
+}
+```
+
+**Notes:**
+- Automatically unsets previous default address
+- Only one default address per user
+
+**Error Responses:**
+- `404 Not Found`: Address not found or doesn't belong to user
+
+---
+
+### DELETE /addresses/:id
+Delete an address.
+
+**Authentication Required:** Yes
+
+**Path Parameters:**
+- `id` (string, required): Address ID
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Address deleted successfully",
+  "data": {
+    "success": true,
+    "message": "Address deleted successfully",
+    "deletedAddressId": "addr_123abc"
+  }
+}
+```
+
+**Notes:**
+- If deleting the default address and other addresses exist, the most recently created address becomes default
+- Users can only delete their own addresses
+
+**Error Responses:**
+- `404 Not Found`: Address not found or doesn't belong to user
+
+---
+
+### GET /addresses/count
+Get the count of addresses for the authenticated user.
+
+**Authentication Required:** Yes
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "count": 3
+  }
+}
+```
+
+---
+
+### Address Geolocation Features
+
+#### Capturing Location
+Use the browser's Geolocation API to capture coordinates:
+
+```javascript
+// Frontend implementation example
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    
+    // Use in address form
+    addressData.latitude = latitude;
+    addressData.longitude = longitude;
+  },
+  (error) => {
+    console.error('Geolocation error:', error.message);
+  },
+  {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+  }
+);
+```
+
+#### Map Integration
+Generate map links from coordinates:
+
+```javascript
+// Google Maps URL
+const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+// OpenStreetMap URL
+const osmUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=15`;
+```
+
+---
+
+### Address Image Upload
+
+#### Upload Workflow
+1. **Upload Image** to `/uploads/image` endpoint with `folder: "addresses"`
+2. **Receive Image URL** from Cloudinary
+3. **Create/Update Address** with the received `imageUrl`
+
+#### Image Requirements
+- **Formats:** JPG, JPEG, PNG, WebP
+- **Max Size:** 5MB
+- **Recommended:** 
+  - Resolution: 1200x800 pixels or higher
+  - Aspect Ratio: 3:2 or 16:9
+  - Clear, well-lit photos of shop front or location
+
+#### Example Upload
+```bash
+# Using cURL
+curl -X POST https://api.example.com/api/v1/uploads/image \
+  -H "Authorization: Bearer <token>" \
+  -F "image=@shop_front.jpg" \
+  -F "folder=addresses"
+```
+
+---
+
+### Indian States List
+
+Supported states for address validation:
+- Andhra Pradesh
+- Arunachal Pradesh
+- Assam
+- Bihar
+- Chhattisgarh
+- Goa
+- Gujarat
+- Haryana
+- Himachal Pradesh
+- Jharkhand
+- Karnataka
+- Kerala
+- Madhya Pradesh
+- Maharashtra
+- Manipur
+- Meghalaya
+- Mizoram
+- Nagaland
+- Odisha
+- Punjab
+- Rajasthan
+- Sikkim
+- Tamil Nadu
+- Telangana
+- Tripura
+- Uttar Pradesh
+- Uttarakhand
+- West Bengal
+- Andaman and Nicobar Islands
+- Chandigarh
+- Dadra and Nagar Haveli and Daman and Diu
+- Delhi
+- Jammu and Kashmir
+- Ladakh
+- Lakshadweep
+- Puducherry
+
+---
+
+### Address Usage in Order Flow
+
+#### Checkout Process
+1. User selects or creates delivery address
+2. Address validation occurs
+3. Address ID included in order placement
+4. Address data snapshot stored with order
+
+#### Order Placement
+```json
+POST /orders
+{
+  "addressId": "addr_123abc",
+  "paymentMethod": "COD",
+  "notes": "Please deliver before 6 PM"
+}
+```
+
+#### Order Response (includes address snapshot)
+```json
+{
+  "success": true,
+  "data": {
+    "id": "order_456def",
+    "orderNumber": "ORD-2026-10-001",
+    "deliveryAddress": {
+      "name": "John Doe",
+      "phone": "9876543210",
+      "addressLine1": "123 Main Street",
+      "addressLine2": "Near Central Park",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postalCode": "400001",
+      "latitude": 19.0760,
+      "longitude": 72.8777,
+      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v1/addresses/shop_front.jpg"
+    },
+    "items": [...],
+    "totalAmount": 1250.00,
+    "orderStatus": "pending"
+  }
+}
+```
+
+---
+
+### Best Practices
+
+#### Security
+- ✅ Always authenticate requests
+- ✅ Users can only access their own addresses
+- ✅ Validate all input fields server-side
+- ✅ Sanitize image URLs
+
+#### Performance
+- ✅ Cache address list on client
+- ✅ Invalidate cache on CRUD operations
+- ✅ Use pagination for large address lists
+- ✅ Optimize image sizes before upload
+
+#### User Experience
+- ✅ Auto-select default address in checkout
+- ✅ Show address with map preview
+- ✅ Allow inline address creation during checkout
+- ✅ Provide clear validation error messages
+- ✅ Request geolocation permission appropriately
+
+#### Data Quality
+- ✅ Validate phone numbers and postal codes
+- ✅ Ensure geolocation coordinates are complete
+- ✅ Verify image URLs are accessible
+- ✅ Keep address data up to date
+
+---
+
+### Error Codes
+
+| Code | Message | Description |
+|------|---------|-------------|
+| 400 | Validation failed | Required fields missing or invalid format |
+| 401 | Unauthorized | Authentication token missing or invalid |
+| 404 | Address not found | Address doesn't exist or doesn't belong to user |
+| 500 | Server error | Internal server error occurred |
+
+---
+
+### Rate Limiting
+
+- **Address CRUD operations:** 100 requests per minute per user
+- **Address listing:** 200 requests per minute per user
+- **Image upload:** 20 requests per minute per user
+
+---
+
+### Changelog
+
+#### Version 1.1 (October 2026)
+- ✅ Added geolocation support (latitude, longitude)
+- ✅ Added shop/location image support
+- ✅ Enhanced validation for geolocation completeness
+- ✅ Added default address management
+- ✅ Improved error messages
+
+#### Version 1.0 (September 2026)
+- ✅ Initial address CRUD operations
+- ✅ Basic validation
+- ✅ Default address selection
+

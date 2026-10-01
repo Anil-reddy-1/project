@@ -93,15 +93,35 @@ export const deliveryService = {
   }) => api.get<DeliveriesListResponse>('/deliveries', params),
 
   getAllDeliveries: async (): Promise<Delivery[]> => {
-    const res = await api.get<DeliveriesListResponse>('/deliveries');
-    return res.data.deliveries;
+    try {
+      const res = await api.get<any>('/deliveries');
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res?.data?.deliveries)) return res.data.deliveries;
+      if (Array.isArray(res)) return res;
+      return [];
+    } catch (err) {
+      console.error('Error in getAllDeliveries:', err);
+      return [];
+    }
   },
 
   getAvailablePartners: async (): Promise<any[]> => {
     try {
-      const res = await api.get<{ success: boolean; data: { staff: any[] } }>('/staff', { role: 'Delivery Partner', status: 'active' });
-      return res.data.staff;
-    } catch {
+      let res;
+      try {
+        res = await api.get<any>('/deliveries/partners/available');
+      } catch {
+        res = await api.get<any>('/staff', { role: 'Delivery Partner', status: 'active' });
+      }
+      
+      const data = res?.data;
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.partners)) return data.partners;
+      if (Array.isArray(data?.staff)) return data.staff;
+      if (Array.isArray(res)) return res;
+      return [];
+    } catch (err) {
+      console.error('Error in getAvailablePartners:', err);
       return [];
     }
   },

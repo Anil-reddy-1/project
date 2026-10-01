@@ -168,6 +168,29 @@ class AddressService {
       errors.push({ field: 'postalCode', message: 'Postal code must be 6 digits' });
     }
 
+    // Validate geolocation if provided (both must be provided together)
+    if (addressData.latitude !== undefined || addressData.longitude !== undefined) {
+      if (addressData.latitude === undefined || addressData.latitude === null ||
+          addressData.longitude === undefined || addressData.longitude === null) {
+        errors.push({ field: 'geolocation', message: 'Both latitude and longitude must be provided together' });
+      } else {
+        if (addressData.latitude < -90 || addressData.latitude > 90) {
+          errors.push({ field: 'latitude', message: 'Latitude must be between -90 and 90' });
+        }
+        if (addressData.longitude < -180 || addressData.longitude > 180) {
+          errors.push({ field: 'longitude', message: 'Longitude must be between -180 and 180' });
+        }
+      }
+    }
+
+    // Validate image URL if provided
+    if (addressData.imageUrl && addressData.imageUrl.trim().length > 0) {
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(addressData.imageUrl.trim())) {
+        errors.push({ field: 'imageUrl', message: 'Image URL must be a valid HTTP/HTTPS URL' });
+      }
+    }
+
     return errors;
   }
 
@@ -204,6 +227,30 @@ class AddressService {
    */
   getAddressDisplayName(address: Address): string {
     return `${address.name} - ${address.phone}`;
+  }
+
+  /**
+   * Generate Google Maps URL from coordinates
+   */
+  getMapUrl(latitude: number, longitude: number): string {
+    return `https://www.google.com/maps?q=${latitude},${longitude}`;
+  }
+
+  /**
+   * Check if address has geolocation
+   */
+  hasGeolocation(address: Address): boolean {
+    return address.latitude !== null && 
+           address.latitude !== undefined && 
+           address.longitude !== null && 
+           address.longitude !== undefined;
+  }
+
+  /**
+   * Check if address has shop image
+   */
+  hasImage(address: Address): boolean {
+    return !!address.imageUrl && address.imageUrl.trim().length > 0;
   }
 }
 

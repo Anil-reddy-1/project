@@ -23,7 +23,10 @@ async function createAddress(userId, addressData) {
       city,
       state,
       postalCode,
-      isDefault
+      isDefault,
+      latitude,
+      longitude,
+      imageUrl
     } = addressData;
     
     // Check if user has any existing addresses
@@ -48,9 +51,9 @@ async function createAddress(userId, addressData) {
     const insertQuery = `
       INSERT INTO user_addresses (
         user_id, name, phone, address_line1, address_line2,
-        city, state, postal_code, is_default
+        city, state, postal_code, is_default, latitude, longitude, image_url
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *;
     `;
     
@@ -63,7 +66,10 @@ async function createAddress(userId, addressData) {
       city,
       state,
       postalCode,
-      shouldBeDefault
+      shouldBeDefault,
+      latitude || null,
+      longitude || null,
+      imageUrl || null
     ];
     
     const result = await client.query(insertQuery, values);
@@ -164,7 +170,10 @@ async function updateAddress(addressId, userId, addressData) {
       city,
       state,
       postalCode,
-      isDefault
+      isDefault,
+      latitude,
+      longitude,
+      imageUrl
     } = addressData;
     
     // If setting as default, unset other defaults
@@ -187,6 +196,9 @@ async function updateAddress(addressId, userId, addressData) {
         state = COALESCE($8, state),
         postal_code = COALESCE($9, postal_code),
         is_default = COALESCE($10, is_default),
+        latitude = $11,
+        longitude = $12,
+        image_url = $13,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND user_id = $2
       RETURNING *;
@@ -202,7 +214,10 @@ async function updateAddress(addressId, userId, addressData) {
       city,
       state,
       postalCode,
-      isDefault
+      isDefault,
+      latitude !== undefined ? latitude : null,
+      longitude !== undefined ? longitude : null,
+      imageUrl !== undefined ? imageUrl : null
     ];
     
     const result = await client.query(updateQuery, values);
@@ -380,6 +395,35 @@ function validateAddressData(addressData) {
     errors.push('Postal code must be 6 digits');
   }
   
+  // Validate geolocation if provided
+  if (addressData.latitude !== undefined || addressData.longitude !== undefined) {
+    // Both must be provided together
+    if (addressData.latitude === undefined || addressData.latitude === null || 
+        addressData.longitude === undefined || addressData.longitude === null) {
+      errors.push('Both latitude and longitude must be provided together');
+    } else {
+      const lat = parseFloat(addressData.latitude);
+      const lon = parseFloat(addressData.longitude);
+      
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        errors.push('Latitude must be a valid number between -90 and 90');
+      }
+      
+      if (isNaN(lon) || lon < -180 || lon > 180) {
+        errors.push('Longitude must be a valid number between -180 and 180');
+      }
+    }
+  }
+  
+  // Validate image URL if provided
+  if (addressData.imageUrl !== undefined && addressData.imageUrl !== null && 
+      addressData.imageUrl.trim().length > 0) {
+    const urlPattern = /^(https?:\/\/)/i;
+    if (!urlPattern.test(addressData.imageUrl.trim())) {
+      errors.push('Image URL must be a valid HTTP/HTTPS URL');
+    }
+  }
+  
   return errors;
 }
 
@@ -400,6 +444,9 @@ function mapAddressRow(row) {
     state: row.state,
     postalCode: row.postal_code,
     isDefault: row.is_default,
+    latitude: row.latitude ? parseFloat(row.latitude) : null,
+    longitude: row.longitude ? parseFloat(row.longitude) : null,
+    imageUrl: row.image_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

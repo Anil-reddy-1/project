@@ -150,14 +150,20 @@ async function initializeTables() {
     const createOrdersTableQuery = `
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE RESTRICT,
         customer_id UUID,
         customer_name VARCHAR(255),
         customer_email VARCHAR(255),
+        firebase_uid VARCHAR(128),
+        order_number VARCHAR(50),
         total_amount DECIMAL(15,2),
+        payment_method VARCHAR(50) DEFAULT 'COD',
+        payment_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        order_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
+        delivery_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         delivery_address JSONB,
-        status VARCHAR(50) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'processing', 'completed', 'cancelled')),
-        payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed')),
-        delivery_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (delivery_status IN ('pending', 'in_progress', 'completed', 'failed')),
+        notes TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -165,29 +171,80 @@ async function initializeTables() {
 
     await client.query(createOrdersTableQuery);
 
+    // Create Order Items table
+    const createOrderItemsTableQuery = `
+      CREATE TABLE IF NOT EXISTS order_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+        product_name VARCHAR(255) NOT NULL,
+        product_sku VARCHAR(100) NOT NULL,
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        unit_price DECIMAL(10, 2) NOT NULL CHECK (unit_price >= 0),
+        total_price DECIMAL(10, 2) NOT NULL CHECK (total_price >= 0),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createOrderItemsTableQuery);
+
     // Create Deliveries table
     const createDeliveriesTableQuery = `
       CREATE TABLE IF NOT EXISTS deliveries (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+        delivery_partner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        partner_id UUID REFERENCES staff(id) ON DELETE SET NULL,
         customer_id UUID,
         customer_name VARCHAR(255),
         customer_phone VARCHAR(30),
         customer_address TEXT,
-        partner_id UUID REFERENCES staff(id) ON DELETE SET NULL,
+        delivery_address JSONB,
         partner_name VARCHAR(255),
-        status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'accepted', 'started', 'completed', 'failed')),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
         amount DECIMAL(15,2),
         assigned_at TIMESTAMPTZ,
         accepted_at TIMESTAMPTZ,
         started_at TIMESTAMPTZ,
+        delivered_at TIMESTAMPTZ,
         completed_at TIMESTAMPTZ,
+        notes TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `;
 
     await client.query(createDeliveriesTableQuery);
+
+    // Create Delivery Status History table
+    const createDeliveryStatusHistoryTableQuery = `
+      CREATE TABLE IF NOT EXISTS delivery_status_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        delivery_id UUID NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
+        status VARCHAR(50) NOT NULL,
+        changed_by UUID,
+        notes TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createDeliveryStatusHistoryTableQuery);
+
+    // Create Notifications table
+    const createNotificationsTableQuery = `
+      CREATE TABLE IF NOT EXISTS notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        data JSONB DEFAULT '{}',
+        read_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createNotificationsTableQuery);
 
     // Create Debts table
     const createDebtsTableQuery = `
@@ -272,15 +329,47 @@ async function initializeTables() {
 
     await client.query(createUserAddressesTableQuery);
 
+    // Create Stock Transactions table (audit trail for stock changes during orders)
+    const createStockTransactionsTableQuery = `
+      CREATE TABLE IF NOT EXISTS stock_transactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('sale', 'return', 'adjustment', 'restock', 'damage')),
+        quantity_change BIGINT NOT NULL,
+        quantity_after BIGINT NOT NULL,
+        reason TEXT,
+        reference_id UUID,
+        reference_type VARCHAR(50),
+        performed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createStockTransactionsTableQuery);
+
     // Create Indexes for performance
     // Ensure newly added columns exist in case tables were created previously
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE RESTRICT;');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128);');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);');
+    await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_status VARCHAR(50) DEFAULT 'pending';");
+    await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'COD';");
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);');
+
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_partner_id UUID REFERENCES users(id) ON DELETE SET NULL;');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS notes TEXT;');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_id UUID;');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(30);');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_address TEXT;');
+
+    // Sync order_status and delivery_partner_id where needed
+    await client.query("UPDATE orders SET order_status = status WHERE order_status IS NULL OR order_status = 'pending';");
+    await client.query("UPDATE deliveries SET delivery_partner_id = partner_id WHERE delivery_partner_id IS NULL AND partner_id IS NOT NULL;");
 
     // Ensure products table has all required columns (for pre-existing tables)
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT;");
@@ -304,8 +393,10 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_orders_order_status ON orders(order_status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_order_id ON deliveries(order_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_partner_id ON deliveries(partner_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_delivery_partner_id ON deliveries(delivery_partner_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_status ON debts(status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_due_date ON debts(due_date);');
@@ -318,6 +409,23 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_is_default ON user_addresses(user_id, is_default);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_is_primary ON product_images(product_id, is_primary);');
+
+    // ── Data Healing ───────────────────────────────────────────────────────
+    // Reset users with legacy/invalid roles to 'buyer'. Valid: admin, buyer, delivery
+    await client.query(`
+      UPDATE users
+      SET role = 'buyer', updated_at = CURRENT_TIMESTAMP
+      WHERE role NOT IN ('admin', 'buyer', 'delivery');
+    `);
+
+    // Stock transactions indexes
+    await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_product_id ON stock_transactions(product_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_reference ON stock_transactions(reference_id, reference_type);');
+
+
+    await client.query('COMMIT');
+    logger.info('Database tables initialized successfully');
+
 
     await client.query('COMMIT');
     logger.info('Database tables initialized successfully');

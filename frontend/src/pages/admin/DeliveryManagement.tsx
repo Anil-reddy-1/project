@@ -39,20 +39,22 @@ export function DeliveryManagement() {
         deliveryService.getAllDeliveries(),
         deliveryService.getAvailablePartners(),
       ]);
-      setDeliveries(deliveriesData);
-      setAvailablePartners(partnersData);
+      setDeliveries(Array.isArray(deliveriesData) ? deliveriesData : []);
+      setAvailablePartners(Array.isArray(partnersData) ? partnersData : []);
     } catch (error) {
       console.error('Failed to load deliveries:', error);
+      setDeliveries([]);
+      setAvailablePartners([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredDeliveries = deliveries.filter((delivery) => {
+  const filteredDeliveries = (deliveries || []).filter((delivery) => {
     const matchesSearch =
-      delivery.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      delivery.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       delivery.deliveryId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      delivery.orderId.toLowerCase().includes(searchQuery.toLowerCase());
+      delivery.orderId?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || delivery.status === statusFilter;
     const matchesType = deliveryTypeFilter === 'all' || delivery.deliveryType === deliveryTypeFilter;
     return matchesSearch && matchesStatus && matchesType;
@@ -400,7 +402,7 @@ export function DeliveryManagement() {
                 }`}
               >
                 <option value="">Choose a delivery partner</option>
-                {availablePartners.map((partner) => (
+                {(availablePartners || []).map((partner) => (
                   <option key={partner.id} value={partner.id}>
                     {partner.name} - {partner.phone || partner.contact}
                     {partner.activeDeliveries !== undefined &&
@@ -411,11 +413,11 @@ export function DeliveryManagement() {
               {formErrors.partner && <p className="mt-1 text-sm text-red-500">{formErrors.partner}</p>}
             </div>
 
-            {availablePartners.length > 0 && selectedPartner && (
+            {(availablePartners || []).length > 0 && selectedPartner && (
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <strong>Partner Info:</strong>{' '}
-                  {availablePartners.find((p) => p.id === selectedPartner)?.name}
+                  {(availablePartners || []).find((p) => p.id === selectedPartner)?.name}
                   {' - '}
                   Available for delivery
                 </p>

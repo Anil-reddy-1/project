@@ -64,4 +64,14 @@ export const dismissToast = (toastId: string) => {
   toast.dismiss(toastId);
 };
 
+export const showToast = {
+  success: showSuccessToast,
+  error: showErrorToast,
+  warning: showWarningToast,
+  info: showInfoToast,
+  loading: showLoadingToast,
+  dismiss: dismissToast,
+};
+
 export { toast };
+

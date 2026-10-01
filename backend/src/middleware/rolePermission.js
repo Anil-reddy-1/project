@@ -24,6 +24,13 @@ const rolePermissions = {
     pricing: ['view'],
     dashboard: ['view'],
   },
+  seller: {
+    orders: ['view', 'create'],
+    deliveries: ['view'],
+    stock: ['view', 'create', 'update', 'adjust'],
+    pricing: ['view'],
+    dashboard: ['view'],
+  },
   delivery: {
     deliveries: ['view', 'update'],
     orders: ['view'],
@@ -35,7 +42,16 @@ const rolePermissions = {
  * Check if user has permission for a resource action
  */
 function hasPermission(role, resource, action) {
-  const permissions = rolePermissions[role];
+  const roleAliases = {
+    'delivery_partner': 'delivery',
+    'deliverypartner': 'delivery',
+    'delivery-partner': 'delivery',
+    'customer': 'buyer',
+    'user': 'buyer',
+  };
+  const effectiveRole = roleAliases[role] || role;
+
+  const permissions = rolePermissions[effectiveRole] || rolePermissions[role];
   if (!permissions) return false;
 
   const resourcePermissions = permissions[resource];
@@ -55,7 +71,7 @@ function requirePermission(resource, action) {
       return next(new ForbiddenError('Authentication required'));
     }
 
-    const userRole = req.user.role ? String(req.user.role).toLowerCase() : 'buyer';
+    const userRole = (req.user.dbRole || req.user.role || 'buyer').toString().toLowerCase();
 
     if (!hasPermission(userRole, resource, action)) {
       logger.warn(`Permission denied: user=${req.user.uid}, role=${userRole}, resource=${resource}, action=${action}`);
@@ -80,7 +96,7 @@ function requireAnyPermission(permissions) {
       return next(new ForbiddenError('Authentication required'));
     }
 
-    const userRole = req.user.role ? String(req.user.role).toLowerCase() : 'buyer';
+    const userRole = (req.user.dbRole || req.user.role || 'buyer').toString().toLowerCase();
 
     const hasAny = permissions.some(({ resource, action }) =>
       hasPermission(userRole, resource, action)

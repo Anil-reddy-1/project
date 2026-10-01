@@ -14,7 +14,13 @@ async function runMigration(migrationFile) {
     console.log(`\n🔄 Running migration: ${migrationFile}\n`);
     
     const migrationPath = path.join(__dirname, '..', 'migrations', migrationFile);
+    
+    if (!fs.existsSync(migrationPath)) {
+      throw new Error(`Migration file not found: ${migrationPath}`);
+    }
+    
     const sql = fs.readFileSync(migrationPath, 'utf8');
+    console.log('SQL loaded, executing...');
     
     // Execute the migration
     await client.query(sql);
@@ -24,7 +30,8 @@ async function runMigration(migrationFile) {
   } catch (error) {
     console.error(`❌ Migration failed: ${migrationFile}`);
     console.error('Error details:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Full error:', JSON.stringify(error, null, 2));
     throw error;
   } finally {
     client.release();

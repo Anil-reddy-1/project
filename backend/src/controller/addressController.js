@@ -102,7 +102,12 @@ async function getDefaultAddress(req, res) {
 /**
  * Create a new address
  * POST /api/v1/addresses
- * Body: { name, phone, addressLine1, addressLine2?, city, state, postalCode, isDefault? }
+ * Body: { 
+ *   name, phone, addressLine1, addressLine2?, city, state, postalCode, 
+ *   isDefault?, latitude?, longitude?, imageUrl? 
+ * }
+ * Note: Upload shop/location image to /api/v1/uploads/image with folder='addresses' first,
+ *       then use the returned URL as imageUrl
  */
 async function createAddress(req, res) {
   try {
@@ -139,7 +144,12 @@ async function createAddress(req, res) {
 /**
  * Update an address
  * PUT /api/v1/addresses/:id
- * Body: { name?, phone?, addressLine1?, addressLine2?, city?, state?, postalCode?, isDefault? }
+ * Body: { 
+ *   name?, phone?, addressLine1?, addressLine2?, city?, state?, postalCode?, 
+ *   isDefault?, latitude?, longitude?, imageUrl? 
+ * }
+ * Note: Upload shop/location image to /api/v1/uploads/image with folder='addresses' first,
+ *       then use the returned URL as imageUrl
  */
 async function updateAddress(req, res) {
   try {

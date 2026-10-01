@@ -8,7 +8,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Package, MapPin, CreditCard, FileText, 
-  Clock, CheckCircle, Truck, XCircle, User, Phone, Edit 
+  Clock, CheckCircle, Truck, XCircle, User, Phone, Edit,
+  ExternalLink, Image as ImageIcon
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { orderService, type Order } from '../../services/order.service';
@@ -18,6 +19,8 @@ import {
   Button, Card, Badge, Skeleton, Alert, Separator 
 } from '../../components/ui';
 import { fadeVariants } from '../../utils/animations';
+import { addressService } from '../../services/address.service';
+import { formatCoordinatesWithLabels } from '../../utils/geolocation';
 import { formatDateTime } from '../../utils/date';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 
@@ -237,7 +240,8 @@ export function OrderDetails() {
                   <h2 className="text-lg font-semibold text-slate-800">Delivery Address</h2>
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-6 space-y-4">
+                {/* Basic Address Info */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-slate-500" />
@@ -260,6 +264,53 @@ export function OrderDetails() {
                     {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.postalCode}
                   </p>
                 </div>
+
+                {/* Shop/Location Image */}
+                {order.deliveryAddress.imageUrl && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <ImageIcon className="w-4 h-4" />
+                      Shop/Location Image
+                    </div>
+                    <div className="rounded-lg overflow-hidden border border-slate-200">
+                      <img
+                        src={order.deliveryAddress.imageUrl}
+                        alt="Shop location"
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Geolocation */}
+                {order.deliveryAddress.latitude && order.deliveryAddress.longitude && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <MapPin className="w-4 h-4" />
+                      Location Coordinates
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <span className="text-sm text-slate-700">
+                        {formatCoordinatesWithLabels(
+                          order.deliveryAddress.latitude,
+                          order.deliveryAddress.longitude
+                        )}
+                      </span>
+                      <a
+                        href={addressService.getMapUrl(
+                          order.deliveryAddress.latitude,
+                          order.deliveryAddress.longitude
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium"
+                      >
+                        View on Map
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
 

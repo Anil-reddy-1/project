@@ -8,3 +8,6 @@ export * from './useProducts';
 
 // Wishlist hooks
 export * from './useWishlist';
+
+// Geolocation hooks
+export * from './useGeolocation';

@@ -15,6 +15,9 @@ export interface Address {
   state: string;
   postalCode: string;
   isDefault: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +56,9 @@ export interface CreateAddressRequest {
   state: string;
   postalCode: string;
   isDefault?: boolean;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
 }
 
 // Create address response
@@ -72,6 +78,9 @@ export interface UpdateAddressRequest {
   state?: string;
   postalCode?: string;
   isDefault?: boolean;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
 }
 
 // Update address response
@@ -123,6 +132,17 @@ export interface AddressFormData {
   state: string;
   postalCode: string;
   isDefault: boolean;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
+}
+
+// Geolocation coordinates
+export interface GeolocationCoordinates {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp: number;
 }
 
 // Indian states list (for dropdown)

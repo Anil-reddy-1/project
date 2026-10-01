@@ -35,11 +35,17 @@ async function ensureUser(req, res, next) {
     // Allowed roles: 'admin', 'buyer', 'seller', 'delivery'
     let normalizedRole = role || 'buyer';
     
-    // Map Firebase roles to database roles
+    // Map Firebase custom claim roles → valid DB roles
     const roleMapping = {
+      // Delivery aliases
       'delivery_partner': 'delivery',
       'deliverypartner': 'delivery',
-      'delivery-partner': 'delivery'
+      'delivery-partner': 'delivery',
+      // Buyer aliases — legacy Firebase claims or older setups
+      'retailer': 'buyer',
+      'wholesaler': 'buyer',
+      'customer': 'buyer',
+      'user': 'buyer',
     };
     
     // Apply role mapping
@@ -48,14 +54,17 @@ async function ensureUser(req, res, next) {
       normalizedRole = mappedRole;
     }
     
-    // Validate against allowed roles
-    const allowedRoles = ['admin', 'buyer', 'seller', 'delivery'];
+    // Validate against allowed roles; default anything unknown to buyer
+    const allowedRoles = ['admin', 'buyer', 'delivery'];
     if (!allowedRoles.includes(normalizedRole.toLowerCase())) {
       logger.warn(`Invalid role '${normalizedRole}' for user ${uid}, defaulting to 'buyer'`);
       normalizedRole = 'buyer';
     }
 
-    // Upsert user into database and get the database UUID
+    // Upsert user into database and get the database UUID.
+    // We intentionally DO NOT update the role on conflict — role changes are
+    // made by admins via the User Management UI, not overwritten on every login.
+    // HOWEVER: if the stored role is somehow invalid (e.g. old data), heal it.
     const query = `
       INSERT INTO users (firebase_uid, email, name, avatar_url, role)
       VALUES ($1, $2, $3, $4, $5)
@@ -76,10 +85,11 @@ async function ensureUser(req, res, next) {
       normalizedRole
     ]);
 
-    // Attach database UUID to req.user
+    // Attach database UUID and synchronized role to req.user
     if (result.rows.length > 0) {
       req.user.dbId = result.rows[0].id;
       req.user.dbRole = result.rows[0].role;
+      req.user.role = result.rows[0].role;
     }
 
     return next();

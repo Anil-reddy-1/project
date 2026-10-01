@@ -8,16 +8,17 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   CreditCard, MapPin, Package, AlertCircle, 
-  CheckCircle, ArrowRight, ArrowLeft, Loader2 
+  CheckCircle, ArrowRight, ArrowLeft, Loader2, Plus 
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useCart } from '../../hooks/useCart';
 import { useCheckout } from '../../hooks/useCheckout';
 import { addressService } from '../../services/address.service';
-import { Alert, Button, Skeleton } from '../../components/ui';
-import { showErrorToast } from '../../utils/toast';
+import { AddressForm } from '../../components/address';
+import { Alert, Button, Skeleton, Card } from '../../components/ui';
+import { showErrorToast, showToast } from '../../utils/toast';
 import { fadeVariants } from '../../utils/animations';
-import type { Address } from '../../types/address.types';
+import type { Address, AddressFormData } from '../../types/address.types';
 
 export function Checkout() {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ export function Checkout() {
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [notes, setNotes] = useState('');
   const [validated, setValidated] = useState(false);
+  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+  const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 
   // Calculate totals
   const { subtotal, itemCount, hasStockIssues } = useMemo(() => {
@@ -109,6 +112,35 @@ export function Checkout() {
     }
   };
 
+  /**
+   * Handle add address inline
+   */
+  const handleAddAddress = async (data: AddressFormData) => {
+    try {
+      setIsCreatingAddress(true);
+      const response = await addressService.createAddress(data);
+      const newAddress = response.data;
+      setAddresses((prev) => [newAddress, ...prev]);
+      setSelectedAddressId(newAddress.id);
+      setShowAddAddressForm(false);
+      setValidated(false); // Reset validation when address changes
+      showToast.success('Address added successfully');
+    } catch (error: any) {
+      console.error('Error creating address:', error);
+      showToast.error(error.message || 'Failed to add address');
+      throw error; // Re-throw to prevent form from closing on error
+    } finally {
+      setIsCreatingAddress(false);
+    }
+  };
+
+  /**
+   * Handle show/hide add address form
+   */
+  const handleToggleAddAddressForm = () => {
+    setShowAddAddressForm((prev) => !prev);
+  };
+
   const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
 
   // Loading state
@@ -149,24 +181,47 @@ export function Checkout() {
     );
   }
 
-  // No addresses
+  // No addresses - show add form inline
   if (addresses.length === 0) {
     return (
       <DashboardLayout title="Store" subtitle="Checkout">
-        <div className="max-w-4xl mx-auto py-8">
+        <div className="max-w-4xl mx-auto py-8 space-y-6">
           <Alert variant="warning">
             <AlertCircle className="h-4 w-4" />
             <div>
               <p className="font-semibold">No delivery address found</p>
-              <p className="text-sm mt-1">Please add a delivery address before checking out.</p>
+              <p className="text-sm mt-1">Please add a delivery address to continue with checkout.</p>
             </div>
           </Alert>
-          <Button
-            onClick={() => navigate('/buyer/addresses')}
-            className="mt-4"
-          >
-            Add Address
-          </Button>
+
+          {/* Inline Add Address Form */}
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Add Delivery Address</h2>
+            <AddressForm
+              mode="create"
+              onSubmit={handleAddAddress}
+              submitLabel="Add Address & Continue"
+              isLoading={isCreatingAddress}
+            />
+          </Card>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/buyer/addresses')}
+              className="flex-1"
+            >
+              Go to Address Page
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/buyer/cart')}
+              className="flex-1"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Cart
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -270,12 +325,48 @@ export function Checkout() {
             {/* Delivery Address */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-slate-600" />
-                  <h2 className="text-lg font-semibold text-slate-800">Delivery Address</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-slate-600" />
+                    <h2 className="text-lg font-semibold text-slate-800">Delivery Address</h2>
+                  </div>
+                  {!showAddAddressForm && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleToggleAddAddressForm}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add New
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="p-6 space-y-4">
+                {/* Add Address Form (inline) */}
+                {showAddAddressForm && (
+                  <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-blue-900">Add New Address</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleToggleAddAddressForm}
+                        disabled={isCreatingAddress}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    <AddressForm
+                      mode="create"
+                      onSubmit={handleAddAddress}
+                      submitLabel="Add Address"
+                      isLoading={isCreatingAddress}
+                    />
+                  </div>
+                )}
+
+                {/* Address List */}
                 {addresses.map((address) => (
                   <div
                     key={address.id}

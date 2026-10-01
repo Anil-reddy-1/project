@@ -41,6 +41,7 @@ import {
 
 // Delivery Partner Pages
 import {
+  DeliveryDashboard as DeliveryPartnerDashboard,
   Deliveries,
   DeliveryDetails as DeliveryPartnerDeliveryDetails,
 } from "./pages/delivery";
@@ -317,6 +318,14 @@ function App() {
           
           {/* Delivery Partner Routes */}
           <Route
+            path="/delivery/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "delivery"]}>
+                <DeliveryPartnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/delivery/deliveries"
             element={
               <ProtectedRoute allowedRoles={["admin", "delivery"]}>
@@ -336,7 +345,7 @@ function App() {
             path="/delivery"
             element={
               <ProtectedRoute allowedRoles={["admin", "delivery"]}>
-                <Navigate to="/delivery/deliveries" replace />
+                <Navigate to="/delivery/dashboard" replace />
               </ProtectedRoute>
             }
           />

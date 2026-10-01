@@ -1,55 +1,259 @@
+/**
+ * Addresses Page
+ * Manage user delivery addresses with CRUD operations
+ */
+
+import { useState, useEffect } from 'react';
 import { MapPin, Plus } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
+import { AddressCard, AddressForm } from '../../components/address';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
+import { addressService } from '../../services/address.service';
+import { showToast } from '../../utils/toast';
+import type { Address, AddressFormData } from '../../types/address.types';
 
 export function Addresses() {
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  /**
+   * Load addresses on mount
+   */
+  useEffect(() => {
+    loadAddresses();
+  }, []);
+
+  /**
+   * Load addresses from API
+   */
+  const loadAddresses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await addressService.getAddresses();
+      setAddresses(response.data.addresses);
+    } catch (error: any) {
+      console.error('Error loading addresses:', error);
+      showToast.error(error.message || 'Failed to load addresses');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Handle add address
+   */
+  const handleAddAddress = async (data: AddressFormData) => {
+    try {
+      setIsCreating(true);
+      const response = await addressService.createAddress(data);
+      setAddresses((prev) => [response.data, ...prev]);
+      setShowAddForm(false);
+      showToast.success('Address added successfully');
+    } catch (error: any) {
+      console.error('Error creating address:', error);
+      showToast.error(error.message || 'Failed to add address');
+      throw error; // Re-throw to prevent form from closing on error
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  /**
+   * Handle update address
+   */
+  const handleUpdateAddress = async (addressId: string, data: AddressFormData) => {
+    try {
+      setUpdatingIds((prev) => new Set(prev).add(addressId));
+      const response = await addressService.updateAddress(addressId, data);
+      setAddresses((prev) =>
+        prev.map((addr) => (addr.id === addressId ? response.data : addr))
+      );
+      showToast.success('Address updated successfully');
+    } catch (error: any) {
+      console.error('Error updating address:', error);
+      showToast.error(error.message || 'Failed to update address');
+      throw error; // Re-throw to prevent card from exiting edit mode on error
+    } finally {
+      setUpdatingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(addressId);
+        return newSet;
+      });
+    }
+  };
+
+  /**
+   * Handle delete address
+   */
+  const handleDeleteAddress = async (addressId: string) => {
+    try {
+      setDeletingIds((prev) => new Set(prev).add(addressId));
+      await addressService.deleteAddress(addressId);
+      setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
+      showToast.success('Address deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting address:', error);
+      showToast.error(error.message || 'Failed to delete address');
+    } finally {
+      setDeletingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(addressId);
+        return newSet;
+      });
+    }
+  };
+
+  /**
+   * Handle set default address
+   */
+  const handleSetDefault = async (addressId: string) => {
+    try {
+      setUpdatingIds((prev) => new Set(prev).add(addressId));
+      const response = await addressService.setDefaultAddress(addressId);
+      // Update addresses list - set new default and unset others
+      setAddresses((prev) =>
+        prev.map((addr) => ({
+          ...addr,
+          isDefault: addr.id === addressId,
+        }))
+      );
+      showToast.success('Default address updated');
+    } catch (error: any) {
+      console.error('Error setting default address:', error);
+      showToast.error(error.message || 'Failed to set default address');
+    } finally {
+      setUpdatingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(addressId);
+        return newSet;
+      });
+    }
+  };
+
+  /**
+   * Handle show add form
+   */
+  const handleShowAddForm = () => {
+    setShowAddForm(true);
+  };
+
+  /**
+   * Handle cancel add form
+   */
+  const handleCancelAddForm = () => {
+    setShowAddForm(false);
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Store" subtitle="Addresses">
+        <div className="max-w-4xl mx-auto py-8">
+          <div className="flex items-center justify-center py-16">
+            <LoadingSpinner size="lg" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout title="Store" subtitle="Addresses">
-      <div className="max-w-2xl mx-auto py-2 space-y-6">
+      <div className="max-w-4xl mx-auto py-8 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Delivery Addresses</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Manage your saved delivery locations</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Manage your saved delivery locations
+            </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-            <Plus className="w-4 h-4" />
-            Add Address
-          </button>
+          {!showAddForm && addresses.length > 0 && (
+            <Button onClick={handleShowAddForm}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Address
+            </Button>
+          )}
         </div>
 
-        {/* Empty state */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
-            <MapPin className="w-8 h-8 text-slate-300" />
-          </div>
-          <h2 className="text-lg font-semibold text-slate-700 mb-1">No addresses saved</h2>
-          <p className="text-sm text-slate-400 max-w-xs mb-6">
-            Add your business delivery address to speed up checkout.
-          </p>
-          <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-            <Plus className="w-4 h-4" />
-            Add First Address
-          </button>
-        </div>
+        {/* Add Address Form */}
+        {showAddForm && (
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Add New Address</h2>
+            <AddressForm
+              mode="create"
+              onSubmit={handleAddAddress}
+              onCancel={handleCancelAddForm}
+              submitLabel="Add Address"
+              isLoading={isCreating}
+            />
+          </Card>
+        )}
 
-        {/* Address fields guide */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Address fields</p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {['Contact Name', 'Phone Number', 'Address Line', 'Area / Locality', 'City', 'State', 'Postal Code', 'Landmark (Optional)'].map((field) => (
-              <div key={field} className="flex items-center gap-2 py-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                <span className="text-xs text-slate-600">{field}</span>
-              </div>
+        {/* Empty State */}
+        {addresses.length === 0 && !showAddForm && (
+          <EmptyState
+            icon={MapPin}
+            title="No addresses saved"
+            description="Add your business delivery address to speed up checkout"
+            action={{
+              label: 'Add First Address',
+              onClick: handleShowAddForm,
+            }}
+          />
+        )}
+
+        {/* Address List */}
+        {addresses.length > 0 && (
+          <div className="space-y-4">
+            {addresses.map((address) => (
+              <AddressCard
+                key={address.id}
+                address={address}
+                onUpdate={handleUpdateAddress}
+                onDelete={handleDeleteAddress}
+                onSetDefault={handleSetDefault}
+                isUpdating={updatingIds.has(address.id)}
+                isDeleting={deletingIds.has(address.id)}
+                showActions={true}
+              />
             ))}
           </div>
-        </div>
+        )}
 
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-          <p className="font-semibold text-amber-800 text-sm">Address management coming soon</p>
-          <p className="text-xs text-amber-600 mt-0.5">
-            Save, edit, and set default delivery addresses will be available shortly.
-          </p>
-        </div>
+        {/* Info Card */}
+        {addresses.length > 0 && (
+          <Card className="p-5 bg-blue-50 border-blue-200">
+            <p className="text-sm font-semibold text-blue-900 mb-3">
+              Address Tips
+            </p>
+            <ul className="space-y-2 text-xs text-blue-700">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">•</span>
+                <span>Add shop/location image for easy identification by delivery partners</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">•</span>
+                <span>Capture location coordinates for accurate delivery</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">•</span>
+                <span>Set a default address for faster checkout</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">•</span>
+                <span>You can edit or delete addresses anytime (except default address)</span>
+              </li>
+            </ul>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

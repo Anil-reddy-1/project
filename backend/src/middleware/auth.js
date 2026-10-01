@@ -247,11 +247,26 @@ function requireRole(...allowedRoles) {
       return next(new UnauthorizedError('Authentication required.', 'UNAUTHORIZED'));
     }
 
-    const userRole = req.user.role ? String(req.user.role).toLowerCase() : 'buyer';
-    const isAllowed = rolesList.includes(userRole);
+    const rawRole = (req.user.dbRole || req.user.role || 'buyer').toString().toLowerCase();
+    
+    // Normalize role aliases
+    const roleAliases = {
+      'delivery_partner': 'delivery',
+      'deliverypartner': 'delivery',
+      'delivery-partner': 'delivery',
+      'customer': 'buyer',
+      'user': 'buyer',
+    };
+    const effectiveRole = roleAliases[rawRole] || rawRole;
+
+    const isAllowed =
+      rolesList.includes(rawRole) ||
+      rolesList.includes(effectiveRole) ||
+      rolesList.includes('*') ||
+      (rolesList.includes('buyer') && ['buyer', 'customer', 'user'].includes(effectiveRole));
 
     if (!isAllowed) {
-      logger.warn(`Forbidden access attempt: path=${req.path}, user=${req.user.uid}, role=${userRole}, required=[${rolesList.join(', ')}]`);
+      logger.warn(`Forbidden access attempt: path=${req.path}, user=${req.user.uid}, role=${rawRole} (effective: ${effectiveRole}), required=[${rolesList.join(', ')}]`);
       return next(
         new ForbiddenError(
           `Forbidden. Requires one of the following roles: ${rolesList.join(', ')}`,
