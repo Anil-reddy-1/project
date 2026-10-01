@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { FullScreenLoader } from "./ui/FullScreenLoader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,12 +11,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner" />
-        Loading...
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   // Not authenticated at all
