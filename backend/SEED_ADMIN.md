@@ -29,7 +29,7 @@ npm run seed:admin
 The script will:
 1. Check if an admin user already exists
 2. If not, create a default admin user with these credentials:
-   - **Email**: `admin@enterprise-ops.com`
+   - **Email**: `admin@gangajamuna.com`
    - **Name**: System Administrator
    - **Role**: admin
    - **Temporary Firebase UID**: `admin_default_uid`
@@ -44,7 +44,7 @@ You'll see output like this:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 Admin User Details:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Email:         admin@enterprise-ops.com
+   Email:         admin@gangajamuna.com
    Name:          System Administrator
    Role:          admin
    Firebase UID:  admin_default_uid
@@ -56,7 +56,7 @@ You'll see output like this:
 ### 1. Create Firebase User
 
 Go to Firebase Console → Authentication → Add User:
-- Email: `admin@enterprise-ops.com`
+- Email: `admin@gangajamuna.com`
 - Password: Set a secure password
 - Copy the generated UID
 
@@ -67,19 +67,19 @@ Run this SQL command (replace `YOUR_FIREBASE_UID` with the actual UID):
 ```sql
 UPDATE users 
 SET firebase_uid = 'YOUR_FIREBASE_UID' 
-WHERE email = 'admin@enterprise-ops.com';
+WHERE email = 'admin@gangajamuna.com';
 ```
 
 Or use psql:
 
 ```bash
-psql -d enterprise_ops -c "UPDATE users SET firebase_uid = 'YOUR_FIREBASE_UID' WHERE email = 'admin@enterprise-ops.com';"
+psql -d enterprise_ops -c "UPDATE users SET firebase_uid = 'YOUR_FIREBASE_UID' WHERE email = 'admin@gangajamuna.com';"
 ```
 
 ### 3. Login
 
 Now you can login with:
-- Email: `admin@enterprise-ops.com`
+- Email: `admin@gangajamuna.com`
 - Password: (the one you set in Firebase)
 
 ## Alternative: Manual Database Insert

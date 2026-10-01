@@ -89,13 +89,22 @@ async function initializeTables() {
 
     await client.query(createStockAdjustmentsTableQuery);
 
-    // Create Products/Pricing table
+    // Create Products table (full e-commerce schema)
     const createProductsTableQuery = `
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         sku VARCHAR(100) UNIQUE NOT NULL,
         name VARCHAR(255) NOT NULL,
-        category VARCHAR(100),
+        description TEXT,
+        category_tags JSONB DEFAULT '[]'::jsonb,
+        quantity BIGINT NOT NULL DEFAULT 0,
+        unit VARCHAR(50) DEFAULT 'unit',
+        min_stock BIGINT DEFAULT 0,
+        max_stock BIGINT,
+        min_order_quantity INTEGER DEFAULT 1,
+        price DECIMAL(15,2) DEFAULT 0,
+        status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'draft')),
+        primary_image_url TEXT,
         current_price DECIMAL(15,2),
         previous_price DECIMAL(15,2),
         last_changed TIMESTAMPTZ,
@@ -106,6 +115,21 @@ async function initializeTables() {
     `;
 
     await client.query(createProductsTableQuery);
+
+    // Create Product Images table
+    const createProductImagesTableQuery = `
+      CREATE TABLE IF NOT EXISTS product_images (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        image_url TEXT NOT NULL,
+        cloudinary_public_id VARCHAR(255),
+        display_order INTEGER NOT NULL DEFAULT 0,
+        is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createProductImagesTableQuery);
 
     // Create Price History table
     const createPriceHistoryTableQuery = `
@@ -258,6 +282,18 @@ async function initializeTables() {
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(30);');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_address TEXT;');
 
+    // Ensure products table has all required columns (for pre-existing tables)
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS category_tags JSONB DEFAULT '[]'::jsonb;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity BIGINT NOT NULL DEFAULT 0;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'unit';");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS min_stock BIGINT DEFAULT 0;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS max_stock BIGINT;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS min_order_quantity INTEGER DEFAULT 1;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS price DECIMAL(15,2) DEFAULT 0;");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'active';");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS primary_image_url TEXT;");
+
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);');
@@ -280,6 +316,8 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_saved_for_later_product_id ON saved_for_later(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_is_default ON user_addresses(user_id, is_default);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_is_primary ON product_images(product_id, is_primary);');
 
     await client.query('COMMIT');
     logger.info('Database tables initialized successfully');

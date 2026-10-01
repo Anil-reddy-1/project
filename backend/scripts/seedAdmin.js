@@ -22,48 +22,61 @@ async function seedAdmin() {
   try {
     console.log('🌱 Seeding admin user...\n');
 
-    // Check if admin already exists
-    const checkQuery = 'SELECT * FROM users WHERE role = $1 LIMIT 1;';
-    const checkResult = await client.query(checkQuery, ['admin']);
+    const ADMIN_EMAIL = 'admin@gangajamuna.com';
 
-    if (checkResult.rows.length > 0) {
-      console.log('✅ Admin user already exists:');
-      console.log(`   Email: ${checkResult.rows[0].email}`);
-      console.log(`   Name: ${checkResult.rows[0].name}`);
-      console.log(`   Firebase UID: ${checkResult.rows[0].firebase_uid}`);
-      console.log('\n⚠️  No changes made.');
-      return;
+    // Check if user with this email already exists
+    const checkUserQuery = 'SELECT * FROM users WHERE email = $1 LIMIT 1;';
+    const checkUserResult = await client.query(checkUserQuery, [ADMIN_EMAIL]);
+
+    let admin;
+
+    if (checkUserResult.rows.length > 0) {
+      // User exists — promote to admin
+      const existingUser = checkUserResult.rows[0];
+      if (existingUser.role === 'admin') {
+        console.log('✅ Admin user already exists:');
+        console.log(`   Email: ${existingUser.email}`);
+        console.log(`   Name: ${existingUser.name}`);
+        console.log(`   Firebase UID: ${existingUser.firebase_uid}`);
+        console.log('\n⚠️  No changes made.');
+        return;
+      }
+
+      // Update role to admin
+      const updateQuery = `
+        UPDATE users SET role = 'admin', updated_at = CURRENT_TIMESTAMP
+        WHERE email = $1
+        RETURNING *;
+      `;
+      const updateResult = await client.query(updateQuery, [ADMIN_EMAIL]);
+      admin = updateResult.rows[0];
+      console.log('✅ Existing user promoted to admin!\n');
+    } else {
+      // Create new admin user
+      const insertQuery = `
+        INSERT INTO users (
+          firebase_uid, email, name, phone, role, is_active,
+          created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING *;
+      `;
+
+      const adminData = [
+        'admin_default_uid',              // firebase_uid (temporary)
+        ADMIN_EMAIL,                      // email
+        'System Administrator',           // name
+        '+1234567890',                    // phone
+        'admin',                          // role
+        true,                             // is_active
+      ];
+
+      const result = await client.query(insertQuery, adminData);
+      admin = result.rows[0];
+      console.log('✅ Admin user created successfully!\n');
     }
 
-    // Create admin user
-    const insertQuery = `
-      INSERT INTO users (
-        firebase_uid,
-        email,
-        name,
-        phone,
-        role,
-        is_active,
-        created_at,
-        updated_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING *;
-    `;
-
-    const adminData = [
-      'admin_default_uid',              // firebase_uid (temporary, replace when Firebase user created)
-      'admin@enterprise-ops.com',       // email
-      'System Administrator',           // name
-      '+1234567890',                    // phone
-      'admin',                          // role
-      true,                             // is_active
-    ];
-
-    const result = await client.query(insertQuery, adminData);
-    const admin = result.rows[0];
-
-    console.log('✅ Admin user created successfully!\n');
+    // Display admin details
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📋 Admin User Details:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

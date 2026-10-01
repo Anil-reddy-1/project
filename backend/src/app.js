@@ -64,7 +64,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // API v1 Routes
-const API_PREFIX = "/api/v1";
+const API_PREFIX = "/api";
 
 // Public routes (no authentication required)
 app.use(`${API_PREFIX}/signup`, signupRoutes);

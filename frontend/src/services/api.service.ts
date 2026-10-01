@@ -2,7 +2,7 @@
 import { auth } from '../firebase';
 
 // API Base URL - explicitly set to include /v1
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
 console.log('API Base URL:', API_BASE_URL); // Debug log
 
@@ -12,7 +12,7 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
   // Removed default Content-Type header to allow FormData to set it automatically
 });
-
+ 
 // Request interceptor to add auth token and handle FormData
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {

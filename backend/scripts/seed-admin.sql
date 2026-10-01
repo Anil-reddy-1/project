@@ -24,7 +24,7 @@ BEGIN
         )
         VALUES (
             'admin_default_uid',
-            'admin@enterprise-ops.com',
+            'admin@gangajamuna.com',
             'System Administrator',
             '+1234567890',
             'admin',
@@ -36,7 +36,7 @@ BEGIN
         RAISE NOTICE '✅ Admin user created successfully!';
         RAISE NOTICE '';
         RAISE NOTICE '📋 Admin Details:';
-        RAISE NOTICE '   Email: admin@enterprise-ops.com';
+        RAISE NOTICE '   Email: admin@gangajamuna.com';
         RAISE NOTICE '   Name: System Administrator';
         RAISE NOTICE '   Role: admin';
         RAISE NOTICE '   Temp Firebase UID: admin_default_uid';
@@ -44,7 +44,7 @@ BEGIN
         RAISE NOTICE '⚠️  NEXT STEPS:';
         RAISE NOTICE '1. Create this user in Firebase Authentication';
         RAISE NOTICE '2. Copy the Firebase UID';
-        RAISE NOTICE '3. Run: UPDATE users SET firebase_uid = ''YOUR_UID'' WHERE email = ''admin@enterprise-ops.com'';';
+        RAISE NOTICE '3. Run: UPDATE users SET firebase_uid = ''YOUR_UID'' WHERE email = ''admin@gangajamuna.com'';';
     END IF;
 END $$;
 
