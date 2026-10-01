@@ -165,8 +165,9 @@ class ProductService {
    */
   async exportProducts(filters?: ProductFilters): Promise<Blob> {
     const params = this.buildQueryParams(filters);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
     const response = await fetch(
-      `http://localhost:5000/api/v1${this.baseUrl}/export/csv?${new URLSearchParams(params as any).toString()}`,
+      `${backendUrl}${this.baseUrl}/export/csv?${new URLSearchParams(params as any).toString()}`,
       {
         headers: {
           'Authorization': `Bearer ${await this.getAuthToken()}`

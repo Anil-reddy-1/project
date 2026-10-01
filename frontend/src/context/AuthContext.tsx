@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
-const API_URL = 'http://localhost:5000/api/v1'; // v2 - fixed URL
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
 
 interface User {
   id: string;
