@@ -81,7 +81,7 @@ class ProductService {
       
       // Log FormData entries
       console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
         } else {
