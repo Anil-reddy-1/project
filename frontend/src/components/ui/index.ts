@@ -7,6 +7,7 @@ export { PageHeader } from './PageHeader';
 export { ActionButton } from './ActionButton';
 export { Modal } from './Modal';
 export { LoadingSpinner } from './LoadingSpinner';
+export { FullScreenLoader } from './FullScreenLoader';
 export { EmptyState } from './EmptyState';
 export { Input } from './input';
 export { Label } from './label';
