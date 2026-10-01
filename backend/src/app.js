@@ -34,8 +34,9 @@ const app = express();
 app.use(express.json());
 
 // Configure CORS
-const allowedOriginsString = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
-const allowedOrigins = allowedOriginsString.split(',').map(origin => origin.trim());
+const envOrigins = process.env.ALLOWED_ORIGIN ? process.env.ALLOWED_ORIGIN.split(',').map(origin => origin.trim()) : [];
+const defaultOrigins = ['http://localhost:5173', 'https://ganga-jamuna.vercel.app'];
+const allowedOrigins = [...new Set([...envOrigins, ...defaultOrigins])];
 
 app.use(cors({
   origin: function (origin, callback) {
