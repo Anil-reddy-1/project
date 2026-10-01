@@ -57,6 +57,15 @@ router.get('/me', requireRole('delivery'), deliveryController.getMyDeliveries);
 router.get('/order/:orderId', deliveryController.getDeliveryByOrderId);
 
 /**
+ * @route   POST /api/v1/deliveries/order/:orderId/assign
+ * @desc    Assign a delivery partner to an order (creates delivery if needed)
+ * @access  Private (admin)
+ * @body    { partnerId: string }
+ */
+router.post('/order/:orderId/assign', requireRole('admin'), deliveryController.assignDeliveryByOrderId);
+
+
+/**
  * @route   GET /api/v1/deliveries/:id
  * @desc    Get delivery by ID
  * @access  Private (admin or assigned partner)

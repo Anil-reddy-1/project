@@ -145,10 +145,16 @@ export const deliveryService = {
   getDeliveryHistory: (id: string) =>
     api.get<DeliveryHistoryResponse>(`/deliveries/${id}/history`),
 
-  // Assign delivery to partner (admin only)
+  // Assign delivery to partner (admin only) — by delivery ID
   assignDelivery: async (payload: AssignDeliveryPayload): Promise<Delivery> => {
     const id = payload.deliveryId || '';
     const res = await api.post<DeliveryResponse>(`/deliveries/${id}/assign`, payload);
+    return res.data.delivery;
+  },
+
+  // Assign delivery partner by Order ID (creates delivery record if needed)
+  assignDeliveryByOrderId: async (orderId: string, partnerId: string, notes?: string): Promise<Delivery> => {
+    const res = await api.post<DeliveryResponse>(`/deliveries/order/${orderId}/assign`, { partnerId, notes });
     return res.data.delivery;
   },
 

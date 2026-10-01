@@ -18,6 +18,7 @@ interface UseDeliveryPartnersReturn {
   // Operations
   fetchPartners: () => Promise<void>;
   assignDelivery: (deliveryId: string, partnerId: string, notes?: string) => Promise<boolean>;
+  assignDeliveryToOrder: (orderId: string, partnerId: string, notes?: string) => Promise<boolean>;
 }
 
 export function useDeliveryPartners(): UseDeliveryPartnersReturn {
@@ -83,6 +84,31 @@ export function useDeliveryPartners(): UseDeliveryPartnersReturn {
     }
   }, []);
 
+  /**
+   * Assign delivery partner by Order ID (creates delivery if needed)
+   */
+  const assignDeliveryToOrder = useCallback(async (
+    orderId: string,
+    partnerId: string,
+    notes?: string
+  ): Promise<boolean> => {
+    try {
+      setAssigning(true);
+      setError(null);
+      await deliveryService.assignDeliveryByOrderId(orderId, partnerId, notes);
+      showSuccessToast('Delivery assigned successfully');
+      return true;
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to assign delivery';
+      setError(errorMessage);
+      showErrorToast(errorMessage);
+      console.error('Error assigning delivery by order:', err);
+      return false;
+    } finally {
+      setAssigning(false);
+    }
+  }, []);
+
   // Auto-fetch partners on mount
   useEffect(() => {
     fetchPartners();
@@ -95,5 +121,6 @@ export function useDeliveryPartners(): UseDeliveryPartnersReturn {
     error,
     fetchPartners,
     assignDelivery,
+    assignDeliveryToOrder,
   };
 }

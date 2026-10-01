@@ -138,12 +138,13 @@ export function UserManagement() {
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
     try {
-      const updateData: UpdateUserPayload = {
-        name: formData.name,
-        phone: formData.phone,
-        role: formData.role,
-        status: formData.status,
-      };
+      // Only send fields that have actual values — empty strings fail backend validation
+      const updateData: UpdateUserPayload = {};
+      if (formData.name?.trim()) updateData.name = formData.name.trim();
+      if (formData.phone?.trim()) updateData.phone = formData.phone.trim();
+      if (formData.role) updateData.role = formData.role;
+      if (formData.status) updateData.status = formData.status;
+
       await userService.updateUser(selectedUser.id, updateData);
       toast.success('User updated successfully');
       setIsEditModalOpen(false);

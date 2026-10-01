@@ -76,8 +76,8 @@ export function OrderDetails() {
       setOrder(response.data.order);
       setNewStatus(response.data.order.orderStatus);
       
-      // Try to load delivery if order is confirmed or beyond
-      if (['confirmed', 'assigned', 'delivered', 'completed'].includes(response.data.order.orderStatus)) {
+      // Only try to load delivery once it has been assigned
+      if (['assigned', 'delivered', 'completed'].includes(response.data.order.orderStatus)) {
         await loadDelivery(response.data.order.id);
       }
     } catch (error) {
@@ -92,10 +92,10 @@ export function OrderDetails() {
     try {
       setLoadingDelivery(true);
       const response = await deliveryService.getDeliveryByOrderId(orderId);
-      setDelivery(response.data.delivery);
+      // Backend returns delivery: null when not yet assigned — that's fine
+      setDelivery(response.data.delivery ?? null);
     } catch (error) {
-      console.error('Error loading delivery:', error);
-      // Delivery might not exist yet if order just confirmed
+      // Silently ignore — delivery simply may not exist yet
     } finally {
       setLoadingDelivery(false);
     }
@@ -524,7 +524,7 @@ export function OrderDetails() {
             </Card>
 
             {/* Delivery Assignment */}
-            {order.orderStatus === 'confirmed' && !delivery?.deliveryPartnerId && (
+            {['pending', 'confirmed'].includes(order.orderStatus) && !delivery?.deliveryPartnerId && (
               <Card className="border-2 border-blue-200 bg-blue-50">
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-3">
@@ -591,7 +591,6 @@ export function OrderDetails() {
           isOpen={showAssignModal}
           onClose={() => setShowAssignModal(false)}
           order={order}
-          deliveryId={delivery?.id}
           onSuccess={loadOrder}
         />
       </motion.div>

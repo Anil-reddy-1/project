@@ -61,7 +61,7 @@ const schemas = {
   updateUser: Joi.object({
     name: Joi.string().min(2).max(255).optional(),
     email: Joi.string().email().optional(),
-    phone: Joi.string().pattern(/^[0-9+\-\s()]+$/).optional(),
+    phone: Joi.string().pattern(/^[0-9+\-\s()]+$/).allow('', null).optional(),
     role: Joi.string().valid('admin', 'buyer', 'delivery').optional(),
     status: Joi.string().valid('active', 'inactive').optional(),
   }).min(1),
@@ -141,7 +141,7 @@ const schemas = {
   }),
 
   updateDeliveryStatus: Joi.object({
-    status: Joi.string().valid('pending', 'assigned', 'accepted', 'started', 'completed', 'failed').required(),
+    status: Joi.string().valid('pending', 'assigned', 'accepted', 'in_transit', 'delivered', 'failed', 'cancelled').required(),
     notes: Joi.string().optional(),
     proofOfDelivery: Joi.string().optional(),
   }),
@@ -212,6 +212,14 @@ const querySchemas = {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
     search: Joi.string().optional(),
+  }),
+
+  userFilter: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    search: Joi.string().optional(),
+    role: Joi.string().valid('admin', 'buyer', 'delivery').optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
   }),
 
   staffFilter: Joi.object({

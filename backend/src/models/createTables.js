@@ -366,6 +366,18 @@ async function initializeTables() {
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(30);');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS customer_address TEXT;');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_address JSONB;');
+    await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS partner_name VARCHAR(255);');
+
+    // Fix status check constraint on deliveries to include all values used by the service
+    // (in_transit was missing from the original constraint)
+    await client.query(`
+      ALTER TABLE deliveries DROP CONSTRAINT IF EXISTS deliveries_status_check;
+    `);
+    await client.query(`
+      ALTER TABLE deliveries ADD CONSTRAINT deliveries_status_check
+        CHECK (status IN ('pending', 'assigned', 'accepted', 'in_transit', 'delivered', 'failed', 'cancelled'));
+    `);
 
     // Sync order_status and delivery_partner_id where needed
     await client.query("UPDATE orders SET order_status = status WHERE order_status IS NULL OR order_status = 'pending';");
@@ -421,11 +433,6 @@ async function initializeTables() {
     // Stock transactions indexes
     await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_product_id ON stock_transactions(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_reference ON stock_transactions(reference_id, reference_type);');
-
-
-    await client.query('COMMIT');
-    logger.info('Database tables initialized successfully');
-
 
     await client.query('COMMIT');
     logger.info('Database tables initialized successfully');

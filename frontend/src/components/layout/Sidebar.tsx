@@ -20,8 +20,6 @@ import {
   User,
   Boxes,
   Navigation,
-  History,
-  Bell,
 } from 'lucide-react';
 
 interface NavItem {
@@ -55,6 +53,7 @@ const adminSections: NavSection[] = [
   {
     title: 'OPERATIONS',
     items: [
+      { path: '/admin/orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
       { path: '/admin/deliveries', label: 'Delivery Management', icon: <Truck className="w-4 h-4" /> },
       { path: '/admin/debts', label: 'Pending Debts', icon: <Wallet className="w-4 h-4" /> },
     ],
@@ -106,16 +105,14 @@ const deliverySections: NavSection[] = [
   {
     title: 'OPERATIONS',
     items: [
-      { path: '/delivery/home', label: 'Home', icon: <Home className="w-4 h-4" /> },
+      { path: '/delivery/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
       { path: '/delivery/deliveries', label: 'My Deliveries', icon: <Navigation className="w-4 h-4" /> },
     ],
   },
   {
-    title: 'HISTORY & ACCOUNT',
+    title: 'ACCOUNT',
     items: [
-      { path: '/delivery/history', label: 'Delivery History', icon: <History className="w-4 h-4" /> },
-      { path: '/delivery/notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
-      { path: '/delivery/profile', label: 'My Profile', icon: <User className="w-4 h-4" /> },
+      { path: '/buyer/profile', label: 'My Profile', icon: <User className="w-4 h-4" /> },
     ],
   },
 ];

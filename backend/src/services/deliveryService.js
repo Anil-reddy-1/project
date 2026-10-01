@@ -112,6 +112,84 @@ async function assignDelivery(deliveryId, partnerId, adminId) {
 }
 
 /**
+ * Assign delivery partner directly by Order ID (admin only)
+ * - Finds or creates the delivery record for the order
+ * - Validates partner has 'delivery' role
+ * - Syncs order status to 'assigned'
+ */
+async function assignDeliveryToOrder(orderId, partnerId, adminId) {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Validate order exists and is assignable
+    const order = await orderModel.findOrderById(orderId);
+    if (!order) throw new NotFoundError('Order not found', 'Order');
+
+    const assignableStatuses = ['confirmed', 'pending', 'assigned'];
+    if (!assignableStatuses.includes(order.orderStatus)) {
+      throw new BadRequestError(
+        `Cannot assign delivery to order with status '${order.orderStatus}'.`
+      );
+    }
+
+    // Validate partner
+    const partner = await userModel.findUserById(partnerId);
+    if (!partner) throw new NotFoundError('Delivery partner not found', 'User');
+    if (partner.role !== 'delivery') {
+      throw new BadRequestError(`User is not a delivery partner (role: ${partner.role})`);
+    }
+
+    // Find existing delivery record, or create one
+    let delivery = await deliveryModel.findDeliveryByOrderId(orderId);
+
+    if (!delivery) {
+      const addr = order.deliveryAddress || {};
+      delivery = await deliveryModel.createDelivery({
+        orderId,
+        customerName: addr.name || order.userName || 'Customer',
+        customerPhone: addr.phone || order.userPhone || '',
+        deliveryAddress: addr,
+        status: 'pending',
+      }, client);
+    }
+
+    // Assign partner
+    const updatedDelivery = await deliveryModel.assignDeliveryPartner(delivery.id, partnerId, client);
+
+    // Sync order status
+    await client.query(
+      `UPDATE orders SET order_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [orderId]
+    );
+
+    // Status history
+    await deliveryModel.createStatusHistory(
+      delivery.id, 'assigned', adminId,
+      `Assigned to ${partner.name || partner.email}`, client
+    );
+
+    await client.query('COMMIT');
+
+    // Non-blocking notification
+    notificationService.sendDeliveryAssigned(partnerId, {
+      id: delivery.id, orderId,
+      orderNumber: order.orderNumber,
+      customerName: delivery.customerName,
+      deliveryAddress: delivery.deliveryAddress
+    }).catch(err => console.error('Notification error:', err));
+
+    return updatedDelivery;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Accept delivery (delivery partner)
  * - Partner accepts the delivery assignment
  * - Updates status from 'assigned' to 'accepted'
@@ -490,6 +568,7 @@ async function getAvailablePartners() {
 
 module.exports = {
   assignDelivery,
+  assignDeliveryToOrder,
   acceptDelivery,
   startDelivery,
   completeDelivery,

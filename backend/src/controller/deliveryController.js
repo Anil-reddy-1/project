@@ -216,6 +216,40 @@ async function assignDelivery(req, res, next) {
 }
 
 /**
+ * Assign delivery partner by Order ID (admin only)
+ * POST /api/v1/deliveries/order/:orderId/assign
+ * Body: { partnerId }
+ */
+async function assignDeliveryByOrderId(req, res, next) {
+  try {
+    const { orderId } = req.params;
+    const { partnerId } = req.body;
+    const adminId = req.user.dbId;
+
+    if (!partnerId) {
+      throw new BadRequestError('Delivery partner ID is required');
+    }
+
+    const delivery = await deliveryService.assignDeliveryToOrder(orderId, partnerId, adminId);
+
+    logger.info('Delivery assigned via orderId', { orderId, partnerId, assignedBy: adminId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Delivery assigned successfully',
+      data: { delivery }
+    });
+  } catch (error) {
+    logger.error('Assign delivery by order ID error:', {
+      error: error.message,
+      orderId: req.params.orderId,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
  * Accept delivery (delivery partner)
  * POST /api/v1/deliveries/:id/accept
  */
@@ -379,7 +413,12 @@ async function getDeliveryByOrderId(req, res, next) {
     const delivery = await deliveryModel.findDeliveryByOrderId(orderId);
     
     if (!delivery) {
-      throw new NotFoundError('Delivery not found for this order', 'Delivery');
+      // Not an error — order simply hasn't been assigned a delivery yet
+      return res.status(200).json({
+        success: true,
+        message: 'No delivery assigned yet',
+        data: { delivery: null }
+      });
     }
     
     // Permission check
@@ -418,6 +457,7 @@ module.exports = {
   getMyDeliveryStats,
   getDeliveryById,
   assignDelivery,
+  assignDeliveryByOrderId,
   acceptDelivery,
   startDelivery,
   completeDelivery,

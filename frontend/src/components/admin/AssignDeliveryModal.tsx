@@ -13,7 +13,6 @@ interface AssignDeliveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   order: Order | null;
-  deliveryId?: string;
   onSuccess?: () => void;
 }
 
@@ -21,10 +20,9 @@ export function AssignDeliveryModal({
   isOpen,
   onClose,
   order,
-  deliveryId,
   onSuccess,
 }: AssignDeliveryModalProps) {
-  const { partners, loading, assigning, fetchPartners, assignDelivery } = useDeliveryPartners();
+  const { partners, loading, assigning, fetchPartners, assignDeliveryToOrder } = useDeliveryPartners();
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
   const [notes, setNotes] = useState('');
 
@@ -37,9 +35,9 @@ export function AssignDeliveryModal({
   }, [isOpen, fetchPartners]);
 
   const handleAssign = async () => {
-    if (!selectedPartnerId || !deliveryId) return;
+    if (!selectedPartnerId || !order) return;
 
-    const success = await assignDelivery(deliveryId, selectedPartnerId, notes || undefined);
+    const success = await assignDeliveryToOrder(order.id, selectedPartnerId, notes || undefined);
     
     if (success) {
       onSuccess?.();

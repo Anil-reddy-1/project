@@ -14,7 +14,7 @@ router.get(
   '/',
   authenticate,
   requireRole('admin'),
-  validateQuery(querySchemas.search),
+  validateQuery(querySchemas.userFilter),
   userController.getAllUsers
 );
 
