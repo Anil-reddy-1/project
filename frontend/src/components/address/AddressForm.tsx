@@ -3,25 +3,25 @@
  * Form for creating and editing delivery addresses with geolocation and shop image
  */
 
-import React, { useState, useEffect } from 'react';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Button } from '../ui/button';
+import React, { useState, useEffect } from "react";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { Alert } from '../ui/alert';
-import { AlertCircle, MapPin, Upload, X, Loader2 } from 'lucide-react';
-import { INDIAN_STATES, type AddressFormData } from '../../types/address.types';
-import { addressService } from '../../services/address.service';
-import { uploadService } from '../../services';
-import { useGeolocation } from '../../hooks/useGeolocation';
-import { formatCoordinatesWithLabels } from '../../utils/geolocation';
-import type { AddressValidationError } from '../../types/address.types';
+} from "../ui/select";
+import { Alert } from "../ui/alert";
+import { AlertCircle, MapPin, Upload, X, Loader2 } from "lucide-react";
+import { INDIAN_STATES, type AddressFormData } from "../../types/address.types";
+import { addressService } from "../../services/address.service";
+import { uploadService } from "../../services";
+import { useGeolocation } from "../../hooks/useGeolocation";
+import { formatCoordinatesWithLabels } from "../../utils/geolocation";
+import type { AddressValidationError } from "../../types/address.types";
 
 interface AddressFormProps {
   initialData?: Partial<AddressFormData>;
@@ -29,17 +29,17 @@ interface AddressFormProps {
   onCancel?: () => void;
   submitLabel?: string;
   isLoading?: boolean;
-  mode?: 'create' | 'edit';
+  mode?: "create" | "edit";
 }
 
 const initialFormData: AddressFormData = {
-  name: '',
-  phone: '',
-  addressLine1: '',
-  addressLine2: '',
-  city: '',
-  state: '',
-  postalCode: '',
+  name: "",
+  phone: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  postalCode: "",
   isDefault: false,
 };
 
@@ -47,7 +47,7 @@ export function AddressForm({
   initialData,
   onSubmit,
   onCancel,
-  submitLabel = 'Save Address',
+  submitLabel = "Save Address",
   isLoading = false,
 }: AddressFormProps) {
   const [formData, setFormData] = useState<AddressFormData>({
@@ -61,7 +61,7 @@ export function AddressForm({
   // Image upload state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.imageUrl || null
+    initialData?.imageUrl || null,
   );
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -103,7 +103,10 @@ export function AddressForm({
   /**
    * Handle input change
    */
-  const handleChange = (field: keyof AddressFormData, value: string | boolean) => {
+  const handleChange = (
+    field: keyof AddressFormData,
+    value: string | boolean,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -141,7 +144,7 @@ export function AddressForm({
     // Validate file
     const validation = uploadService.validateImageFiles([file]);
     if (!validation.valid) {
-      alert(validation.errors.join('\n'));
+      alert(validation.errors.join("\n"));
       return;
     }
 
@@ -172,11 +175,11 @@ export function AddressForm({
 
     setIsUploadingImage(true);
     try {
-      const result = await uploadService.uploadImage(imageFile, 'addresses');
+      const result = await uploadService.uploadImage(imageFile, "addresses");
       return result.data.url;
     } catch (error) {
-      console.error('Image upload error:', error);
-      alert('Failed to upload image. Please try again.');
+      console.error("Image upload error:", error);
+      alert("Failed to upload image. Please try again.");
       return null;
     } finally {
       setIsUploadingImage(false);
@@ -233,9 +236,11 @@ export function AddressForm({
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       // Scroll to first error
-      const firstErrorField = document.querySelector(`[name="${validationErrors[0].field}"]`);
+      const firstErrorField = document.querySelector(
+        `[name="${validationErrors[0].field}"]`,
+      );
       if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
     }
@@ -282,13 +287,13 @@ export function AddressForm({
           type="text"
           placeholder="Enter recipient name"
           value={formData.name}
-          onChange={(e) => handleChange('name', e.target.value)}
-          onBlur={() => handleBlur('name')}
+          onChange={(e) => handleChange("name", e.target.value)}
+          onBlur={() => handleBlur("name")}
           disabled={isLoading}
-          className={getFieldError('name') ? 'border-red-500' : ''}
+          className={getFieldError("name") ? "border-red-500" : ""}
         />
-        {getFieldError('name') && (
-          <p className="text-sm text-red-500">{getFieldError('name')}</p>
+        {getFieldError("name") && (
+          <p className="text-sm text-red-500">{getFieldError("name")}</p>
         )}
       </div>
 
@@ -303,14 +308,14 @@ export function AddressForm({
           type="tel"
           placeholder="10-digit mobile number"
           value={formData.phone}
-          onChange={(e) => handleChange('phone', e.target.value)}
-          onBlur={() => handleBlur('phone')}
+          onChange={(e) => handleChange("phone", e.target.value)}
+          onBlur={() => handleBlur("phone")}
           disabled={isLoading}
           maxLength={10}
-          className={getFieldError('phone') ? 'border-red-500' : ''}
+          className={getFieldError("phone") ? "border-red-500" : ""}
         />
-        {getFieldError('phone') && (
-          <p className="text-sm text-red-500">{getFieldError('phone')}</p>
+        {getFieldError("phone") && (
+          <p className="text-sm text-red-500">{getFieldError("phone")}</p>
         )}
       </div>
 
@@ -325,13 +330,15 @@ export function AddressForm({
           type="text"
           placeholder="House no., Building name, Street"
           value={formData.addressLine1}
-          onChange={(e) => handleChange('addressLine1', e.target.value)}
-          onBlur={() => handleBlur('addressLine1')}
+          onChange={(e) => handleChange("addressLine1", e.target.value)}
+          onBlur={() => handleBlur("addressLine1")}
           disabled={isLoading}
-          className={getFieldError('addressLine1') ? 'border-red-500' : ''}
+          className={getFieldError("addressLine1") ? "border-red-500" : ""}
         />
-        {getFieldError('addressLine1') && (
-          <p className="text-sm text-red-500">{getFieldError('addressLine1')}</p>
+        {getFieldError("addressLine1") && (
+          <p className="text-sm text-red-500">
+            {getFieldError("addressLine1")}
+          </p>
         )}
       </div>
 
@@ -344,8 +351,8 @@ export function AddressForm({
           type="text"
           placeholder="Area, Landmark"
           value={formData.addressLine2}
-          onChange={(e) => handleChange('addressLine2', e.target.value)}
-          onBlur={() => handleBlur('addressLine2')}
+          onChange={(e) => handleChange("addressLine2", e.target.value)}
+          onBlur={() => handleBlur("addressLine2")}
           disabled={isLoading}
         />
       </div>
@@ -363,13 +370,13 @@ export function AddressForm({
             type="text"
             placeholder="Enter city"
             value={formData.city}
-            onChange={(e) => handleChange('city', e.target.value)}
-            onBlur={() => handleBlur('city')}
+            onChange={(e) => handleChange("city", e.target.value)}
+            onBlur={() => handleBlur("city")}
             disabled={isLoading}
-            className={getFieldError('city') ? 'border-red-500' : ''}
+            className={getFieldError("city") ? "border-red-500" : ""}
           />
-          {getFieldError('city') && (
-            <p className="text-sm text-red-500">{getFieldError('city')}</p>
+          {getFieldError("city") && (
+            <p className="text-sm text-red-500">{getFieldError("city")}</p>
           )}
         </div>
 
@@ -380,14 +387,14 @@ export function AddressForm({
           </Label>
           <Select
             value={formData.state}
-            onValueChange={(value) => handleChange('state', value)}
+            onValueChange={(value) => handleChange("state", value)}
             disabled={isLoading}
           >
             <SelectTrigger
               id="state"
               name="state"
-              className={getFieldError('state') ? 'border-red-500' : ''}
-              onBlur={() => handleBlur('state')}
+              className={getFieldError("state") ? "border-red-500" : ""}
+              onBlur={() => handleBlur("state")}
             >
               <SelectValue placeholder="Select state" />
             </SelectTrigger>
@@ -399,8 +406,8 @@ export function AddressForm({
               ))}
             </SelectContent>
           </Select>
-          {getFieldError('state') && (
-            <p className="text-sm text-red-500">{getFieldError('state')}</p>
+          {getFieldError("state") && (
+            <p className="text-sm text-red-500">{getFieldError("state")}</p>
           )}
         </div>
       </div>
@@ -416,14 +423,14 @@ export function AddressForm({
           type="text"
           placeholder="6-digit PIN code"
           value={formData.postalCode}
-          onChange={(e) => handleChange('postalCode', e.target.value)}
-          onBlur={() => handleBlur('postalCode')}
+          onChange={(e) => handleChange("postalCode", e.target.value)}
+          onBlur={() => handleBlur("postalCode")}
           disabled={isLoading}
           maxLength={6}
-          className={getFieldError('postalCode') ? 'border-red-500' : ''}
+          className={getFieldError("postalCode") ? "border-red-500" : ""}
         />
-        {getFieldError('postalCode') && (
-          <p className="text-sm text-red-500">{getFieldError('postalCode')}</p>
+        {getFieldError("postalCode") && (
+          <p className="text-sm text-red-500">{getFieldError("postalCode")}</p>
         )}
       </div>
 
@@ -437,7 +444,7 @@ export function AddressForm({
         {!imagePreview ? (
           <div
             className="relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
-            onClick={() => document.getElementById('shopImage')?.click()}
+            onClick={() => document.getElementById("shopImage")?.click()}
           >
             <input
               id="shopImage"
@@ -452,9 +459,7 @@ export function AddressForm({
               <p className="text-sm text-gray-600">
                 Click to upload shop image
               </p>
-              <p className="text-xs text-gray-400">
-                PNG, JPG, WebP up to 5MB
-              </p>
+              <p className="text-xs text-gray-400">PNG, JPG, WebP up to 5MB</p>
             </div>
           </div>
         ) : (
@@ -531,10 +536,16 @@ export function AddressForm({
                 <MapPin className="w-4 h-4" />
                 <span className="font-medium">
                   {formData.latitude && formData.longitude
-                    ? formatCoordinatesWithLabels(formData.latitude, formData.longitude)
+                    ? formatCoordinatesWithLabels(
+                        formData.latitude,
+                        formData.longitude,
+                      )
                     : coordinates
-                    ? formatCoordinatesWithLabels(coordinates.latitude, coordinates.longitude)
-                    : 'Location captured'}
+                      ? formatCoordinatesWithLabels(
+                          coordinates.latitude,
+                          coordinates.longitude,
+                        )
+                      : "Location captured"}
                 </span>
               </div>
               {!isLoading && (
@@ -564,7 +575,7 @@ export function AddressForm({
           id="isDefault"
           name="isDefault"
           checked={formData.isDefault}
-          onChange={(e) => handleChange('isDefault', e.target.checked)}
+          onChange={(e) => handleChange("isDefault", e.target.checked)}
           disabled={isLoading}
           className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
         />
@@ -575,11 +586,7 @@ export function AddressForm({
 
       {/* Form Actions */}
       <div className="flex gap-3 pt-4">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1"
-        >
+        <Button type="submit" disabled={isLoading} className="flex-1">
           {isLoading ? (
             <>
               <span className="mr-2">⏳</span>
