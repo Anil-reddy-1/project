@@ -6,13 +6,15 @@
 import type { GeolocationCoordinates } from '../types/address.types';
 
 // Geolocation error types
-export enum GeolocationErrorType {
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
-  POSITION_UNAVAILABLE = 'POSITION_UNAVAILABLE',
-  TIMEOUT = 'TIMEOUT',
-  NOT_SUPPORTED = 'NOT_SUPPORTED',
-  UNKNOWN = 'UNKNOWN',
-}
+export const GeolocationErrorType = {
+  PERMISSION_DENIED: 'PERMISSION_DENIED',
+  POSITION_UNAVAILABLE: 'POSITION_UNAVAILABLE',
+  TIMEOUT: 'TIMEOUT',
+  NOT_SUPPORTED: 'NOT_SUPPORTED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type GeolocationErrorType = typeof GeolocationErrorType[keyof typeof GeolocationErrorType];
 
 // Custom error class for geolocation errors
 export class GeolocationError extends Error {

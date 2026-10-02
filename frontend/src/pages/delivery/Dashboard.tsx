@@ -8,14 +8,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Truck, CheckCircle, Clock, ArrowRight,
-  MapPin, Phone, User, AlertCircle, RefreshCw
+  MapPin, User, RefreshCw
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useDeliveries } from '../../hooks/useDeliveries';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Badge, Skeleton } from '../../components/ui';
 import { fadeVariants, listContainerVariants, listItemVariants } from '../../utils/animations';
-import { formatDate } from '../../utils/date';
 
 const STATUS_COLORS: Record<string, string> = {
   assigned: 'from-amber-500 to-orange-500',
@@ -137,7 +136,7 @@ export function DeliveryDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-800">Pending Actions</h2>
             {pendingActions.length > 0 && (
-              <Badge variant="yellow">{pendingActions.length} pending</Badge>
+              <Badge variant="warning">{pendingActions.length} pending</Badge>
             )}
           </div>
 

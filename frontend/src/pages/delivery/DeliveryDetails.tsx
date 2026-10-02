@@ -7,13 +7,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, MapPin, Phone, User, ExternalLink,
+  ArrowLeft, MapPin, Phone, User,
   Clock, CheckCircle, Truck, FileText, Package, Navigation
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useDeliveries } from '../../hooks/useDeliveries';
 import {
-  Button, Card, Badge, Skeleton, Alert, Separator
+  Button, Card, Skeleton, Alert, Separator
 } from '../../components/ui';
 import { fadeVariants } from '../../utils/animations';
 import { formatDateTime } from '../../utils/date';

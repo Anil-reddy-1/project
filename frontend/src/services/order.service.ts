@@ -20,6 +20,9 @@ export interface DeliveryAddress {
   city: string;
   state: string;
   postalCode: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  imageUrl?: string | null;
 }
 
 export interface Order {

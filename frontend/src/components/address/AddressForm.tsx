@@ -49,7 +49,6 @@ export function AddressForm({
   onCancel,
   submitLabel = 'Save Address',
   isLoading = false,
-  mode = 'create',
 }: AddressFormProps) {
   const [formData, setFormData] = useState<AddressFormData>({
     ...initialFormData,
@@ -79,7 +78,7 @@ export function AddressForm({
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
-      setFormData((prev) => ({
+      setFormData(() => ({
         ...initialFormData,
         ...initialData,
       }));
@@ -217,11 +216,12 @@ export function AddressForm({
     // Upload image if new file is selected
     let imageUrl = formData.imageUrl;
     if (imageFile) {
-      imageUrl = await uploadImage();
-      if (!imageUrl) {
+      const uploadedImageUrl = await uploadImage();
+      if (!uploadedImageUrl) {
         // Upload failed, don't proceed
         return;
       }
+      imageUrl = uploadedImageUrl;
     }
 
     // Prepare data with image URL

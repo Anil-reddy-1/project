@@ -3,7 +3,7 @@
  * Display address with inline editing capability
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -16,7 +16,6 @@ import {
   Image as ImageIcon,
   ExternalLink,
   CheckCircle2,
-  X
 } from 'lucide-react';
 import { AddressForm } from './AddressForm';
 import { addressService } from '../../services/address.service';

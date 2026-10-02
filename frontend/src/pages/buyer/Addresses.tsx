@@ -116,7 +116,7 @@ export function Addresses() {
   const handleSetDefault = async (addressId: string) => {
     try {
       setUpdatingIds((prev) => new Set(prev).add(addressId));
-      const response = await addressService.setDefaultAddress(addressId);
+      await addressService.setDefaultAddress(addressId);
       // Update addresses list - set new default and unset others
       setAddresses((prev) =>
         prev.map((addr) => ({
@@ -203,10 +203,7 @@ export function Addresses() {
             icon={MapPin}
             title="No addresses saved"
             description="Add your business delivery address to speed up checkout"
-            action={{
-              label: 'Add First Address',
-              onClick: handleShowAddForm,
-            }}
+            action={<Button onClick={handleShowAddForm}>Add First Address</Button>}
           />
         )}
 
