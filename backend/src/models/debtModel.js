@@ -9,9 +9,14 @@ function mapDebtRow(row) {
   return {
     id: row.id,
     description: row.description,
-    originalAmount: row.original_amount,
-    paidAmount: row.paid_amount,
-    remainingAmount: row.remaining_amount,
+    creditorName: row.creditor_name,
+    invoiceNumber: row.invoice_number,
+    referenceNumber: row.reference_number,
+    priority: row.priority,
+    type: row.type || 'payable',
+    originalAmount: parseFloat(row.original_amount) || 0,
+    paidAmount: parseFloat(row.paid_amount) || 0,
+    remainingAmount: parseFloat(row.remaining_amount) || 0,
     status: row.status,
     dueDate: row.due_date,
     notes: row.notes,
@@ -20,13 +25,13 @@ function mapDebtRow(row) {
   };
 }
 
-async function createDebt({ description, amount, dueDate, notes }) {
+async function createDebt({ description, creditorName, invoiceNumber, referenceNumber, priority, type, amount, dueDate, notes }) {
   const query = `
-    INSERT INTO debts (description, original_amount, paid_amount, remaining_amount, status, due_date, notes)
-    VALUES ($1, $2, 0, $2, 'pending', $3, $4)
+    INSERT INTO debts (description, creditor_name, invoice_number, reference_number, priority, type, original_amount, paid_amount, remaining_amount, status, due_date, notes)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $7, 'pending', $8, $9)
     RETURNING *;
   `;
-  const values = [description, amount, dueDate, notes];
+  const values = [description, creditorName, invoiceNumber, referenceNumber, priority || 'medium', type || 'payable', amount, dueDate, notes];
   const result = await pool.query(query, values);
   return mapDebtRow(result.rows[0]);
 }
@@ -37,7 +42,7 @@ async function findDebtById(id) {
   return mapDebtRow(result.rows[0]);
 }
 
-async function findAllDebts({ page = 1, limit = 20, status, overdue = false }) {
+async function findAllDebts({ page = 1, limit = 20, status, type, overdue = false }) {
   const offset = (page - 1) * limit;
   const whereClauses = [];
   const queryParams = [];
@@ -45,6 +50,11 @@ async function findAllDebts({ page = 1, limit = 20, status, overdue = false }) {
   if (status) {
     queryParams.push(status);
     whereClauses.push(`status = $${queryParams.length}`);
+  }
+
+  if (type) {
+    queryParams.push(type);
+    whereClauses.push(`type = $${queryParams.length}`);
   }
 
   if (overdue) {
@@ -128,14 +138,15 @@ async function recordPayment(debtId, amount, paymentDate, paymentMethod, referen
   }
 }
 
-async function getDebtSummary() {
+async function getDebtSummary(type) {
+  const typeFilter = type ? `WHERE type = '${type}'` : '';
   const query = `
     SELECT
-      SUM(CASE WHEN status = 'pending' THEN remaining_amount ELSE 0 END) as total_pending,
+      SUM(CASE WHEN status != 'cleared' THEN remaining_amount ELSE 0 END) as total_pending,
       SUM(CASE WHEN status = 'partial' THEN remaining_amount ELSE 0 END) as total_partial,
       SUM(paid_amount) as total_cleared,
       COUNT(CASE WHEN due_date < CURRENT_TIMESTAMP AND status != 'cleared' THEN 1 END) as overdue_count
-    FROM debts;
+    FROM debts ${typeFilter};
   `;
   const result = await pool.query(query);
   return result.rows[0];

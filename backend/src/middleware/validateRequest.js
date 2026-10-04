@@ -54,7 +54,7 @@ const schemas = {
     name: Joi.string().min(2).max(255).required(),
     email: Joi.string().email().required(),
     phone: Joi.string().pattern(/^[0-9+\-\s()]+$/).optional(),
-    role: Joi.string().valid('admin', 'buyer', 'delivery').required(),
+    role: Joi.string().valid('admin', 'buyer', 'delivery', 'supervisor').required(),
     status: Joi.string().valid('active', 'inactive').default('active'),
   }),
 
@@ -62,7 +62,7 @@ const schemas = {
     name: Joi.string().min(2).max(255).optional(),
     email: Joi.string().email().optional(),
     phone: Joi.string().pattern(/^[0-9+\-\s()]+$/).allow('', null).optional(),
-    role: Joi.string().valid('admin', 'buyer', 'delivery').optional(),
+    role: Joi.string().valid('admin', 'buyer', 'delivery', 'supervisor').optional(),
     status: Joi.string().valid('active', 'inactive').optional(),
   }).min(1),
 
@@ -71,7 +71,7 @@ const schemas = {
     name: Joi.string().min(2).max(255).required(),
     email: Joi.string().email().required(),
     phone: Joi.string().pattern(/^[0-9+\-\s()]+$/).required(),
-    role: Joi.string().valid('manager', 'seller', 'delivery_partner').required(),
+    role: Joi.string().valid('manager', 'seller', 'delivery_partner', 'supervisor').required(),
     status: Joi.string().valid('active', 'inactive').default('active'),
   }),
 
@@ -218,7 +218,7 @@ const querySchemas = {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
     search: Joi.string().optional(),
-    role: Joi.string().valid('admin', 'buyer', 'delivery').optional(),
+    role: Joi.string().valid('admin', 'buyer', 'delivery', 'supervisor').optional(),
     status: Joi.string().valid('active', 'inactive').optional(),
   }),
 

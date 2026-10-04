@@ -21,7 +21,7 @@ async function initializeTables() {
         email VARCHAR(255) UNIQUE NOT NULL,
         name VARCHAR(255) NOT NULL,
         phone VARCHAR(30),
-        role VARCHAR(50) NOT NULL DEFAULT 'buyer' CHECK (role IN ('admin', 'buyer', 'delivery')),
+        role VARCHAR(50) NOT NULL DEFAULT 'buyer' CHECK (role IN ('admin', 'buyer', 'delivery', 'supervisor')),
         department VARCHAR(100),
         avatar_url TEXT,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -39,7 +39,7 @@ async function initializeTables() {
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         phone VARCHAR(30),
-        role VARCHAR(50) NOT NULL CHECK (role IN ('manager', 'seller', 'delivery_partner')),
+        role VARCHAR(50) NOT NULL CHECK (role IN ('manager', 'seller', 'delivery_partner', 'supervisor')),
         status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
         availability VARCHAR(50) NOT NULL DEFAULT 'available' CHECK (availability IN ('available', 'busy', 'offline')),
         active_deliveries INT DEFAULT 0,
@@ -107,6 +107,8 @@ async function initializeTables() {
         primary_image_url TEXT,
         current_price DECIMAL(15,2),
         previous_price DECIMAL(15,2),
+        wholesale_price DECIMAL(15,2),
+        cost_price DECIMAL(15,2),
         last_changed TIMESTAMPTZ,
         changed_by UUID,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -138,6 +140,11 @@ async function initializeTables() {
         product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
         previous_price DECIMAL(15,2),
         new_price DECIMAL(15,2),
+        previous_wholesale DECIMAL(15,2),
+        new_wholesale DECIMAL(15,2),
+        previous_cost DECIMAL(15,2),
+        new_cost DECIMAL(15,2),
+        change_type VARCHAR(50) DEFAULT 'manual',
         reason VARCHAR(255),
         changed_by UUID,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -160,6 +167,8 @@ async function initializeTables() {
         payment_method VARCHAR(50) DEFAULT 'COD',
         payment_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         order_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        pickup_otp VARCHAR(6),
+        pickup_otp_expires_at TIMESTAMPTZ,
         status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
         delivery_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         delivery_address JSONB,
@@ -251,10 +260,15 @@ async function initializeTables() {
       CREATE TABLE IF NOT EXISTS debts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         description VARCHAR(255),
+        creditor_name VARCHAR(255) NOT NULL,
+        invoice_number VARCHAR(100),
+        reference_number VARCHAR(100),
+        priority VARCHAR(50) DEFAULT 'medium',
+        type VARCHAR(50) NOT NULL DEFAULT 'payable' CHECK (type IN ('payable', 'receivable')),
         original_amount DECIMAL(15,2),
         paid_amount DECIMAL(15,2) DEFAULT 0,
         remaining_amount DECIMAL(15,2),
-        status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'partial', 'cleared')),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'partial', 'cleared', 'overdue')),
         due_date TIMESTAMPTZ,
         notes TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -354,6 +368,8 @@ async function initializeTables() {
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);');
     await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_status VARCHAR(50) DEFAULT 'pending';");
     await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'COD';");
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_otp VARCHAR(6);');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_otp_expires_at TIMESTAMPTZ;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
@@ -379,6 +395,15 @@ async function initializeTables() {
         CHECK (status IN ('pending', 'assigned', 'accepted', 'in_transit', 'delivered', 'failed', 'cancelled'));
     `);
 
+    // Fix staff_role_check constraint on staff to include supervisor
+    await client.query(`
+      ALTER TABLE staff DROP CONSTRAINT IF EXISTS staff_role_check;
+    `);
+    await client.query(`
+      ALTER TABLE staff ADD CONSTRAINT staff_role_check
+        CHECK (role IN ('manager', 'seller', 'delivery_partner', 'supervisor'));
+    `);
+
     // Sync order_status and delivery_partner_id where needed
     await client.query("UPDATE orders SET order_status = status WHERE order_status IS NULL OR order_status = 'pending';");
     await client.query("UPDATE deliveries SET delivery_partner_id = partner_id WHERE delivery_partner_id IS NULL AND partner_id IS NOT NULL;");
@@ -394,6 +419,17 @@ async function initializeTables() {
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS price DECIMAL(15,2) DEFAULT 0;");
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'active';");
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS primary_image_url TEXT;");
+    
+    // Add pricing & margin columns
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS wholesale_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price DECIMAL(15,2);");
+
+    // Add pricing history columns
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_wholesale DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_wholesale DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_cost DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_cost DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS change_type VARCHAR(50) DEFAULT 'manual';");
 
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
@@ -410,8 +446,28 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_partner_id ON deliveries(partner_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_delivery_partner_id ON deliveries(delivery_partner_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);');
+    
+    // ALTER TABLE for debts to add new columns if they don't exist
+    await client.query("ALTER TABLE debts ADD COLUMN IF NOT EXISTS creditor_name VARCHAR(255) NOT NULL DEFAULT 'Unknown';");
+    await client.query('ALTER TABLE debts ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100);');
+    await client.query('ALTER TABLE debts ADD COLUMN IF NOT EXISTS reference_number VARCHAR(100);');
+    await client.query("ALTER TABLE debts ADD COLUMN IF NOT EXISTS priority VARCHAR(50) DEFAULT 'medium';");
+    await client.query("ALTER TABLE debts ADD COLUMN IF NOT EXISTS type VARCHAR(50) NOT NULL DEFAULT 'payable';");
+    
+    await client.query(`
+      ALTER TABLE debts DROP CONSTRAINT IF EXISTS debts_status_check;
+    `);
+    await client.query(`
+      ALTER TABLE debts ADD CONSTRAINT debts_status_check
+        CHECK (status IN ('pending', 'partial', 'cleared', 'overdue'));
+    `);
+
+    // Add department column to staff if not exists
+    await client.query("ALTER TABLE staff ADD COLUMN IF NOT EXISTS department VARCHAR(100);");
+
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_status ON debts(status);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_debts_due_date ON debts(due_date);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_debts_type ON debts(type);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON cart_items(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_cart_items_user_product ON cart_items(user_id, product_id);');
@@ -423,11 +479,18 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_is_primary ON product_images(product_id, is_primary);');
 
     // ── Data Healing ───────────────────────────────────────────────────────
-    // Reset users with legacy/invalid roles to 'buyer'. Valid: admin, buyer, delivery
+    // Reset users with legacy/invalid roles to 'buyer'. Valid: admin, buyer, delivery, supervisor
     await client.query(`
       UPDATE users
       SET role = 'buyer', updated_at = CURRENT_TIMESTAMP
-      WHERE role NOT IN ('admin', 'buyer', 'delivery');
+      WHERE role NOT IN ('admin', 'buyer', 'delivery', 'supervisor');
+    `);
+
+    // Fix users role CHECK constraint to include supervisor
+    await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;`);
+    await client.query(`
+      ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK (role IN ('admin', 'buyer', 'delivery', 'supervisor'));
     `);
 
     // Stock transactions indexes

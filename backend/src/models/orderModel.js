@@ -20,6 +20,8 @@ function mapOrderRow(row) {
     paymentMethod: row.payment_method,
     paymentStatus: row.payment_status,
     orderStatus: row.order_status,
+    pickupOtp: row.pickup_otp || null,
+    pickupOtpExpiresAt: row.pickup_otp_expires_at || null,
     deliveryAddress: row.delivery_address,
     notes: row.notes,
     createdAt: row.created_at,

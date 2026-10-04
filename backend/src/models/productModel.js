@@ -151,9 +151,9 @@ async function findAllProducts(filters = {}) {
   if (stockStatus === 'out') {
     whereClauses.push('quantity = 0');
   } else if (stockStatus === 'low') {
-    whereClauses.push('quantity > 0 AND max_stock IS NOT NULL AND quantity < (max_stock * 0.1)');
+    whereClauses.push('quantity > 0 AND min_stock IS NOT NULL AND quantity <= min_stock');
   } else if (stockStatus === 'healthy') {
-    whereClauses.push('(max_stock IS NULL OR quantity >= (max_stock * 0.1))');
+    whereClauses.push('(min_stock IS NULL OR quantity > min_stock)');
   }
   
   const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -187,11 +187,11 @@ async function findAllProducts(filters = {}) {
       ) as images,
       CASE
         WHEN p.quantity = 0 THEN 'out'
-        WHEN p.max_stock IS NOT NULL AND p.quantity < (p.max_stock * 0.1) THEN 'low'
+        WHEN p.min_stock IS NOT NULL AND p.quantity <= p.min_stock THEN 'low'
         ELSE 'healthy'
       END as stock_status,
       CASE
-        WHEN p.max_stock IS NOT NULL AND p.max_stock > 0 THEN ROUND((p.quantity::decimal / p.max_stock * 100), 2)
+        WHEN p.min_stock IS NOT NULL AND p.min_stock > 0 THEN ROUND((p.quantity::decimal / p.min_stock * 100), 2)
         ELSE NULL
       END as low_stock_percentage
     FROM products p
@@ -436,15 +436,15 @@ async function getLowStockProducts() {
         ) FILTER (WHERE pi.id IS NOT NULL),
         '[]'::json
       ) as images,
-      ROUND((p.quantity::decimal / p.max_stock * 100), 2) as stock_percentage
+      ROUND((p.quantity::decimal / p.min_stock * 100), 2) as stock_percentage
     FROM products p
     LEFT JOIN product_images pi ON p.id = pi.product_id
-    WHERE p.max_stock IS NOT NULL 
-      AND p.quantity < (p.max_stock * 0.1)
+    WHERE p.min_stock IS NOT NULL 
+      AND p.quantity <= p.min_stock
       AND p.quantity > 0
       AND p.status = 'active'
     GROUP BY p.id
-    ORDER BY (p.quantity::decimal / p.max_stock) ASC;
+    ORDER BY (p.quantity::decimal / p.min_stock) ASC;
   `;
   
   const result = await pool.query(query);
@@ -460,8 +460,8 @@ async function getProductStats() {
       COUNT(*) as total_products,
       COUNT(*) FILTER (WHERE quantity > 0 AND status = 'active') as in_stock_count,
       COUNT(*) FILTER (
-        WHERE max_stock IS NOT NULL 
-        AND quantity < (max_stock * 0.1) 
+        WHERE min_stock IS NOT NULL 
+        AND quantity <= min_stock 
         AND quantity > 0
         AND status = 'active'
       ) as low_stock_count,
@@ -631,6 +631,301 @@ async function setPrimaryImage(productId, imageId) {
   }
 }
 
+// ============= Pricing & Margin Management =============
+
+async function getAllPricingData(filters = {}) {
+  const { page = 1, limit = 20, search, category, status } = filters;
+  const offset = (page - 1) * limit;
+  const queryParams = [];
+  const whereClauses = [];
+
+  if (search) {
+    queryParams.push(`%${search.toLowerCase()}%`);
+    whereClauses.push(`(LOWER(name) LIKE $${queryParams.length} OR LOWER(sku) LIKE $${queryParams.length})`);
+  }
+  
+  if (category) {
+    queryParams.push(`"%${category}%"`); 
+    whereClauses.push(`category_tags::text LIKE $${queryParams.length}`);
+  }
+
+  if (status) {
+    queryParams.push(status);
+    whereClauses.push(`status = $${queryParams.length}`);
+  } else {
+    whereClauses.push(`status != 'inactive'`);
+  }
+
+  const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+  
+  const countQuery = `SELECT COUNT(*) FROM products ${whereString};`;
+  const countResult = await pool.query(countQuery, queryParams);
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  const dataParams = [...queryParams, limit, offset];
+  const query = `
+    SELECT 
+      id, sku, name, category_tags,
+      price as "retailPrice",
+      wholesale_price as "wholesalePrice",
+      cost_price as "costPrice",
+      previous_price as "previousRetailPrice",
+      last_changed as "lastChanged",
+      changed_by as "changedBy",
+      updated_at as "lastUpdated"
+    FROM products
+    ${whereString}
+    ORDER BY name ASC
+    LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length};
+  `;
+  
+  const result = await pool.query(query, dataParams);
+  
+  const products = result.rows.map(row => {
+    let category = null;
+    if (row.category_tags && row.category_tags.length > 0) {
+      category = row.category_tags[0];
+    }
+    
+    let margin = null;
+    const retail = parseFloat(row.retailPrice || 0);
+    const cost = parseFloat(row.costPrice || 0);
+    if (retail > 0 && cost > 0) {
+      margin = ((retail - cost) / retail) * 100;
+    }
+
+    return {
+      id: row.id,
+      productId: row.id,
+      productName: row.name,
+      sku: row.sku,
+      category,
+      retailPrice: retail,
+      wholesalePrice: row.wholesalePrice ? parseFloat(row.wholesalePrice) : null,
+      costPrice: cost > 0 ? cost : null,
+      previousRetailPrice: row.previousRetailPrice ? parseFloat(row.previousRetailPrice) : null,
+      margin,
+      lastChanged: row.lastChanged,
+      lastUpdated: row.lastUpdated,
+      changedBy: row.changedBy
+    };
+  });
+
+  return { products, total };
+}
+
+async function getPricingStats() {
+  const query = `
+    SELECT
+      COUNT(*) as total_products,
+      AVG(price) as avg_retail_price,
+      COUNT(CASE WHEN price > previous_price THEN 1 END) as price_increases,
+      COUNT(CASE WHEN price < previous_price THEN 1 END) as price_decreases,
+      AVG(CASE WHEN price > 0 AND cost_price > 0 THEN ((price - cost_price) / price) * 100 ELSE NULL END) as avg_margin
+    FROM products
+    WHERE status != 'inactive' AND price > 0;
+  `;
+  const result = await pool.query(query);
+  const stats = result.rows[0];
+  
+  return {
+    totalProducts: parseInt(stats.total_products || 0, 10),
+    avgRetailPrice: parseFloat(stats.avg_retail_price || 0),
+    avgMargin: parseFloat(stats.avg_margin || 0),
+    priceIncreases: parseInt(stats.price_increases || 0, 10),
+    priceDecreases: parseInt(stats.price_decreases || 0, 10)
+  };
+}
+
+async function updateProductPricing(id, { retailPrice, wholesalePrice, costPrice }, reason, changedBy) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    const getProductQuery = 'SELECT price, wholesale_price, cost_price FROM products WHERE id = $1 FOR UPDATE';
+    const productResult = await client.query(getProductQuery, [id]);
+    
+    if (productResult.rows.length === 0) {
+      throw new Error('Product not found');
+    }
+    
+    const current = productResult.rows[0];
+    const prevRetail = parseFloat(current.price || 0);
+    const prevWholesale = parseFloat(current.wholesale_price || 0);
+    const prevCost = parseFloat(current.cost_price || 0);
+    
+    let adminId = null;
+    if (changedBy) {
+      const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      if (uuidRegex.test(changedBy)) {
+        adminId = changedBy;
+      } else {
+        const userResult = await client.query('SELECT id FROM users WHERE firebase_uid = $1', [changedBy]);
+        if (userResult.rows.length > 0) {
+          adminId = userResult.rows[0].id;
+        }
+      }
+    }
+    
+    const updateQuery = `
+      UPDATE products 
+      SET 
+        previous_price = price,
+        price = COALESCE($1, price),
+        wholesale_price = COALESCE($2, wholesale_price),
+        cost_price = COALESCE($3, cost_price),
+        last_changed = CURRENT_TIMESTAMP,
+        changed_by = $4,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $5
+      RETURNING *;
+    `;
+    const updateResult = await client.query(updateQuery, [retailPrice, wholesalePrice, costPrice, adminId, id]);
+    
+    const newRetail = parseFloat(updateResult.rows[0].price || 0);
+    
+    const historyQuery = `
+      INSERT INTO price_history (
+        product_id, previous_price, new_price, 
+        previous_wholesale, new_wholesale, 
+        previous_cost, new_cost,
+        change_type, reason, changed_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `;
+    
+    await client.query(historyQuery, [
+      id, prevRetail, retailPrice, 
+      prevWholesale, wholesalePrice, 
+      prevCost, costPrice,
+      'manual', reason || 'Manual update', adminId
+    ]);
+    
+    await client.query('COMMIT');
+    
+    return {
+      productId: id,
+      previousPrice: prevRetail,
+      newPrice: retailPrice || newRetail,
+      change: (retailPrice || newRetail) - prevRetail,
+      changePercentage: prevRetail > 0 ? (((retailPrice || newRetail) - prevRetail) / prevRetail) * 100 : 0,
+      updatedBy: changedBy,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function bulkUpdatePricing(productIds, { adjustmentType, adjustmentValue, applyTo, reason }, changedBy) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    let updatedCount = 0;
+
+    let adminId = null;
+    if (changedBy) {
+      const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      if (uuidRegex.test(changedBy)) {
+        adminId = changedBy;
+      } else {
+        const userResult = await client.query('SELECT id FROM users WHERE firebase_uid = $1', [changedBy]);
+        if (userResult.rows.length > 0) {
+          adminId = userResult.rows[0].id;
+        }
+      }
+    }
+    
+    for (const id of productIds) {
+      const getProductQuery = 'SELECT price, wholesale_price, cost_price FROM products WHERE id = $1 FOR UPDATE';
+      const productResult = await client.query(getProductQuery, [id]);
+      
+      if (productResult.rows.length === 0) continue;
+      
+      const current = productResult.rows[0];
+      const prevRetail = parseFloat(current.price || 0);
+      const prevWholesale = parseFloat(current.wholesale_price || 0);
+      
+      let newRetail = prevRetail;
+      let newWholesale = prevWholesale;
+      
+      if (applyTo === 'retail' || applyTo === 'both') {
+        if (adjustmentType === 'percentage') {
+          newRetail = prevRetail * (1 + (adjustmentValue / 100));
+        } else {
+          newRetail = prevRetail + adjustmentValue;
+        }
+        newRetail = Math.max(0, newRetail); // ensure not negative
+      }
+      
+      if (applyTo === 'wholesale' || applyTo === 'both') {
+        if (adjustmentType === 'percentage') {
+          newWholesale = prevWholesale * (1 + (adjustmentValue / 100));
+        } else {
+          newWholesale = prevWholesale + adjustmentValue;
+        }
+        newWholesale = Math.max(0, newWholesale);
+      }
+      
+      // Update if changed
+      if (newRetail !== prevRetail || newWholesale !== prevWholesale) {
+        await client.query(`
+          UPDATE products 
+          SET previous_price = price, price = $1, wholesale_price = $2,
+              last_changed = CURRENT_TIMESTAMP, changed_by = $3, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $4
+        `, [newRetail, newWholesale, adminId, id]);
+        
+        await client.query(`
+          INSERT INTO price_history (
+            product_id, previous_price, new_price, 
+            previous_wholesale, new_wholesale, 
+            previous_cost, new_cost,
+            change_type, reason, changed_by
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [
+          id, prevRetail, newRetail, prevWholesale, newWholesale,
+          current.cost_price, current.cost_price,
+          'bulk', reason || 'Bulk update', adminId
+        ]);
+        
+        updatedCount++;
+      }
+    }
+    
+    await client.query('COMMIT');
+    return { updated: updatedCount };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function getPriceHistory(productId, limit = 50) {
+  const query = `
+    SELECT 
+      previous_price as "previousPrice",
+      new_price as "newPrice",
+      previous_wholesale as "previousWholesale",
+      new_wholesale as "newWholesale",
+      change_type as "changeType",
+      reason,
+      changed_by as "changedBy",
+      created_at as "createdAt"
+    FROM price_history
+    WHERE product_id = $1
+    ORDER BY created_at DESC
+    LIMIT $2
+  `;
+  const result = await pool.query(query, [productId, limit]);
+  return result.rows;
+}
+
 module.exports = {
   createProduct,
   findAllProducts,
@@ -646,5 +941,10 @@ module.exports = {
   addProductImage,
   removeProductImage,
   reorderProductImages,
-  setPrimaryImage
+  setPrimaryImage,
+  getAllPricingData,
+  getPricingStats,
+  updateProductPricing,
+  bulkUpdatePricing,
+  getPriceHistory
 };

@@ -36,6 +36,12 @@ const rolePermissions = {
     orders: ['view'],
     dashboard: ['view'],
   },
+  supervisor: {
+    orders: ['view', 'create', 'update'],
+    deliveries: ['view', 'create', 'assign', 'update'],
+    stock: ['view'],
+    dashboard: ['view'],
+  },
 };
 
 /**
@@ -48,6 +54,7 @@ function hasPermission(role, resource, action) {
     'delivery-partner': 'delivery',
     'customer': 'buyer',
     'user': 'buyer',
+    'manager': 'admin',
   };
   const effectiveRole = roleAliases[role] || role;
 

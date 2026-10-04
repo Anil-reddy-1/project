@@ -55,7 +55,7 @@ async function ensureUser(req, res, next) {
     }
     
     // Validate against allowed roles; default anything unknown to buyer
-    const allowedRoles = ['admin', 'buyer', 'delivery'];
+    const allowedRoles = ['admin', 'buyer', 'delivery', 'supervisor'];
     if (!allowedRoles.includes(normalizedRole.toLowerCase())) {
       logger.warn(`Invalid role '${normalizedRole}' for user ${uid}, defaulting to 'buyer'`);
       normalizedRole = 'buyer';
@@ -80,7 +80,7 @@ async function ensureUser(req, res, next) {
     const result = await pool.query(query, [
       uid,
       email || null,
-      name || null,
+      name || (email ? email.split('@')[0] : 'Unknown User'),
       picture || null,
       normalizedRole
     ]);
