@@ -147,7 +147,7 @@ class ProductService {
   }
 
   /**
-   * Get low stock products (< 10% of max stock)
+   * Get low stock products (quantity <= minStock)
    */
   async getLowStockProducts(): Promise<LowStockResponse> {
     return api.get<LowStockResponse>(`${this.baseUrl}/alerts/low-stock`);

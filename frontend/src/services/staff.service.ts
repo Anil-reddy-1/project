@@ -5,7 +5,7 @@ export interface Staff {
   name: string;
   email: string;
   phone: string;
-  role: 'Manager' | 'Seller' | 'Delivery Partner';
+  role: 'manager' | 'seller' | 'delivery_partner' | 'supervisor';
   department?: string;
   status: 'active' | 'inactive';
   availability?: 'available' | 'busy' | 'offline';
@@ -24,7 +24,7 @@ export interface CreateStaffPayload {
   name: string;
   email: string;
   phone: string;
-  role: 'Manager' | 'Seller' | 'Delivery Partner';
+  role: 'manager' | 'seller' | 'delivery_partner' | 'supervisor';
   department?: string;
   status: 'active' | 'inactive';
 }
@@ -33,7 +33,7 @@ export interface UpdateStaffPayload {
   name?: string;
   email?: string;
   phone?: string;
-  role?: 'Manager' | 'Seller' | 'Delivery Partner';
+  role?: 'manager' | 'seller' | 'delivery_partner' | 'supervisor';
   department?: string;
   status?: 'active' | 'inactive';
 }
@@ -51,17 +51,19 @@ export const staffService = {
 
   getAllStaff: async (): Promise<Staff[]> => {
     const res = await api.get<StaffResponse>('/staff');
-    return res.data.staff;
+    // Axios interceptor already returns response.data (the body)
+    // Body shape: { success, message, data: [...], meta: {...} }
+    return (res as any).data || [];
   },
 
   createStaff: async (payload: CreateStaffPayload): Promise<Staff> => {
     const res = await api.post<{ success: boolean; data: { staff: Staff } }>('/staff', payload);
-    return res.data.staff;
+    return (res as any).data;
   },
 
   updateStaff: async (id: string, payload: UpdateStaffPayload): Promise<Staff> => {
     const res = await api.put<{ success: boolean; data: { staff: Staff } }>(`/staff/${id}`, payload);
-    return res.data.staff;
+    return (res as any).data?.staff || (res as any).data;
   },
 
   deleteStaff: (id: string) =>

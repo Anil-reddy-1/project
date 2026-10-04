@@ -17,81 +17,79 @@ export interface PriceData {
   updatedBy?: string;
 }
 
-export interface ProductPricing {
-  id: string;
-  sku: string;
-  name: string;
-  currentPrice: number;
-  previousPrice: number;
-  lastChanged: string;
-  changedBy: string;
-}
-
-export interface PricingResponse {
-  success: boolean;
-  data: {
-    products: ProductPricing[];
-  };
+export interface PricingStats {
+  totalProducts: number;
+  avgRetailPrice: number;
+  avgMargin: number;
+  priceIncreases: number;
+  priceDecreases: number;
 }
 
 export interface UpdatePricePayload {
-  newPrice?: number;
-  retailPrice?: number;
+  retailPrice: number;
   wholesalePrice?: number;
   costPrice?: number;
   reason?: string;
-  effectiveDate?: string;
 }
 
-export interface PriceUpdate {
-  productId: string;
-  previousPrice: number;
-  newPrice: number;
-  change: number;
-  changePercentage: number;
-  updatedBy: string;
-  timestamp: string;
+export interface BulkUpdatePayload {
+  productIds: string[];
+  adjustmentType: 'percentage' | 'flat';
+  adjustmentValue: number;
+  applyTo?: 'retail' | 'wholesale' | 'both';
+  reason?: string;
+}
+
+export interface BulkUpdateResult {
+  updated: number;
 }
 
 export interface PriceHistory {
-  price: number;
-  effectiveDate: string;
+  previousPrice: number;
+  newPrice: number;
+  previousWholesale: number;
+  newWholesale: number;
+  changeType: string;
+  reason: string;
   changedBy: string;
-}
-
-export interface PriceHistoryResponse {
-  success: boolean;
-  data: {
-    history: PriceHistory[];
-  };
+  createdAt: string;
 }
 
 export const pricingService = {
-  getPricing: () => api.get<PricingResponse>('/pricing'),
-
   getAllPrices: async (): Promise<PriceData[]> => {
-    const res = await api.get<PricingResponse>('/pricing');
-    // Map ProductPricing to PriceData shape
-    return (res.data.products as any[]).map((p: any) => ({
-      id: p.id,
-      productId: p.id,
-      productName: p.name || p.productName,
-      sku: p.sku,
-      category: p.category,
-      retailPrice: p.currentPrice ?? p.retailPrice,
-      wholesalePrice: p.wholesalePrice,
-      costPrice: p.costPrice,
-      previousRetailPrice: p.previousPrice ?? p.previousRetailPrice,
-      lastChanged: p.lastChanged,
-      changedBy: p.changedBy,
-    }));
+    const res = await api.get<{ success: boolean; data: { products: PriceData[] } }>('/pricing');
+    return res.data.products;
+  },
+
+  getStats: async (): Promise<PricingStats> => {
+    const res = await api.get<{ success: boolean; data: PricingStats }>('/pricing/stats');
+    return res.data;
   },
 
   updatePrice: async (id: string, payload: UpdatePricePayload): Promise<PriceData> => {
-    const res = await api.put<{ success: boolean; data: { priceUpdate: any } }>(`/pricing/${id}`, payload);
-    return res.data.priceUpdate as PriceData;
+    const res = await api.put<{ success: boolean; data: { priceUpdate: PriceData } }>(`/pricing/${id}`, payload);
+    return res.data.priceUpdate;
   },
 
-  getPriceHistory: (id: string) =>
-    api.get<PriceHistoryResponse>(`/pricing/${id}/history`),
+  bulkUpdate: async (payload: BulkUpdatePayload): Promise<BulkUpdateResult> => {
+    const res = await api.put<{ success: boolean; data: BulkUpdateResult }>('/pricing/bulk', payload);
+    return res.data;
+  },
+
+  getPriceHistory: async (id: string): Promise<PriceHistory[]> => {
+    const res = await api.get<{ success: boolean; data: { history: PriceHistory[] } }>(`/pricing/${id}/history`);
+    return res.data.history;
+  },
+  
+  exportPricing: async (): Promise<Blob> => {
+    // Note: Use axios directly or a different config if we need a blob, 
+    // assuming our api client handles it or we'll fetch manually.
+    // Given api.service.ts intercepts and parses JSON by default, we might need a raw fetch.
+    // const token = localStorage.getItem('token') || ''; // Adjust depending on auth system, here api client uses firebase auth internally.
+    
+    // Instead of raw fetch, let's just use window.open if it requires auth we might need to append token.
+    // For now, let's just make it return the api endpoint for the component to handle or fetch it using api.get with responseType: 'blob'
+    // since api.get doesn't support custom config easily, we might need to handle it via a direct fetch.
+    return new Blob(); // Placeholder, will implement download in component if possible.
+  }
 };

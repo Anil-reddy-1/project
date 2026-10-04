@@ -11,7 +11,7 @@ export type { Staff, CreateStaffPayload, UpdateStaffPayload } from './staff.serv
 export { stockService } from './stock.service';
 export type { StockItem, StockAdjustPayload } from './stock.service';
 export { pricingService } from './pricing.service';
-export type { PriceData, ProductPricing, UpdatePricePayload } from './pricing.service';
+export type { PriceData, UpdatePricePayload } from './pricing.service';
 export { orderService } from './order.service';
 export type { Order, CreateOrderPayload, UpdateOrderStatusPayload } from './order.service';
 export { deliveryService } from './delivery.service';
@@ -23,3 +23,4 @@ export type { Report, GenerateReportPayload } from './report.service';
 export { productService } from './product.service';
 export { wishlistService } from './wishlist.service';
 export { uploadService } from './upload.service';
+export { supervisorService } from './supervisor.service';

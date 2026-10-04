@@ -24,7 +24,7 @@ interface UseDeliveriesReturn {
   loadDeliveries: (params?: { status?: string }) => Promise<void>;
   getDeliveryById: (id: string) => Promise<Delivery | null>;
   acceptDelivery: (id: string, notes?: string) => Promise<boolean>;
-  startDelivery: (id: string, notes?: string) => Promise<boolean>;
+  startDelivery: (id: string, notes?: string, otp?: string) => Promise<boolean>;
   completeDelivery: (id: string, notes?: string) => Promise<boolean>;
 }
 
@@ -105,9 +105,9 @@ export function useDeliveries(params: UseDeliveriesParams = {}): UseDeliveriesRe
   /**
    * Start delivery (mark as in transit)
    */
-  const startDelivery = useCallback(async (id: string, notes?: string): Promise<boolean> => {
+  const startDelivery = useCallback(async (id: string, notes?: string, otp?: string): Promise<boolean> => {
     try {
-      await deliveryService.startDelivery(id, notes ? { notes } : undefined);
+      await deliveryService.startDelivery(id, { notes, otp });
       showSuccessToast('Delivery started successfully');
       await refreshDeliveries();
       return true;

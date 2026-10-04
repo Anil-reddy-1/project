@@ -25,6 +25,8 @@ export interface Delivery {
     city: string;
     state: string;
     postalCode: string;
+    lat?: number;
+    lng?: number;
   };
   origin?: string;
   destination?: string;
@@ -81,6 +83,7 @@ export interface AssignDeliveryPayload {
 
 export interface UpdateDeliveryStatusPayload {
   notes?: string;
+  otp?: string;
 }
 
 export const deliveryService = {
