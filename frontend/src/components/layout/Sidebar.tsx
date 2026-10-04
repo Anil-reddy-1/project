@@ -65,9 +65,9 @@ const adminSections: NavSection[] = [
     ],
   },
   {
-    title: 'REPORTS & ANALYTICS',
+    title: 'ANALYTICS',
     items: [
-      { path: '/admin/reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" /> },
+      { path: '/admin/analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
     ],
   },
 ];

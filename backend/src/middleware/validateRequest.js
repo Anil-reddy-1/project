@@ -164,12 +164,33 @@ const schemas = {
 
   // Reports
   generateReport: Joi.object({
-    type: Joi.string().valid('sales', 'inventory', 'delivery', 'financial').required(),
+    type: Joi.string().valid('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary').required(),
     startDate: Joi.date().iso().required(),
     endDate: Joi.date().iso().required(),
-    format: Joi.string().valid('pdf', 'csv', 'json').default('pdf'),
     filters: Joi.object().optional(),
   }),
+
+  quickAnalytics: Joi.object({
+    type: Joi.string().valid('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary').required(),
+    startDate: Joi.date().iso().required(),
+    endDate: Joi.date().iso().required(),
+    filters: Joi.object().optional(),
+  }),
+
+  // Scheduled Reports
+  createScheduledReport: Joi.object({
+    title: Joi.string().min(3).max(255).required(),
+    reportType: Joi.string().valid('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary').required(),
+    frequency: Joi.string().valid('daily', 'weekly', 'monthly').required(),
+    filters: Joi.object().optional(),
+  }),
+
+  updateScheduledReport: Joi.object({
+    title: Joi.string().min(3).max(255).optional(),
+    frequency: Joi.string().valid('daily', 'weekly', 'monthly').optional(),
+    filters: Joi.object().optional(),
+    isActive: Joi.boolean().optional(),
+  }).min(1),
 };
 
 /**
@@ -258,6 +279,17 @@ const querySchemas = {
     status: Joi.string().optional(),
     dateFrom: Joi.date().iso().optional(),
     dateTo: Joi.date().iso().optional(),
+  }),
+
+  reportFilter: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    type: Joi.string().valid('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary').optional(),
+    status: Joi.string().valid('pending', 'processing', 'completed', 'failed').optional(),
+    startDate: Joi.date().iso().optional(),
+    endDate: Joi.date().iso().optional(),
+    sortBy: Joi.string().valid('created_at', 'title', 'type', 'status').default('created_at'),
+    sortOrder: Joi.string().valid('ASC', 'DESC').default('DESC'),
   }),
 };
 

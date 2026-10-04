@@ -18,9 +18,19 @@ export { deliveryService } from './delivery.service';
 export type { Delivery, AssignDeliveryPayload } from './delivery.service';
 export { debtService } from './debt.service';
 export type { Debt, RecordPaymentPayload } from './debt.service';
-export { reportService } from './report.service';
+export { reportService, scheduledReportService } from './report.service';
 export type { Report, GenerateReportPayload } from './report.service';
 export { productService } from './product.service';
 export { wishlistService } from './wishlist.service';
 export { uploadService } from './upload.service';
 export { supervisorService } from './supervisor.service';
+export { analyticsService } from './analytics.service';
+export type { 
+  SalesAnalytics, 
+  StockAnalytics, 
+  DeliveryAnalytics, 
+  StaffAnalytics, 
+  DebtAnalytics,
+  DailyOperationsAnalytics,
+  FinancialSummaryAnalytics 
+} from './analytics.service';

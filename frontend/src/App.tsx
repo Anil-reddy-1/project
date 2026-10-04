@@ -20,7 +20,7 @@ import { ProductManagement } from "./pages/admin/ProductManagement";
 import { PricingManagement } from "./pages/admin/PricingManagement";
 import { DeliveryManagement } from "./pages/admin/DeliveryManagement";
 import { DebtManagement } from "./pages/admin/DebtManagement";
-import { Reports } from "./pages/admin/Reports";
+import { Analytics } from "./pages/admin/Analytics";
 import { Orders as AdminOrders } from "./pages/admin/Orders";
 import { OrderDetails as AdminOrderDetails } from "./pages/admin/OrderDetails";
 import { FullScreenLoader } from "./components/ui/FullScreenLoader";
@@ -190,10 +190,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/reports"
+            path="/admin/analytics"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <Reports />
+                <Analytics />
               </ProtectedRoute>
             }
           />

@@ -16,6 +16,15 @@ export interface DashboardStats {
   pendingDebts: number;
 }
 
+export interface DashboardStatsResponse {
+  success: boolean;
+  message: string;
+  data: DashboardStats;
+}
+
 export const dashboardService = {
-  getStats: () => api.get<{ success: boolean; data: DashboardStats }>('/dashboard/stats'),
+  /**
+   * Get dashboard statistics
+   */
+  getStats: () => api.get<DashboardStatsResponse>('/dashboard/stats').then(res => res.data),
 };

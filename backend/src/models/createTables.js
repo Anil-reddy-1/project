@@ -361,6 +361,45 @@ async function initializeTables() {
 
     await client.query(createStockTransactionsTableQuery);
 
+    // Create Reports table
+    const createReportsTableQuery = `
+      CREATE TABLE IF NOT EXISTS reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL CHECK (type IN ('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary')),
+        date_range_start TIMESTAMPTZ NOT NULL,
+        date_range_end TIMESTAMPTZ NOT NULL,
+        filters JSONB DEFAULT '{}'::jsonb,
+        status VARCHAR(50) NOT NULL DEFAULT 'completed' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+        metadata JSONB DEFAULT '{}'::jsonb,
+        generated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        scheduled_report_id UUID,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createReportsTableQuery);
+
+    // Create Scheduled Reports table
+    const createScheduledReportsTableQuery = `
+      CREATE TABLE IF NOT EXISTS scheduled_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title VARCHAR(255) NOT NULL,
+        report_type VARCHAR(50) NOT NULL CHECK (report_type IN ('daily_operations', 'sales', 'stock', 'delivery', 'staff_performance', 'debt', 'financial_summary')),
+        frequency VARCHAR(50) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
+        filters JSONB DEFAULT '{}'::jsonb,
+        last_run TIMESTAMPTZ,
+        next_run TIMESTAMPTZ NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await client.query(createScheduledReportsTableQuery);
+
     // Create Indexes for performance
     // Ensure newly added columns exist in case tables were created previously
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE RESTRICT;');
@@ -496,6 +535,20 @@ async function initializeTables() {
     // Stock transactions indexes
     await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_product_id ON stock_transactions(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_stock_transactions_reference ON stock_transactions(reference_id, reference_type);');
+
+    // Reports indexes
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_date_range ON reports(date_range_start, date_range_end);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_generated_by ON reports(generated_by);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_reports_scheduled_report_id ON reports(scheduled_report_id);');
+
+    // Scheduled reports indexes
+    await client.query('CREATE INDEX IF NOT EXISTS idx_scheduled_reports_report_type ON scheduled_reports(report_type);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_scheduled_reports_next_run ON scheduled_reports(next_run);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_scheduled_reports_is_active ON scheduled_reports(is_active);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_scheduled_reports_created_by ON scheduled_reports(created_by);');
 
     await client.query('COMMIT');
     logger.info('Database tables initialized successfully');

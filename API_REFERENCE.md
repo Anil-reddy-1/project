@@ -734,8 +734,173 @@ Record debt payment.
 
 ## 10. Reports
 
-### POST /reports/generate
-Generate business report.
+### POST /reports
+Generate and save a new report with analytics data.
+
+**Required Permission:** `reports.generate`
+
+**Request Body:**
+```json
+{
+  "type": "sales",
+  "startDate": "2024-09-01",
+  "endDate": "2024-09-15",
+  "filters": {}
+}
+```
+
+**Valid Report Types:**
+- `daily_operations` - Daily order summary, stock movements, deliveries, revenue
+- `sales` - Revenue analysis, top products, sales trends, payment methods
+- `stock` - Inventory value, low stock alerts, turnover rates, movements
+- `delivery` - Delivery metrics, partner performance, time analysis
+- `staff_performance` - Staff workload, availability, performance metrics
+- `debt` - Outstanding debts, aging analysis, payment history
+- `financial_summary` - Revenue, costs, profit margins, period comparisons
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Report generated successfully",
+  "data": {
+    "report": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Sales Report - 2024-09-01 to 2024-09-15",
+      "type": "sales",
+      "dateRangeStart": "2024-09-01T00:00:00Z",
+      "dateRangeEnd": "2024-09-15T23:59:59Z",
+      "filters": {},
+      "status": "completed",
+      "metadata": {
+        "summary": { "total_orders": 125, "total_revenue": 245000 },
+        "topProducts": [...],
+        "dailyTrend": [...]
+      },
+      "generatedBy": "user_123",
+      "createdAt": "2024-09-17T10:00:00Z"
+    }
+  }
+}
+```
+
+### GET /reports
+Get all reports with filtering and pagination.
+
+**Required Permission:** `reports.view`
+
+**Query Parameters:**
+- `type` (string): Filter by report type
+- `status` (string): Filter by status (pending/processing/completed/failed)
+- `startDate` (string): Filter reports with date range start after this date
+- `endDate` (string): Filter reports with date range end before this date
+- `page` (number): Page number (default: 1)
+- `limit` (number): Items per page (default: 20, max: 100)
+- `sortBy` (string): Sort field (created_at/title/type/status)
+- `sortOrder` (string): Sort order (ASC/DESC)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Reports retrieved successfully",
+  "data": {
+    "reports": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "title": "Sales Report - 2024-09-01 to 2024-09-15",
+        "type": "sales",
+        "dateRangeStart": "2024-09-01T00:00:00Z",
+        "dateRangeEnd": "2024-09-15T23:59:59Z",
+        "filters": {},
+        "status": "completed",
+        "generatedBy": "user_123",
+        "scheduledReportId": null,
+        "createdAt": "2024-09-17T10:00:00Z",
+        "updatedAt": "2024-09-17T10:00:00Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalReports": 95,
+      "reportsPerPage": 20,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
+  }
+}
+```
+
+### GET /reports/:id
+Get a specific report by ID with full analytics data.
+
+**Required Permission:** `reports.view`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Report retrieved successfully",
+  "data": {
+    "report": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Sales Report - 2024-09-01 to 2024-09-15",
+      "type": "sales",
+      "dateRangeStart": "2024-09-01T00:00:00Z",
+      "dateRangeEnd": "2024-09-15T23:59:59Z",
+      "filters": {},
+      "status": "completed",
+      "metadata": {
+        "summary": {
+          "total_orders": 125,
+          "total_revenue": 245000,
+          "average_order_value": 1960,
+          "unique_customers": 87
+        },
+        "ordersByStatus": [...],
+        "topProducts": [...],
+        "dailyTrend": [...],
+        "paymentMethods": [...],
+        "topCategories": [...]
+      },
+      "generatedBy": "user_123",
+      "scheduledReportId": null,
+      "createdAt": "2024-09-17T10:00:00Z",
+      "updatedAt": "2024-09-17T10:00:00Z"
+    }
+  }
+}
+```
+
+### DELETE /reports/:id
+Delete a report.
+
+**Required Permission:** `reports.generate`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Report deleted successfully",
+  "data": {
+    "reportId": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+```
+
+### GET /reports/:id/download
+Download a report as JSON file.
+
+**Required Permission:** `reports.export`
+
+**Query Parameters:**
+- `format` (string): Export format (json/csv/pdf) - currently only json supported
+
+**Response:** Binary file download with appropriate Content-Type header
+
+### POST /reports/analytics
+Get quick analytics without saving as a report.
 
 **Required Permission:** `reports.view`
 
@@ -745,11 +910,7 @@ Generate business report.
   "type": "sales",
   "startDate": "2024-09-01",
   "endDate": "2024-09-15",
-  "format": "pdf",
-  "filters": {
-    "category": "Grains",
-    "minAmount": 10000
-  }
+  "filters": {}
 }
 ```
 
@@ -757,29 +918,234 @@ Generate business report.
 ```json
 {
   "success": true,
+  "message": "Analytics calculated successfully",
   "data": {
-    "report": {
-      "id": "report_123",
-      "type": "sales",
-      "period": "2024-09-01 to 2024-09-15",
-      "generatedAt": "2024-09-17T10:00:00Z",
-      "downloadUrl": "https://api.example.com/reports/report_123/download",
-      "expiresAt": "2024-09-24T10:00:00Z"
+    "type": "sales",
+    "dateRangeStart": "2024-09-01T00:00:00Z",
+    "dateRangeEnd": "2024-09-15T23:59:59Z",
+    "analytics": {
+      "summary": { "total_orders": 125, "total_revenue": 245000 },
+      "ordersByStatus": [...],
+      "topProducts": [...],
+      "dailyTrend": [...]
     }
   }
 }
 ```
 
-### GET /reports/:id/download
-Download generated report.
+---
 
-**Required Permission:** `reports.export`
+## 11. Scheduled Reports
 
-**Response:** Binary file (PDF/Excel)
+### POST /scheduled-reports
+Create a new scheduled report.
+
+**Required Permission:** `reports.generate`
+
+**Request Body:**
+```json
+{
+  "title": "Weekly Sales Summary",
+  "reportType": "sales",
+  "frequency": "weekly",
+  "filters": {}
+}
+```
+
+**Valid Frequencies:**
+- `daily` - Runs every day at 1 AM
+- `weekly` - Runs every Monday at 1 AM
+- `monthly` - Runs on 1st of each month at 1 AM
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Scheduled report created successfully",
+  "data": {
+    "scheduledReport": {
+      "id": "schedule_123",
+      "title": "Weekly Sales Summary",
+      "reportType": "sales",
+      "frequency": "weekly",
+      "filters": {},
+      "lastRun": null,
+      "nextRun": "2024-09-23T01:00:00Z",
+      "isActive": true,
+      "createdBy": "user_123",
+      "createdAt": "2024-09-17T10:00:00Z"
+    }
+  }
+}
+```
+
+### GET /scheduled-reports
+Get all scheduled reports.
+
+**Required Permission:** `reports.view`
+
+**Query Parameters:**
+- `reportType` (string): Filter by report type
+- `isActive` (boolean): Filter by active status
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Scheduled reports retrieved successfully",
+  "data": {
+    "scheduledReports": [
+      {
+        "id": "schedule_123",
+        "title": "Weekly Sales Summary",
+        "reportType": "sales",
+        "frequency": "weekly",
+        "filters": {},
+        "lastRun": "2024-09-16T01:00:00Z",
+        "nextRun": "2024-09-23T01:00:00Z",
+        "isActive": true,
+        "createdBy": "user_123",
+        "createdAt": "2024-09-10T10:00:00Z",
+        "updatedAt": "2024-09-16T01:05:00Z"
+      }
+    ],
+    "total": 5
+  }
+}
+```
+
+### GET /scheduled-reports/:id
+Get a specific scheduled report with generated reports history.
+
+**Required Permission:** `reports.view`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Scheduled report retrieved successfully",
+  "data": {
+    "scheduledReport": {
+      "id": "schedule_123",
+      "title": "Weekly Sales Summary",
+      "reportType": "sales",
+      "frequency": "weekly",
+      "filters": {},
+      "lastRun": "2024-09-16T01:00:00Z",
+      "nextRun": "2024-09-23T01:00:00Z",
+      "isActive": true,
+      "createdBy": "user_123",
+      "createdAt": "2024-09-10T10:00:00Z",
+      "updatedAt": "2024-09-16T01:05:00Z"
+    },
+    "generatedReports": [
+      {
+        "id": "report_456",
+        "title": "Weekly Sales Summary - 2024-09-09 to 2024-09-15",
+        "type": "sales",
+        "dateRangeStart": "2024-09-09T00:00:00Z",
+        "dateRangeEnd": "2024-09-15T23:59:59Z",
+        "status": "completed",
+        "createdAt": "2024-09-16T01:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+### PATCH /scheduled-reports/:id
+Update a scheduled report.
+
+**Required Permission:** `reports.generate`
+
+**Request Body (all fields optional):**
+```json
+{
+  "title": "Daily Sales Summary",
+  "frequency": "daily",
+  "filters": {},
+  "isActive": false
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Scheduled report updated successfully",
+  "data": {
+    "scheduledReport": {
+      "id": "schedule_123",
+      "title": "Daily Sales Summary",
+      "reportType": "sales",
+      "frequency": "daily",
+      "filters": {},
+      "lastRun": "2024-09-16T01:00:00Z",
+      "nextRun": "2024-09-18T01:00:00Z",
+      "isActive": false,
+      "createdBy": "user_123",
+      "createdAt": "2024-09-10T10:00:00Z",
+      "updatedAt": "2024-09-17T10:30:00Z"
+    }
+  }
+}
+```
+
+### DELETE /scheduled-reports/:id
+Delete a scheduled report.
+
+**Required Permission:** `reports.generate`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Scheduled report deleted successfully",
+  "data": {
+    "scheduledReportId": "schedule_123"
+  }
+}
+```
+
+### POST /scheduled-reports/:id/toggle
+Toggle scheduled report active status.
+
+**Required Permission:** `reports.generate`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Scheduled report enabled successfully",
+  "data": {
+    "scheduledReport": {
+      "id": "schedule_123",
+      "isActive": true
+    }
+  }
+}
+```
+
+### POST /scheduled-reports/:id/run
+Manually trigger a scheduled report to run immediately.
+
+**Required Permission:** `reports.generate`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Report generation started",
+  "data": {
+    "message": "Scheduled report execution triggered",
+    "scheduledReportId": "schedule_123"
+  }
+}
+```
 
 ---
 
-## 11. Dashboard & Analytics
+## 12. Dashboard & Analytics
 
 ### GET /dashboard/stats
 Get dashboard statistics.

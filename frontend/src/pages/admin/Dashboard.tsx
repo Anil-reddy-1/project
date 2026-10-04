@@ -60,63 +60,43 @@ export function Dashboard() {
     );
   }
 
-  const topMetrics = [
+  // Analytics Dashboard Sections
+  const analyticsSections = [
     {
-      label: 'Floor Actions',
-      value: '840',
-      trend: '+12.4%',
-      trendUp: true,
-      sub: 'completed this week',
-      icon: Zap,
+      title: 'Deliveries',
+      icon: Package,
       iconBg: 'bg-purple-50',
       iconColor: 'text-purple-600',
+      route: '/admin/deliveries',
+      metrics: [
+        { label: 'Pending', value: '23', color: 'text-amber-600' },
+        { label: 'In Transit', value: '18', color: 'text-blue-600' },
+        { label: 'Completed Today', value: '47', color: 'text-emerald-600' },
+      ],
     },
     {
-      label: 'Sales Floor',
-      value: '6/8',
-      sub: 'occupied terminals',
-      icon: ShoppingCart,
-      iconBg: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-    },
-    {
-      label: 'Retail Units',
-      value: '3,850',
-      trend: '-8%',
-      trendUp: false,
-      sub: 'processed today',
+      title: 'Stock',
       icon: Boxes,
       iconBg: 'bg-indigo-50',
       iconColor: 'text-indigo-600',
+      route: '/admin/stock',
+      metrics: [
+        { label: 'Low Stock Items', value: '14', color: 'text-red-600' },
+        { label: 'Total Products', value: '1,247', color: 'text-slate-700' },
+        { label: 'Restock Needed', value: '8', color: 'text-amber-600' },
+      ],
     },
     {
-      label: 'Low Stock Alert',
-      value: '14',
-      sub: 'near out-of-stock',
-      icon: AlertTriangle,
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-      highlight: true,
-    },
-    {
-      label: 'Recovery Queue',
-      value: '5',
-      sub: 'returned (Est. 8.5d)',
-      badge: '-1 Overdue',
-      badgeColor: 'text-red-600 bg-red-50 border-red-100',
-      icon: CheckCircle,
+      title: 'Sales',
+      icon: DollarSign,
       iconBg: 'bg-emerald-50',
       iconColor: 'text-emerald-600',
-    },
-    {
-      label: 'Wholesale Desk',
-      value: '₹38,450',
-      trend: '-3.8%',
-      trendUp: false,
-      sub: 'sales volume',
-      icon: DollarSign,
-      iconBg: 'bg-cyan-50',
-      iconColor: 'text-cyan-600',
+      route: '/admin/sales',
+      metrics: [
+        { label: 'Today', value: '₹1,24,680', color: 'text-emerald-600', trend: '+8.4%' },
+        { label: 'This Week', value: '₹8,45,230', color: 'text-slate-700' },
+        { label: 'Active Orders', value: '34', color: 'text-blue-600' },
+      ],
     },
   ];
 
@@ -161,6 +141,50 @@ export function Dashboard() {
       status: 'In Stock',
       statusVariant: 'success' as const,
     },
+  ];
+
+  const topMetrics: any[] = [
+    {
+      label: "Today's Revenue",
+      value: _stats ? formatCurrency(_stats.revenue.total) : '₹0',
+      icon: DollarSign,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      trend: _stats?.revenue.change ? `${_stats.revenue.change > 0 ? '+' : ''}${_stats.revenue.change}%` : undefined,
+      trendUp: _stats ? _stats.revenue.change >= 0 : true,
+    },
+    {
+      label: 'Orders',
+      value: _stats ? _stats.orders.total.toString() : '0',
+      icon: ShoppingCart,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      trend: _stats?.orders.change ? `${_stats.orders.change > 0 ? '+' : ''}${_stats.orders.change}%` : undefined,
+      trendUp: _stats ? _stats.orders.change >= 0 : true,
+    },
+    {
+      label: 'Low Stock',
+      value: _stats ? _stats.lowStockItems.toString() : '0',
+      icon: AlertTriangle,
+      iconBg: 'bg-red-50',
+      iconColor: 'text-red-600',
+      highlight: _stats ? _stats.lowStockItems > 0 : false,
+    },
+    {
+      label: 'Deliveries',
+      value: _stats ? _stats.activeDeliveries.toString() : '0',
+      icon: Package,
+      iconBg: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+    },
+    {
+      label: 'Pending Debts',
+      value: _stats ? _stats.pendingDebts.toString() : '0',
+      icon: TrendingDown,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      highlight: _stats ? _stats.pendingDebts > 0 : false,
+    }
   ];
 
   return (
