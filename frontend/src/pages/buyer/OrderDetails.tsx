@@ -22,10 +22,14 @@ import { addressService } from '../../services/address.service';
 import { formatCoordinatesWithLabels } from '../../utils/geolocation';
 import type { Order } from '../../services/order.service';
 
-const ORDER_STATUS_CONFIG = {
+const ORDER_STATUS_CONFIG: Record<string, { label: string, color: string, icon: any }> = {
   pending: { label: 'Pending', color: 'yellow', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'blue', icon: CheckCircle },
+  preparing: { label: 'Preparing', color: 'orange', icon: Package },
+  packed: { label: 'Packed', color: 'indigo', icon: Package },
   assigned: { label: 'Assigned', color: 'purple', icon: Truck },
+  in_transit: { label: 'In Transit', color: 'blue', icon: Truck },
+  out_for_delivery: { label: 'Out for Delivery', color: 'blue', icon: Truck },
   delivered: { label: 'Delivered', color: 'green', icon: CheckCircle },
   completed: { label: 'Completed', color: 'green', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'red', icon: XCircle },
@@ -97,8 +101,8 @@ export function OrderDetails() {
     );
   }
 
-  const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus];
-  const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus];
+  const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus] || { label: order.orderStatus || 'Unknown', color: 'gray', icon: Package };
+  const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus] || { label: order.paymentStatus || 'Unknown', color: 'gray' };
   const StatusIcon = statusConfig.icon;
   
   const subtotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);

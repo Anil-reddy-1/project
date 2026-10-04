@@ -23,6 +23,7 @@ import { useDeliveries } from "../../hooks/useDeliveries";
 import { Button, Card, Skeleton, Alert, Separator } from "../../components/ui";
 import { fadeVariants } from "../../utils/animations";
 import { formatDateTime } from "../../utils/date";
+import { showErrorToast } from "../../utils/toast";
 import type { Delivery } from "../../services/delivery.service";
 
 const DELIVERY_STATUS_CONFIG: Record<
@@ -91,6 +92,7 @@ export function DeliveryDetails() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState("");
+  const [otp, setOtp] = useState("");
 
   const loadDelivery = useCallback(async () => {
     if (!id) return;
@@ -129,16 +131,21 @@ export function DeliveryDetails() {
         return;
     }
 
+    if (action === "start" && !otp.trim()) {
+      showErrorToast("Please enter the Pickup OTP");
+      return;
+    }
+
     setUpdating(true);
-    const fns = {
-      accept: acceptDelivery,
-      start: startDelivery,
-      complete: completeDelivery,
-    };
-    const success = await fns[action](delivery.id, notes || undefined);
+    const success = await (action === "accept" 
+      ? acceptDelivery(delivery.id, notes || undefined)
+      : action === "start" 
+      ? startDelivery(delivery.id, notes || undefined, otp)
+      : completeDelivery(delivery.id, notes || undefined));
     if (success) {
       await loadDelivery();
       setNotes("");
+      setOtp("");
     }
     setUpdating(false);
   };
@@ -197,7 +204,13 @@ export function DeliveryDetails() {
   const canComplete = delivery.status === "in_transit";
   const isCompleted = delivery.status === "delivered";
 
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  const hasCoordinates = delivery.deliveryAddress.lat !== undefined && delivery.deliveryAddress.lng !== undefined;
+  
+  const mapsCoordinatesUrl = hasCoordinates
+    ? `https://www.google.com/maps/search/?api=1&query=${delivery.deliveryAddress.lat},${delivery.deliveryAddress.lng}`
+    : '';
+
+  const mapsAddressUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${delivery.deliveryAddress.addressLine1}, ${delivery.deliveryAddress.city}, ${delivery.deliveryAddress.state} ${delivery.deliveryAddress.postalCode}`,
   )}`;
 
@@ -347,15 +360,30 @@ export function DeliveryDetails() {
                       Delivery Address
                     </h2>
                   </div>
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-sm font-semibold transition-colors"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    Navigate
-                  </a>
+                  <div className="flex items-center gap-2">
+                    {hasCoordinates && (
+                      <a
+                        href={mapsCoordinatesUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-xl text-sm font-semibold transition-colors"
+                        title="Navigate to exact coordinates"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        By Coordinates
+                      </a>
+                    )}
+                    <a
+                      href={mapsAddressUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-sm font-semibold transition-colors"
+                      title="Navigate to address"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      By Address
+                    </a>
+                  </div>
                 </div>
               </div>
               <div className="p-5">
@@ -380,6 +408,17 @@ export function DeliveryDetails() {
                     {delivery.deliveryAddress.state}{" "}
                     {delivery.deliveryAddress.postalCode}
                   </p>
+                  
+                  {hasCoordinates && (
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        Exact Coordinates
+                      </p>
+                      <p className="text-sm text-slate-700 font-mono bg-slate-50 p-2 rounded border border-slate-100 inline-block">
+                        {delivery.deliveryAddress.lat}, {delivery.deliveryAddress.lng}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -457,13 +496,32 @@ export function DeliveryDetails() {
                   )}
 
                   {canStart && (
-                    <Button
-                      onClick={() => handleAction("start")}
-                      disabled={updating}
-                      className="w-full h-12 text-base bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 border-0"
-                    >
-                      {updating ? "Starting..." : "🚚 Start Delivery"}
-                    </Button>
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">
+                          Pickup OTP
+                        </label>
+                        <p className="text-xs text-slate-500 mb-2">
+                          Ask the supervisor for the 6-digit Pickup OTP.
+                        </p>
+                        <input
+                          type="text"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-xl tracking-[0.5em] font-mono"
+                          disabled={updating}
+                        />
+                      </div>
+                      <Button
+                        onClick={() => handleAction("start")}
+                        disabled={updating || otp.length < 6}
+                        className="w-full h-12 text-base bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 border-0"
+                      >
+                        {updating ? "Verifying..." : "🚚 Verify OTP & Start"}
+                      </Button>
+                    </div>
                   )}
 
                   {canComplete && (
