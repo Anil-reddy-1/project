@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controller/productController');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { ensureUser } = require('../middleware/ensureUser');
 const { uploadMultiple } = require('../middleware/upload');
 const {
   validateCreateProduct,
@@ -23,28 +24,28 @@ const {
  * @desc    Get all products with advanced filtering (admin view)
  * @access  Private - Admin only
  */
-router.get('/admin/all', authenticate, requireRole('admin'), productController.getAllProducts);
+router.get('/admin/all', authenticate, ensureUser, requireRole('admin', 'supervisor'), productController.getAllProducts);
 
 /**
  * @route   GET /api/v1/products/stats/dashboard
  * @desc    Get product statistics for dashboard
  * @access  Private - Admin only
  */
-router.get('/stats/dashboard', authenticate, requireRole('admin'), productController.getProductStats);
+router.get('/stats/dashboard', authenticate, ensureUser, requireRole('admin'), productController.getProductStats);
 
 /**
  * @route   GET /api/v1/products/alerts/low-stock
  * @desc    Get low stock products (< 10% of max_stock)
  * @access  Private - Admin only
  */
-router.get('/alerts/low-stock', authenticate, requireRole('admin'), productController.getLowStockProducts);
+router.get('/alerts/low-stock', authenticate, ensureUser, requireRole('admin', 'supervisor'), productController.getLowStockProducts);
 
 /**
  * @route   GET /api/v1/products/export/csv
  * @desc    Export products to CSV
  * @access  Private - Admin only
  */
-router.get('/export/csv', authenticate, requireRole('admin'), productController.exportProductsCSV);
+router.get('/export/csv', authenticate, ensureUser, requireRole('admin'), productController.exportProductsCSV);
 
 /**
  * @route   PATCH /api/v1/products/bulk/status
@@ -54,6 +55,7 @@ router.get('/export/csv', authenticate, requireRole('admin'), productController.
 router.patch(
   '/bulk/status',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   validateBulkStatus,
   productController.bulkUpdateStatus
@@ -92,6 +94,7 @@ router.get('/:id', productController.getProductById);
 router.post(
   '/',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   uploadMultiple,
   validateCreateProduct,
@@ -106,6 +109,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   uploadMultiple,
   validateUpdateProduct,
@@ -117,7 +121,7 @@ router.put(
  * @desc    Delete product (soft delete - set status to inactive)
  * @access  Private - Admin only
  */
-router.delete('/:id', authenticate, requireRole('admin'), productController.deleteProduct);
+router.delete('/:id', authenticate, ensureUser, requireRole('admin'), productController.deleteProduct);
 
 // ============= Image Management Routes =============
 
@@ -129,6 +133,7 @@ router.delete('/:id', authenticate, requireRole('admin'), productController.dele
 router.delete(
   '/:id/images/:imageId',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   productController.deleteProductImage
 );
@@ -141,6 +146,7 @@ router.delete(
 router.patch(
   '/:id/images/:imageId/primary',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   productController.setPrimaryImage
 );
@@ -153,6 +159,7 @@ router.patch(
 router.put(
   '/:id/images/reorder',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   validateReorderImages,
   productController.reorderImages

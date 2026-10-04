@@ -47,24 +47,24 @@ router.get('/me', orderController.getMyOrders);
 /**
  * @route   GET /api/v1/orders/number/:orderNumber
  * @desc    Get order by order number
- * @access  Private (buyer can view own, admin can view all)
+ * @access  Private (buyer can view own, admin/supervisor can view all)
  */
 router.get('/number/:orderNumber', orderController.getOrderByNumber);
 
 /**
  * @route   GET /api/v1/orders/:id
  * @desc    Get order by ID
- * @access  Private (buyer can view own, admin can view all)
+ * @access  Private (buyer can view own, admin/supervisor can view all)
  */
 router.get('/:id', orderController.getOrderById);
 
 /**
  * @route   GET /api/v1/orders
- * @desc    Get all orders (admin only)
- * @access  Private (admin)
+ * @desc    Get all orders (admin and supervisor)
+ * @access  Private (admin, supervisor)
  * @query   { page, limit, status, paymentStatus, dateFrom, dateTo, search }
  */
-router.get('/', requireRole('admin'), validate(orderQuerySchema, 'query'), orderController.getAllOrders);
+router.get('/', requireRole('admin', 'supervisor'), validate(orderQuerySchema, 'query'), orderController.getAllOrders);
 
 /**
  * @route   POST /api/v1/orders
@@ -75,12 +75,34 @@ router.get('/', requireRole('admin'), validate(orderQuerySchema, 'query'), order
 router.post('/', validate(createOrderSchema), orderController.createOrder);
 
 /**
+ * @route   POST /api/v1/orders/:id/prepare
+ * @desc    Mark order as preparing (supervisor only)
+ * @access  Private (supervisor, admin)
+ */
+router.post('/:id/prepare', requireRole('admin', 'supervisor'), orderController.markAsPreparing);
+
+/**
+ * @route   POST /api/v1/orders/:id/pack
+ * @desc    Mark order as packed and generate OTP (supervisor only)
+ * @access  Private (supervisor, admin)
+ */
+router.post('/:id/pack', requireRole('admin', 'supervisor'), orderController.markAsPacked);
+
+/**
+ * @route   POST /api/v1/orders/:id/verify-otp
+ * @desc    Verify pickup OTP (delivery partner picks up order)
+ * @access  Private (delivery, supervisor, admin)
+ * @body    { otp: string }
+ */
+router.post('/:id/verify-otp', requireRole('admin', 'supervisor', 'delivery'), orderController.verifyPickupOtp);
+
+/**
  * @route   PATCH /api/v1/orders/:id/status
- * @desc    Update order status (admin only)
- * @access  Private (admin)
+ * @desc    Update order status (admin and supervisor)
+ * @access  Private (admin, supervisor)
  * @body    { status: string, notes?: string }
  */
-router.patch('/:id/status', requireRole('admin'), validate(updateOrderStatusSchema), orderController.updateOrderStatus);
+router.patch('/:id/status', requireRole('admin', 'supervisor'), validate(updateOrderStatusSchema), orderController.updateOrderStatus);
 
 /**
  * @route   POST /api/v1/orders/:id/cancel

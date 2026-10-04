@@ -290,10 +290,10 @@ async function acceptDelivery(req, res, next) {
 async function startDelivery(req, res, next) {
   try {
     const { id } = req.params;
-    const { notes } = req.body;
+    const { notes, otp } = req.body;
     const partnerId = req.user.dbId;
     
-    const delivery = await deliveryService.startDelivery(id, partnerId, notes);
+    const delivery = await deliveryService.startDelivery(id, partnerId, notes, otp);
     
     logger.info('Delivery started', {
       deliveryId: id,

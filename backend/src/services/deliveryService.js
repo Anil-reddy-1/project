@@ -127,7 +127,7 @@ async function assignDeliveryToOrder(orderId, partnerId, adminId) {
     const order = await orderModel.findOrderById(orderId);
     if (!order) throw new NotFoundError('Order not found', 'Order');
 
-    const assignableStatuses = ['confirmed', 'pending', 'assigned'];
+    const assignableStatuses = ['confirmed', 'pending', 'preparing', 'packed', 'assigned'];
     if (!assignableStatuses.includes(order.orderStatus)) {
       throw new BadRequestError(
         `Cannot assign delivery to order with status '${order.orderStatus}'.`
@@ -250,7 +250,7 @@ async function acceptDelivery(deliveryId, partnerId) {
  * - Mark delivery as in transit
  * - Updates status from 'accepted' to 'in_transit'
  */
-async function startDelivery(deliveryId, partnerId, notes = null) {
+async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
   const client = await pool.connect();
   
   try {
@@ -265,6 +265,20 @@ async function startDelivery(deliveryId, partnerId, notes = null) {
     // Verify delivery is assigned to this partner
     if (delivery.deliveryPartnerId !== partnerId) {
       throw new ForbiddenError('This delivery is not assigned to you');
+    }
+    
+    // Fetch associated order to verify pickup OTP
+    const order = await orderModel.findOrderById(delivery.orderId);
+    if (!order) {
+      throw new NotFoundError('Order not found', 'Order');
+    }
+
+    if (!otp) {
+      throw new BadRequestError('Pickup OTP is required to start delivery');
+    }
+
+    if (order.pickupOtp !== otp) {
+      throw new BadRequestError('Invalid Pickup OTP');
     }
     
     // Check current status

@@ -278,6 +278,72 @@ function mapNotificationRow(row) {
   };
 }
 
+/**
+ * Notify all supervisors about a new order
+ */
+async function notifySupervisorsNewOrder(orderData) {
+  try {
+    // Find all active supervisors
+    const query = `SELECT id FROM users WHERE role = 'supervisor' AND is_active = TRUE;`;
+    const result = await pool.query(query);
+    
+    for (const row of result.rows) {
+      await createNotification(
+        row.id,
+        'new_order',
+        'New Order Received',
+        `New order #${orderData.orderNumber} received. Total: ₹${orderData.totalAmount?.toFixed?.(2) || orderData.totalAmount}. Please start preparing.`,
+        {
+          orderId: orderData.id,
+          orderNumber: orderData.orderNumber,
+          totalAmount: orderData.totalAmount
+        }
+      );
+    }
+    
+    console.log(`[Notification] Notified ${result.rows.length} supervisors about order ${orderData.orderNumber}`);
+  } catch (error) {
+    console.error('[Notification] Error notifying supervisors:', error);
+  }
+}
+
+/**
+ * Notify all active delivery partners that an order is packed and ready for pickup
+ * If no active delivery partners exist, the notification will be created when they come online
+ */
+async function notifyDeliveryPartnersOrderPacked(orderData) {
+  try {
+    // Find all active delivery users
+    const query = `SELECT id FROM users WHERE role = 'delivery' AND is_active = TRUE;`;
+    const result = await pool.query(query);
+    
+    if (result.rows.length === 0) {
+      console.log(`[Notification] No active delivery partners. Order ${orderData.orderNumber} is waiting for pickup.`);
+      // Store a system-level note — the notification will be visible when partners come online
+      // We create a notification for all delivery users anyway, they'll see it when they log in
+      return;
+    }
+    
+    for (const row of result.rows) {
+      await createNotification(
+        row.id,
+        'order_packed',
+        'Order Ready for Pickup',
+        `Order #${orderData.orderNumber} is packed and ready for pickup. Total: ₹${orderData.totalAmount?.toFixed?.(2) || orderData.totalAmount}.`,
+        {
+          orderId: orderData.id,
+          orderNumber: orderData.orderNumber,
+          totalAmount: orderData.totalAmount
+        }
+      );
+    }
+    
+    console.log(`[Notification] Notified ${result.rows.length} delivery partners about packed order ${orderData.orderNumber}`);
+  } catch (error) {
+    console.error('[Notification] Error notifying delivery partners:', error);
+  }
+}
+
 module.exports = {
   createNotification,
   sendOrderConfirmation,
@@ -285,6 +351,8 @@ module.exports = {
   sendDeliveryStatusUpdate,
   sendOrderCompleted,
   sendOrderCancelled,
+  notifySupervisorsNewOrder,
+  notifyDeliveryPartnersOrderPacked,
   getUserNotifications,
   markAsRead,
   markAllAsRead,

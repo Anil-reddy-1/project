@@ -103,6 +103,63 @@ async function createStaff(req, res, next) {
   }
 }
 
+async function updateStaff(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, role, department, status } = req.validatedBody;
+
+    const staff = await staffModel.findStaffById(id);
+    if (!staff) {
+      throw new NotFoundError('Staff member not found', 'Staff');
+    }
+
+    const updated = await staffModel.updateStaff(id, { name, email, phone, role, department, status });
+
+    logger.info(`Staff member updated: ${id}`);
+
+    return success(res, {
+      data: {
+        staff: {
+          id: updated.id,
+          name: updated.name,
+          email: updated.email,
+          phone: updated.phone,
+          role: updated.role,
+          department: updated.department,
+          status: updated.status,
+          availability: updated.availability,
+          createdAt: updated.createdAt,
+        },
+      },
+      message: 'Staff member updated successfully',
+    });
+  } catch (error) {
+    if (error.message && error.message.includes('duplicate')) {
+      return next(new ConflictError('Staff member with this email already exists'));
+    }
+    next(error);
+  }
+}
+
+async function deleteStaff(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const staff = await staffModel.findStaffById(id);
+    if (!staff) {
+      throw new NotFoundError('Staff member not found', 'Staff');
+    }
+
+    await staffModel.deleteStaff(id);
+
+    logger.info(`Staff member deleted: ${id}`);
+
+    return noContent(res);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function updateStaffAvailability(req, res, next) {
   try {
     const { id } = req.params;
@@ -135,5 +192,7 @@ module.exports = {
   getAllStaff,
   getStaffById,
   createStaff,
+  updateStaff,
+  deleteStaff,
   updateStaffAvailability,
 };

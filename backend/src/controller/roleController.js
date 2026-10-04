@@ -42,6 +42,17 @@ async function getAllRoles(req, res, next) {
         userCount: 0,
         createdAt: new Date().toISOString(),
       },
+      {
+        id: 'role_supervisor',
+        name: 'supervisor',
+        displayName: 'Supervisor',
+        description: 'Prepares orders, generates OTP for delivery handoff, assigns delivery partners',
+        permissions: Object.entries(rolePermissions.supervisor).flatMap(([resource, actions]) =>
+          actions.map(action => `${resource}.${action}`)
+        ),
+        userCount: 0,
+        createdAt: new Date().toISOString(),
+      },
     ];
 
     return success(res, {
@@ -64,6 +75,7 @@ async function getRoleById(req, res, next) {
       role_admin: 'admin',
       role_buyer: 'buyer',
       role_delivery: 'delivery',
+      role_supervisor: 'supervisor',
     };
 
     const roleName = roleMap[id];
@@ -80,12 +92,14 @@ async function getRoleById(req, res, next) {
       admin: 'Administrator',
       buyer: 'Buyer',
       delivery: 'Delivery Partner',
+      supervisor: 'Supervisor',
     };
 
     const descriptions = {
       admin: 'Full system access with all permissions',
       buyer: 'Can create orders and view stock/pricing',
       delivery: 'Can manage deliveries and view orders',
+      supervisor: 'Prepares orders, generates OTP for delivery handoff, assigns delivery partners',
     };
 
     return success(res, {

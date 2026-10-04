@@ -36,6 +36,23 @@ router.post(
   staffController.createStaff
 );
 
+// PUT /staff/:id - Update staff
+router.put(
+  '/:id',
+  authenticate,
+  requirePermission('staff', 'update'),
+  validateRequest(schemas.updateStaff),
+  staffController.updateStaff
+);
+
+// DELETE /staff/:id - Delete staff
+router.delete(
+  '/:id',
+  authenticate,
+  requirePermission('staff', 'delete'),
+  staffController.deleteStaff
+);
+
 // PATCH /staff/:id/availability - Update staff availability
 router.patch(
   '/:id/availability',

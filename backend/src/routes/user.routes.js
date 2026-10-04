@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controller/userController');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { ensureUser } = require('../middleware/ensureUser');
 const { validateRequest, validateQuery, schemas, querySchemas } = require('../middleware/validateRequest');
 
 /**
@@ -13,6 +14,7 @@ const { validateRequest, validateQuery, schemas, querySchemas } = require('../mi
 router.get(
   '/',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   validateQuery(querySchemas.userFilter),
   userController.getAllUsers
@@ -22,6 +24,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   userController.getUserById
 );
@@ -30,6 +33,7 @@ router.get(
 router.post(
   '/',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   validateRequest(schemas.createUser),
   userController.createUser
@@ -39,6 +43,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   validateRequest(schemas.updateUser),
   userController.updateUser
@@ -48,6 +53,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
+  ensureUser,
   requireRole('admin'),
   userController.deleteUser
 );

@@ -4,6 +4,7 @@ const cartModel = require('../models/cartModel');
 const addressModel = require('../models/addressModel');
 const stockModel = require('../models/stockModel');
 const userModel = require('../models/userModel');
+const deliveryModel = require('../models/deliveryModel');
 const notificationService = require('./notificationService');
 const { NotFoundError, BadRequestError, ForbiddenError, ConflictError } = require('../utils/error');
 
@@ -122,6 +123,11 @@ async function placeOrder(userId, firebaseUid, { addressId, paymentMethod = 'COD
       console.error('Failed to send order confirmation notification:', err);
     });
     
+    // 10. Notify all supervisors about new order (non-blocking)
+    notificationService.notifySupervisorsNewOrder(order).catch(err => {
+      console.error('Failed to notify supervisors:', err);
+    });
+    
     return order;
   } catch (error) {
     await client.query('ROLLBACK');
@@ -143,9 +149,33 @@ async function getOrderDetails(orderId, userId, userRole) {
     throw new NotFoundError(`Order with ID '${orderId}' not found.`, 'Order');
   }
   
-  // Permission check: admin can view all, buyer can only view own
-  if (userRole !== 'admin' && order.userId !== userId) {
+  // Permission check: admin and supervisor can view all, buyer can only view own
+  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId) {
     throw new ForbiddenError('You do not have permission to view this order.');
+  }
+  
+  // Hide OTP from non-supervisor roles (only supervisor sees OTP to tell delivery partner)
+  if (userRole !== 'supervisor' && userRole !== 'admin') {
+    order.pickupOtp = null;
+    order.pickupOtpExpiresAt = null;
+  }
+  
+  // Attach delivery partner details if assigned
+  if (['assigned', 'delivered', 'completed'].includes(order.orderStatus)) {
+    try {
+      const delivery = await deliveryModel.findDeliveryByOrderId(order.id);
+      if (delivery && delivery.deliveryPartnerId) {
+        order.deliveryPartnerId = delivery.deliveryPartnerId;
+        const partner = await userModel.findUserById(delivery.deliveryPartnerId);
+        if (partner) {
+          order.deliveryPartnerName = partner.name;
+          order.deliveryPartner = partner;
+        }
+      }
+    } catch (err) {
+      // Ignore error if delivery mapping fails
+      console.error("Failed to fetch delivery details:", err);
+    }
   }
   
   return order;
@@ -162,8 +192,25 @@ async function getOrderByNumber(orderNumber, userId, userRole) {
   }
   
   // Permission check
-  if (userRole !== 'admin' && order.userId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId) {
     throw new ForbiddenError('You do not have permission to view this order.');
+  }
+  
+  // Attach delivery partner details if assigned
+  if (['assigned', 'delivered', 'completed'].includes(order.orderStatus)) {
+    try {
+      const delivery = await deliveryModel.findDeliveryByOrderId(order.id);
+      if (delivery && delivery.deliveryPartnerId) {
+        order.deliveryPartnerId = delivery.deliveryPartnerId;
+        const partner = await userModel.findUserById(delivery.deliveryPartnerId);
+        if (partner) {
+          order.deliveryPartnerName = partner.name;
+          order.deliveryPartner = partner;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch delivery details:", err);
+    }
   }
   
   return order;
@@ -198,13 +245,13 @@ async function getAllOrders({ page = 1, limit = 20, status, paymentStatus, dateF
 }
 
 /**
- * Update order status (admin only)
+ * Update order status (admin or supervisor)
  * Validates status transitions
  */
 async function updateOrderStatus(orderId, newStatus, userId, userRole, notes = null) {
-  // Only admins can update order status
-  if (userRole !== 'admin') {
-    throw new ForbiddenError('Only administrators can update order status.');
+  // Only admins and supervisors can update order status
+  if (userRole !== 'admin' && userRole !== 'supervisor') {
+    throw new ForbiddenError('Only administrators and supervisors can update order status.');
   }
   
   const order = await orderModel.findOrderById(orderId);
@@ -214,10 +261,15 @@ async function updateOrderStatus(orderId, newStatus, userId, userRole, notes = n
   }
   
   // Validate status transition
-  const validStatuses = ['pending', 'confirmed', 'assigned', 'delivered', 'completed', 'cancelled'];
+  const validStatuses = ['pending', 'confirmed', 'preparing', 'packed', 'assigned', 'delivered', 'completed', 'cancelled'];
   
   if (!validStatuses.includes(newStatus)) {
     throw new BadRequestError(`Invalid order status. Valid statuses: ${validStatuses.join(', ')}`);
+  }
+  
+  // Supervisor can only set: preparing, packed, assigned
+  if (userRole === 'supervisor' && !['preparing', 'packed', 'assigned'].includes(newStatus)) {
+    throw new ForbiddenError('Supervisors can only mark orders as preparing, packed, or assigned.');
   }
   
   // Business rules for status transitions
@@ -232,13 +284,15 @@ async function updateOrderStatus(orderId, newStatus, userId, userRole, notes = n
   const statusOrder = {
     'pending': 0,
     'confirmed': 1,
-    'assigned': 2,
-    'delivered': 3,
-    'completed': 4,
+    'preparing': 2,
+    'packed': 3,
+    'assigned': 4,
+    'delivered': 5,
+    'completed': 6,
     'cancelled': -1
   };
   
-  if (newStatus !== 'cancelled' && statusOrder[newStatus] < statusOrder[currentStatus]) {
+  if (newStatus !== 'cancelled' && (statusOrder[newStatus] || 0) < (statusOrder[currentStatus] || 0)) {
     throw new BadRequestError(`Cannot change order status from ${currentStatus} to ${newStatus}.`);
   }
   
@@ -246,6 +300,103 @@ async function updateOrderStatus(orderId, newStatus, userId, userRole, notes = n
   const updatedOrder = await orderModel.updateOrderStatus(orderId, newStatus, notes);
   
   return updatedOrder;
+}
+
+/**
+ * Mark order as preparing (supervisor)
+ */
+async function markAsPreparing(orderId, supervisorId) {
+  const order = await orderModel.findOrderById(orderId);
+  
+  if (!order) {
+    throw new NotFoundError(`Order with ID '${orderId}' not found.`, 'Order');
+  }
+  
+  if (order.orderStatus !== 'confirmed') {
+    throw new BadRequestError(`Order must be in 'confirmed' status to start preparing. Current: '${order.orderStatus}'.`);
+  }
+  
+  const updatedOrder = await orderModel.updateOrderStatus(orderId, 'preparing', `Preparation started by supervisor`);
+  return updatedOrder;
+}
+
+/**
+ * Mark order as packed (supervisor)
+ * Generates a 6-digit OTP for delivery partner verification
+ * Notifies all active delivery partners
+ */
+async function markAsPacked(orderId, supervisorId) {
+  const order = await orderModel.findOrderById(orderId);
+  
+  if (!order) {
+    throw new NotFoundError(`Order with ID '${orderId}' not found.`, 'Order');
+  }
+  
+  if (order.orderStatus !== 'preparing') {
+    throw new BadRequestError(`Order must be in 'preparing' status to mark as packed. Current: '${order.orderStatus}'.`);
+  }
+  
+  // Generate 6-digit OTP
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otpExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+  
+  // Update order with OTP and status
+  const query = `
+    UPDATE orders
+    SET order_status = 'packed', pickup_otp = $1, pickup_otp_expires_at = $2,
+        notes = COALESCE(notes || E'\n', '') || $3, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $4
+    RETURNING *;
+  `;
+  const result = await pool.query(query, [otp, otpExpiresAt, `Packed by supervisor. OTP generated.`, orderId]);
+  const updatedOrder = orderModel.mapOrderRow(result.rows[0]);
+  
+  // Notify all active delivery partners (non-blocking)
+  notificationService.notifyDeliveryPartnersOrderPacked(updatedOrder).catch(err => {
+    console.error('Failed to notify delivery partners:', err);
+  });
+  
+  return updatedOrder;
+}
+
+/**
+ * Verify pickup OTP (delivery partner picks up order)
+ */
+async function verifyPickupOtp(orderId, otp, deliveryPartnerId) {
+  const order = await orderModel.findOrderById(orderId);
+  
+  if (!order) {
+    throw new NotFoundError(`Order with ID '${orderId}' not found.`, 'Order');
+  }
+  
+  if (order.orderStatus !== 'packed' && order.orderStatus !== 'assigned') {
+    throw new BadRequestError(`Order must be packed or assigned to verify OTP. Current: '${order.orderStatus}'.`);
+  }
+  
+  if (!order.pickupOtp) {
+    throw new BadRequestError('No OTP generated for this order.');
+  }
+  
+  // Check OTP expiration
+  if (order.pickupOtpExpiresAt && new Date(order.pickupOtpExpiresAt) < new Date()) {
+    throw new BadRequestError('OTP has expired. Please ask the supervisor to re-pack the order.');
+  }
+  
+  // Verify OTP
+  if (order.pickupOtp !== otp) {
+    throw new BadRequestError('Invalid OTP. Please check and try again.');
+  }
+  
+  // Clear OTP and mark as verified (notes updated)
+  const query = `
+    UPDATE orders
+    SET pickup_otp = NULL, pickup_otp_expires_at = NULL,
+        notes = COALESCE(notes || E'\n', '') || $1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *;
+  `;
+  const result = await pool.query(query, [`OTP verified by delivery partner.`, orderId]);
+  return orderModel.mapOrderRow(result.rows[0]);
 }
 
 /**
@@ -359,6 +510,9 @@ module.exports = {
   getUserOrders,
   getAllOrders,
   updateOrderStatus,
+  markAsPreparing,
+  markAsPacked,
+  verifyPickupOtp,
   cancelOrder,
   getUserOrderStatistics,
   validateOrderPlacement

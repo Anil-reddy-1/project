@@ -16,7 +16,8 @@ const assignDeliverySchema = Joi.object({
 
 // Update delivery status schema
 const updateDeliveryStatusSchema = Joi.object({
-  notes: Joi.string().max(500).allow('', null)
+  notes: Joi.string().max(500).allow('', null),
+  otp: Joi.string().length(6).allow('', null)
 });
 
 // Delivery query parameters

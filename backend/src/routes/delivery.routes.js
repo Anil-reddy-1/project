@@ -24,7 +24,7 @@ router.use(ensureUser);
  * @desc    Get available delivery partners (admin only)
  * @access  Private (admin)
  */
-router.get('/partners/available', requireRole('admin'), deliveryController.getAvailablePartners);
+router.get('/partners/available', requireRole('admin', 'supervisor'), deliveryController.getAvailablePartners);
 
 /**
  * @route   GET /api/v1/deliveries/pending
@@ -32,7 +32,7 @@ router.get('/partners/available', requireRole('admin'), deliveryController.getAv
  * @access  Private (admin)
  * @query   { page, limit }
  */
-router.get('/pending', requireRole('admin'), deliveryController.getPendingDeliveries);
+router.get('/pending', requireRole('admin', 'supervisor'), deliveryController.getPendingDeliveries);
 
 /**
  * @route   GET /api/v1/deliveries/stats/me
@@ -62,7 +62,7 @@ router.get('/order/:orderId', deliveryController.getDeliveryByOrderId);
  * @access  Private (admin)
  * @body    { partnerId: string }
  */
-router.post('/order/:orderId/assign', requireRole('admin'), deliveryController.assignDeliveryByOrderId);
+router.post('/order/:orderId/assign', requireRole('admin', 'supervisor'), deliveryController.assignDeliveryByOrderId);
 
 
 /**
@@ -78,7 +78,7 @@ router.get('/:id', deliveryController.getDeliveryById);
  * @access  Private (admin)
  * @query   { page, limit, status, partnerId, dateFrom, dateTo }
  */
-router.get('/', requireRole('admin'), deliveryController.getAllDeliveries);
+router.get('/', requireRole('admin', 'supervisor'), deliveryController.getAllDeliveries);
 
 /**
  * @route   POST /api/v1/deliveries/:id/assign
@@ -86,7 +86,7 @@ router.get('/', requireRole('admin'), deliveryController.getAllDeliveries);
  * @access  Private (admin)
  * @body    { partnerId: string }
  */
-router.post('/:id/assign', requireRole('admin'), validate(assignDeliverySchema), deliveryController.assignDelivery);
+router.post('/:id/assign', requireRole('admin', 'supervisor'), validate(assignDeliverySchema), deliveryController.assignDelivery);
 
 /**
  * @route   POST /api/v1/deliveries/:id/accept

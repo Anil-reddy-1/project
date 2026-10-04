@@ -313,6 +313,106 @@ async function validateOrder(req, res, next) {
   }
 }
 
+/**
+ * Mark order as preparing (supervisor only)
+ * POST /api/v1/orders/:id/prepare
+ */
+async function markAsPreparing(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+    
+    const order = await orderService.markAsPreparing(id, supervisorId);
+    
+    logger.info('Order marked as preparing', {
+      orderId: id,
+      supervisorId
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order is now being prepared',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Mark as preparing error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Mark order as packed (supervisor only)
+ * Generates OTP for delivery partner verification
+ * POST /api/v1/orders/:id/pack
+ */
+async function markAsPacked(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+    
+    const order = await orderService.markAsPacked(id, supervisorId);
+    
+    logger.info('Order marked as packed, OTP generated', {
+      orderId: id,
+      supervisorId
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order packed successfully. OTP generated for delivery partner verification.',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Mark as packed error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Verify pickup OTP (delivery partner)
+ * POST /api/v1/orders/:id/verify-otp
+ * Body: { otp }
+ */
+async function verifyPickupOtp(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { otp } = req.body;
+    const deliveryPartnerId = req.user.dbId;
+    
+    if (!otp) {
+      throw new BadRequestError('OTP is required');
+    }
+    
+    const order = await orderService.verifyPickupOtp(id, otp, deliveryPartnerId);
+    
+    logger.info('Pickup OTP verified', {
+      orderId: id,
+      deliveryPartnerId
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. Order is ready for delivery.',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Verify OTP error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -322,5 +422,8 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   getMyOrderStats,
-  validateOrder
+  validateOrder,
+  markAsPreparing,
+  markAsPacked,
+  verifyPickupOtp
 };

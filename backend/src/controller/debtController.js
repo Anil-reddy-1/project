@@ -9,21 +9,27 @@ const logger = require('../utils/logger');
 
 async function getAllDebts(req, res, next) {
   try {
-    const { page = 1, limit = 20, status, overdue } = req.validatedQuery;
+    const { page = 1, limit = 20, status, type, overdue } = req.validatedQuery;
 
     const { debts, total } = await debtModel.findAllDebts({
       page,
       limit,
       status,
+      type,
       overdue,
     });
 
-    const summary = await debtModel.getDebtSummary();
+    const summary = await debtModel.getDebtSummary(type);
 
     return paginated(res, {
       data: debts.map(debt => ({
         id: debt.id,
         description: debt.description,
+        creditorName: debt.creditorName,
+        invoiceNumber: debt.invoiceNumber,
+        referenceNumber: debt.referenceNumber,
+        priority: debt.priority,
+        type: debt.type,
         originalAmount: debt.originalAmount,
         paidAmount: debt.paidAmount,
         remainingAmount: debt.remainingAmount,
@@ -69,6 +75,10 @@ async function getDebtById(req, res, next) {
       data: {
         id: debt.id,
         description: debt.description,
+        creditorName: debt.creditorName,
+        invoiceNumber: debt.invoiceNumber,
+        referenceNumber: debt.referenceNumber,
+        priority: debt.priority,
         originalAmount: debt.originalAmount,
         paidAmount: debt.paidAmount,
         remainingAmount: debt.remainingAmount,
@@ -85,22 +95,33 @@ async function getDebtById(req, res, next) {
 
 async function createDebt(req, res, next) {
   try {
-    const { description, amount, dueDate, notes } = req.validatedBody;
+    const { description, creditorName, invoiceNumber, referenceNumber, priority, type, amount, dueDate, notes } = req.validatedBody;
 
     const debt = await debtModel.createDebt({
       description,
+      creditorName,
+      invoiceNumber,
+      referenceNumber,
+      priority,
+      type,
       amount,
       dueDate,
       notes,
     });
 
-    logger.info(`Debt created: ${debt.id}`);
+    logger.info(`Debt created: ${debt.id} (type=${debt.type})`);
 
     return created(res, {
       data: {
         id: debt.id,
         description: debt.description,
+        creditorName: debt.creditorName,
+        invoiceNumber: debt.invoiceNumber,
+        referenceNumber: debt.referenceNumber,
+        priority: debt.priority,
+        type: debt.type,
         originalAmount: debt.originalAmount,
+        paidAmount: debt.paidAmount,
         remainingAmount: debt.remainingAmount,
         status: debt.status,
         dueDate: debt.dueDate,
