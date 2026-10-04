@@ -238,7 +238,7 @@ export function ProductManagement() {
           </div>
           {product.lowStockPercentage !== null && product.lowStockPercentage !== undefined && (
             <div className="text-xs text-gray-500">
-              {Number(product.lowStockPercentage).toFixed(1)}% of max
+              {Number(product.lowStockPercentage).toFixed(1)}% of threshold
             </div>
           )}
         </div>

@@ -417,6 +417,7 @@ export function UserManagement() {
                   { value: 'admin', label: 'Administrator' },
                   { value: 'buyer', label: 'Buyer/Customer' },
                   { value: 'delivery', label: 'Delivery Partner' },
+                  { value: 'supervisor', label: 'Supervisor' },
                 ]}
               />
               <FilterSelect
@@ -566,6 +567,7 @@ export function UserManagement() {
                   <option value="admin">Administrator</option>
                   <option value="buyer">Buyer/Customer</option>
                   <option value="delivery">Delivery Partner</option>
+                  <option value="supervisor">Supervisor</option>
                 </select>
               </FormField>
               <FormField label="Status">
@@ -639,6 +641,7 @@ export function UserManagement() {
                   <option value="admin">Administrator</option>
                   <option value="buyer">Buyer/Customer</option>
                   <option value="delivery">Delivery Partner</option>
+                  <option value="supervisor">Supervisor</option>
                 </select>
               </FormField>
               <FormField label="Status">

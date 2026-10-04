@@ -13,18 +13,27 @@ import {
   EmptyState,
 } from '../../components/ui';
 import { pricingService } from '../../services';
-import type { PriceData, UpdatePricePayload } from '../../services/pricing.service';
+import type { PriceData, UpdatePricePayload, BulkUpdatePayload, PricingStats, PriceHistory } from '../../services/pricing.service';
+// import { api } from '../../services/api.service';
 
 export function PricingManagement() {
   const [prices, setPrices] = useState<PriceData[]>([]);
+  const [stats, setStats] = useState<PricingStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [changeFilter, setChangeFilter] = useState<string>('all');
+  
+  // Modals state
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [_isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  // Selection
   const [selectedItem, setSelectedItem] = useState<PriceData | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  
+  // Update Price Form
   const [priceData, setPriceData] = useState<{
     retailPrice: string;
     wholesalePrice: string;
@@ -36,29 +45,56 @@ export function PricingManagement() {
     costPrice: '',
     margin: '',
   });
+
+  // Bulk Update Form
+  const [bulkData, setBulkData] = useState<{
+    adjustmentType: 'percentage' | 'flat';
+    adjustmentValue: string;
+    applyTo: 'retail' | 'wholesale' | 'both';
+  }>({
+    adjustmentType: 'percentage',
+    adjustmentValue: '',
+    applyTo: 'both',
+  });
+
+  // History Data
+  const [historyData, setHistoryData] = useState<PriceHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [pageMessage, setPageMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
 
   useEffect(() => {
-    loadPrices();
+    loadData();
   }, []);
 
-  const loadPrices = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await pricingService.getAllPrices();
-      setPrices(data);
+      const [pricesData, statsData] = await Promise.all([
+        pricingService.getAllPrices(),
+        pricingService.getStats()
+      ]);
+      setPrices(pricesData);
+      setStats(statsData);
     } catch (error) {
-      console.error('Failed to load prices:', error);
+      console.error('Failed to load data:', error);
+      showPageMessage('error', 'Failed to load pricing data');
     } finally {
       setLoading(false);
     }
   };
 
+  const showPageMessage = (type: 'success' | 'error', text: string) => {
+    setPageMessage({ type, text });
+    setTimeout(() => setPageMessage(null), 3000);
+  };
+
   const filteredPrices = prices.filter((item) => {
     const matchesSearch =
-      item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.sku?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
     const matchesChange =
       changeFilter === 'all' ||
@@ -68,14 +104,14 @@ export function PricingManagement() {
     return matchesSearch && matchesCategory && matchesChange;
   });
 
-  const validateForm = (): boolean => {
+  const validateUpdateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     if (!priceData.retailPrice || Number(priceData.retailPrice) <= 0) {
       errors.retailPrice = 'Retail price must be greater than 0';
     }
-    if (!priceData.wholesalePrice || Number(priceData.wholesalePrice) <= 0) {
-      errors.wholesalePrice = 'Wholesale price must be greater than 0';
+    if (priceData.wholesalePrice && Number(priceData.wholesalePrice) < 0) {
+      errors.wholesalePrice = 'Wholesale price cannot be negative';
     }
     if (priceData.costPrice && Number(priceData.costPrice) < 0) {
       errors.costPrice = 'Cost price cannot be negative';
@@ -86,19 +122,24 @@ export function PricingManagement() {
   };
 
   const handleUpdatePrice = async () => {
-    if (!selectedItem || !validateForm()) return;
+    if (!selectedItem || !validateUpdateForm()) return;
 
     try {
       setSubmitting(true);
       const payload: UpdatePricePayload = {
         retailPrice: Number(priceData.retailPrice),
-        wholesalePrice: Number(priceData.wholesalePrice),
+        wholesalePrice: priceData.wholesalePrice ? Number(priceData.wholesalePrice) : undefined,
         costPrice: priceData.costPrice ? Number(priceData.costPrice) : undefined,
       };
-      const updated = await pricingService.updatePrice(selectedItem.productId, payload);
-      setPrices(prices.map((item) => (item.id === updated.id ? updated : item)));
+      
+      await pricingService.updatePrice(selectedItem.productId, payload);
+      
+      // Reload everything to get updated stats and margin calculations from backend
+      await loadData();
+      
       setIsUpdateModalOpen(false);
-      resetForm();
+      showPageMessage('success', 'Price updated successfully');
+      resetUpdateForm();
     } catch (error) {
       console.error('Failed to update price:', error);
       setFormErrors({ submit: 'Failed to update price. Please try again.' });
@@ -107,11 +148,70 @@ export function PricingManagement() {
     }
   };
 
+  const handleBulkUpdate = async () => {
+    if (selectedItems.length === 0) return;
+    
+    if (!bulkData.adjustmentValue || Number(bulkData.adjustmentValue) === 0) {
+      setFormErrors({ adjustmentValue: 'Please enter a valid adjustment value' });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const payload: BulkUpdatePayload = {
+        productIds: selectedItems,
+        adjustmentType: bulkData.adjustmentType,
+        adjustmentValue: Number(bulkData.adjustmentValue),
+        applyTo: bulkData.applyTo
+      };
+
+      const result = await pricingService.bulkUpdate(payload);
+      await loadData();
+      setIsBulkUpdateModalOpen(false);
+      setSelectedItems([]);
+      showPageMessage('success', `Bulk update applied to ${result.updated} products`);
+    } catch (error) {
+      console.error('Failed to apply bulk update:', error);
+      setFormErrors({ submit: 'Failed to apply bulk update. Please try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      // Create a direct fetch to bypass JSON parsing for Blob
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/v1/pricing/export', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pricing-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showPageMessage('success', 'Export started successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      showPageMessage('error', 'Failed to export pricing data');
+    }
+  };
+
   const openUpdateModal = (item: PriceData) => {
     setSelectedItem(item);
     setPriceData({
-      retailPrice: item.retailPrice.toString(),
-      wholesalePrice: (item.wholesalePrice ?? 0).toString(),
+      retailPrice: item.retailPrice?.toString() || '',
+      wholesalePrice: item.wholesalePrice?.toString() || '',
       costPrice: item.costPrice?.toString() || '',
       margin: item.margin?.toString() || '',
     });
@@ -119,7 +219,22 @@ export function PricingManagement() {
     setIsUpdateModalOpen(true);
   };
 
-  const resetForm = () => {
+  const openHistoryModal = async (item: PriceData) => {
+    setSelectedItem(item);
+    setIsHistoryModalOpen(true);
+    setHistoryLoading(true);
+    setHistoryData([]);
+    try {
+      const data = await pricingService.getPriceHistory(item.productId);
+      setHistoryData(data);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const resetUpdateForm = () => {
     setPriceData({
       retailPrice: '',
       wholesalePrice: '',
@@ -137,7 +252,7 @@ export function PricingManagement() {
   };
 
   const toggleAllItems = () => {
-    if (selectedItems.length === filteredPrices.length) {
+    if (selectedItems.length === filteredPrices.length && filteredPrices.length > 0) {
       setSelectedItems([]);
     } else {
       setSelectedItems(filteredPrices.map((item) => item.id));
@@ -149,14 +264,14 @@ export function PricingManagement() {
     const cost = Number(priceData.costPrice) || 0;
     if (retail > 0 && cost > 0) {
       const margin = ((retail - cost) / retail) * 100;
-      setPriceData({ ...priceData, margin: margin.toFixed(2) });
+      setPriceData((prev) => ({ ...prev, margin: margin.toFixed(2) }));
+    } else {
+      setPriceData((prev) => ({ ...prev, margin: '' }));
     }
   };
 
   useEffect(() => {
-    if (priceData.retailPrice && priceData.costPrice) {
-      calculateMargin();
-    }
+    calculateMargin();
   }, [priceData.retailPrice, priceData.costPrice]);
 
   const columns = [
@@ -201,7 +316,7 @@ export function PricingManagement() {
       label: 'RETAIL',
       render: (item: PriceData) => (
         <div>
-          <div className="font-semibold text-gray-900">₹{item.retailPrice.toFixed(2)}</div>
+          <div className="font-semibold text-gray-900">₹{(item.retailPrice || 0).toFixed(2)}</div>
           {item.previousRetailPrice && item.previousRetailPrice !== item.retailPrice && (
             <div className="text-xs text-gray-500">was ₹{item.previousRetailPrice.toFixed(2)}</div>
           )}
@@ -212,7 +327,9 @@ export function PricingManagement() {
       key: 'wholesale',
       label: 'WHOLESALE',
       render: (item: PriceData) => (
-        <div className="font-semibold text-gray-900">₹{(item.wholesalePrice ?? 0).toFixed(2)}</div>
+        <div className="font-semibold text-gray-900">
+          {item.wholesalePrice ? `₹${item.wholesalePrice.toFixed(2)}` : 'N/A'}
+        </div>
       ),
     },
     {
@@ -227,18 +344,21 @@ export function PricingManagement() {
     {
       key: 'margin',
       label: 'PROFIT %',
-      render: (item: PriceData) => (
-        <div>
-          {item.margin ? (
-            <StatusBadge
-              status={item.margin >= 20 ? 'success' : item.margin >= 10 ? 'warning' : 'danger'}
-              label={`${item.margin.toFixed(1)}%`}
-            />
-          ) : (
-            <span className="text-sm text-gray-500">N/A</span>
-          )}
-        </div>
-      ),
+      render: (item: PriceData) => {
+        const margin = item.margin || 0;
+        return (
+          <div>
+            {item.margin !== null && item.margin !== undefined ? (
+              <StatusBadge
+                status={margin >= 20 ? 'success' : margin >= 10 ? 'warning' : 'danger'}
+                label={`${margin.toFixed(1)}%`}
+              />
+            ) : (
+              <span className="text-sm text-gray-500">N/A</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'lastUpdated',
@@ -248,7 +368,7 @@ export function PricingManagement() {
           <div className="text-sm text-gray-700">
             {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : 'Never'}
           </div>
-          {item.updatedBy && <div className="text-xs text-gray-500">{item.updatedBy}</div>}
+          {item.changedBy && <div className="text-xs text-gray-500">by user</div>}
         </div>
       ),
     },
@@ -256,9 +376,14 @@ export function PricingManagement() {
       key: 'actions',
       label: 'ACTIONS',
       render: (item: PriceData) => (
-        <ActionButton variant="primary" size="sm" onClick={() => openUpdateModal(item)}>
-          Edit Price
-        </ActionButton>
+        <div className="flex gap-2">
+          <ActionButton variant="primary" size="sm" onClick={() => openUpdateModal(item)}>
+            Edit Price
+          </ActionButton>
+          <ActionButton variant="secondary" size="sm" onClick={() => openHistoryModal(item)}>
+            History
+          </ActionButton>
+        </div>
       ),
     },
   ];
@@ -271,24 +396,24 @@ export function PricingManagement() {
     );
   }
 
-  const totalProducts = prices.length;
-  const avgRetailPrice =
-    prices.length > 0 ? prices.reduce((sum, p) => sum + p.retailPrice, 0) / prices.length : 0;
-  const priceIncreases = prices.filter(
-    (p) => p.previousRetailPrice && p.retailPrice > p.previousRetailPrice
-  ).length;
-
   const categories = Array.from(new Set(prices.map((item) => item.category))).filter(Boolean);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        
+        {pageMessage && (
+          <div className={`p-4 rounded-lg ${pageMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {pageMessage.text}
+          </div>
+        )}
+
         {/* Page Header */}
         <PageHeader
           title="Pricing & Margin Management"
           description="Set retail and wholesale pricing, track cost margins, and view price change history"
         >
-          <ActionButton variant="primary">
+          <ActionButton variant="primary" onClick={handleExport}>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
@@ -305,7 +430,7 @@ export function PricingManagement() {
         <div className="grid gap-6 md:grid-cols-4">
           <StatsCard
             title="ACTIVE CATALOG"
-            value={totalProducts.toString()}
+            value={stats?.totalProducts?.toString() || '0'}
             subtitle="Active • with pricing"
             icon={
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,7 +446,7 @@ export function PricingManagement() {
           />
           <StatsCard
             title="ACTIVE RETAIL PRICE"
-            value={`₹${avgRetailPrice.toFixed(2)}`}
+            value={`₹${(stats?.avgRetailPrice || 0).toFixed(2)}`}
             subtitle="AVG"
             icon={
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -333,12 +458,11 @@ export function PricingManagement() {
                 />
               </svg>
             }
-            trend="up"
-            trendValue="+5.2% avg from last"
+            trend="neutral"
           />
           <StatsCard
             title="AVG MARGIN SPREAD"
-            value="28.4%"
+            value={`${(stats?.avgMargin || 0).toFixed(1)}%`}
             subtitle="Margin"
             icon={
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -350,13 +474,12 @@ export function PricingManagement() {
                 />
               </svg>
             }
-            trend="up"
-            trendValue="+2.1%"
+            trend="neutral"
           />
           <StatsCard
-            title="TOP SKUs"
-            value={priceIncreases.toString()}
-            subtitle="Optimized • sorted margin"
+            title="PRICE INCREASES"
+            value={stats?.priceIncreases?.toString() || '0'}
+            subtitle="Recent changes"
             icon={
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -401,7 +524,7 @@ export function PricingManagement() {
             />
           </div>
           {selectedItems.length > 0 && (
-            <ActionButton variant="secondary" onClick={() => setIsBulkUpdateModalOpen(true)}>
+            <ActionButton variant="primary" onClick={() => setIsBulkUpdateModalOpen(true)}>
               Bulk Update ({selectedItems.length})
             </ActionButton>
           )}
@@ -465,7 +588,7 @@ export function PricingManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Wholesale Price <span className="text-red-500">*</span>
+                  Wholesale Price
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
@@ -552,6 +675,164 @@ export function PricingManagement() {
             </div>
           </div>
         </Modal>
+        
+        {/* Bulk Update Modal */}
+        <Modal
+          isOpen={isBulkUpdateModalOpen}
+          onClose={() => setIsBulkUpdateModalOpen(false)}
+          title="Bulk Update Prices"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+              You are about to update prices for <strong>{selectedItems.length}</strong> selected products.
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Apply Update To
+              </label>
+              <select
+                value={bulkData.applyTo}
+                onChange={(e) => setBulkData({...bulkData, applyTo: e.target.value as any})}
+                className="w-full px-4 py-2 border rounded-lg border-gray-300"
+              >
+                <option value="both">Both Retail & Wholesale</option>
+                <option value="retail">Retail Price Only</option>
+                <option value="wholesale">Wholesale Price Only</option>
+              </select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Adjustment Type
+                </label>
+                <select
+                  value={bulkData.adjustmentType}
+                  onChange={(e) => setBulkData({...bulkData, adjustmentType: e.target.value as any})}
+                  className="w-full px-4 py-2 border rounded-lg border-gray-300"
+                >
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="flat">Flat Amount (₹)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Value <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={bulkData.adjustmentValue}
+                    placeholder="e.g. 10 or -5"
+                    onChange={(e) => {
+                      setBulkData({...bulkData, adjustmentValue: e.target.value});
+                      if(formErrors.adjustmentValue) setFormErrors({...formErrors, adjustmentValue: ''});
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${formErrors.adjustmentValue ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                </div>
+                {formErrors.adjustmentValue && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.adjustmentValue}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">Use negative values to decrease price.</p>
+              </div>
+            </div>
+
+            {formErrors.submit && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{formErrors.submit}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <ActionButton
+                variant="secondary"
+                onClick={() => setIsBulkUpdateModalOpen(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </ActionButton>
+              <ActionButton variant="primary" onClick={handleBulkUpdate} disabled={submitting}>
+                {submitting ? 'Applying...' : 'Apply Bulk Update'}
+              </ActionButton>
+            </div>
+          </div>
+        </Modal>
+
+        {/* History Modal */}
+        <Modal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          title="Price Change History"
+          size="lg"
+        >
+          <div className="space-y-4">
+            {selectedItem && (
+              <div className="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-gray-900">{selectedItem.productName}</div>
+                  <div className="text-sm text-gray-600">SKU: {selectedItem.sku}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Current Retail</div>
+                  <div className="font-semibold text-gray-900">₹{(selectedItem.retailPrice || 0).toFixed(2)}</div>
+                </div>
+              </div>
+            )}
+
+            {historyLoading ? (
+              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+            ) : historyData.length === 0 ? (
+              <EmptyState title="No history found" description="There are no recorded price changes for this product yet." />
+            ) : (
+              <div className="max-h-96 overflow-y-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Retail Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Wholesale Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {historyData.map((record, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {new Date(record.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500 capitalize">
+                          {record.changeType}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500 line-through">₹{Number(record.previousPrice || 0).toFixed(2)}</span>
+                            <span>→</span>
+                            <span className="font-medium text-gray-900">₹{Number(record.newPrice || 0).toFixed(2)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500 line-through">₹{Number(record.previousWholesale || 0).toFixed(2)}</span>
+                            <span>→</span>
+                            <span className="font-medium text-gray-900">₹{Number(record.newWholesale || 0).toFixed(2)}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="flex justify-end pt-4 border-t">
+              <ActionButton variant="secondary" onClick={() => setIsHistoryModalOpen(false)}>Close</ActionButton>
+            </div>
+          </div>
+        </Modal>
+
       </div>
     </DashboardLayout>
   );

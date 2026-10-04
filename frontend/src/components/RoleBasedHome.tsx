@@ -15,6 +15,8 @@ export function RoleBasedHome() {
       return <Navigate to="/buyer/home" replace />;
     case "delivery":
       return <Navigate to="/delivery/dashboard" replace />;
+    case "supervisor":
+      return <Navigate to="/supervisor/dashboard" replace />;
     default:
       return <Navigate to="/buyer/home" replace />;
   }

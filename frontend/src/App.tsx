@@ -14,7 +14,6 @@ import { Unauthorized } from "./pages/Unauthorized";
 // Admin Pages
 import { Dashboard } from "./pages/admin/Dashboard";
 import { UserManagement } from "./pages/admin/UserManagement";
-import { RoleManagement } from "./pages/admin/RoleManagement";
 import { StaffManagement } from "./pages/admin/StaffManagement";
 import { StockManagement } from "./pages/admin/StockManagement";
 import { ProductManagement } from "./pages/admin/ProductManagement";
@@ -46,6 +45,14 @@ import {
   Deliveries,
   DeliveryDetails as DeliveryPartnerDeliveryDetails,
 } from "./pages/delivery";
+
+// Supervisor Pages
+import {
+  SupervisorDashboard,
+  SupervisorOrders,
+  SupervisorOrderDetails,
+  SupervisorProducts,
+} from "./pages/supervisor";
 
 /**
  * Redirects authenticated users away from auth pages (login/signup) to home.
@@ -133,14 +140,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/roles"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <RoleManagement />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/admin/staff"
             element={
@@ -290,7 +290,7 @@ function App() {
           <Route
             path="/buyer/profile"
             element={
-              <ProtectedRoute allowedRoles={["admin", "buyer"]}>
+              <ProtectedRoute allowedRoles={["admin", "buyer", "supervisor", "delivery"]}>
                 <Profile />
               </ProtectedRoute>
             }
@@ -342,6 +342,48 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin", "delivery"]}>
                 <Navigate to="/delivery/dashboard" replace />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Supervisor Routes */}
+          <Route
+            path="/supervisor/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
+                <SupervisorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supervisor/orders"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
+                <SupervisorOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supervisor/orders/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
+                <SupervisorOrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supervisor/products"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
+                <SupervisorProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supervisor"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
+                <Navigate to="/supervisor/dashboard" replace />
               </ProtectedRoute>
             }
           />

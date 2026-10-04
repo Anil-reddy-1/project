@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 
 export function Signup() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,6 +15,11 @@ export function Signup() {
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!name.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -27,7 +33,12 @@ export function Signup() {
 
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      
+      // Force refresh token so backend gets the updated name
+      await userCredential.user.getIdToken(true);
+      
       navigate("/");
     } catch (err: any) {
       setError(mapFirebaseError(err.code));
@@ -79,6 +90,21 @@ export function Signup() {
 
           {/* Signup Form */}
           <form onSubmit={handleEmailSignup} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address

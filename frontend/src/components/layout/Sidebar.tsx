@@ -4,7 +4,6 @@ import { useCart } from '../../hooks/useCart';
 import {
   LayoutDashboard,
   Users,
-  ShieldCheck,
   BadgeCheck,
   Package,
   DollarSign,
@@ -55,7 +54,7 @@ const adminSections: NavSection[] = [
     items: [
       { path: '/admin/orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
       { path: '/admin/deliveries', label: 'Delivery Management', icon: <Truck className="w-4 h-4" /> },
-      { path: '/admin/debts', label: 'Pending Debts', icon: <Wallet className="w-4 h-4" /> },
+      { path: '/admin/debts', label: 'Debts & Receivables', icon: <Wallet className="w-4 h-4" /> },
     ],
   },
   {
@@ -63,7 +62,6 @@ const adminSections: NavSection[] = [
     items: [
       { path: '/admin/staff', label: 'Staff Management', icon: <BadgeCheck className="w-4 h-4" /> },
       { path: '/admin/users', label: 'User Management', icon: <Users className="w-4 h-4" /> },
-      { path: '/admin/roles', label: 'Roles & Permissions', icon: <ShieldCheck className="w-4 h-4" /> },
     ],
   },
   {
@@ -117,8 +115,26 @@ const deliverySections: NavSection[] = [
   },
 ];
 
+/* ─── Supervisor navigation ─── */
+const supervisorSections: NavSection[] = [
+  {
+    title: 'OPERATIONS',
+    items: [
+      { path: '/supervisor/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+      { path: '/supervisor/orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
+      { path: '/supervisor/products', label: 'Products & Alerts', icon: <Package className="w-4 h-4" /> },
+    ],
+  },
+  {
+    title: 'ACCOUNT',
+    items: [
+      { path: '/buyer/profile', label: 'My Profile', icon: <User className="w-4 h-4" /> },
+    ],
+  },
+];
+
 /* ─── Role meta: brand subtitle & accent colour ─── */
-type Role = 'admin' | 'buyer' | 'delivery' | string;
+type Role = 'admin' | 'buyer' | 'delivery' | 'supervisor' | string;
 
 interface RoleMeta {
   subtitle: string;
@@ -154,12 +170,21 @@ const ROLE_META: Record<string, RoleMeta> = {
     accentDot: 'bg-amber-500',
     brandSubtitle: 'Delivery Portal',
   },
+  supervisor: {
+    subtitle: 'Supervisor',
+    accentBg: 'bg-purple-50',
+    accentText: 'text-purple-700',
+    accentIcon: 'text-purple-600',
+    accentDot: 'bg-purple-500',
+    brandSubtitle: 'Supervisor Portal',
+  },
 };
 
 function getSections(role: Role): NavSection[] {
   if (role === 'admin') return adminSections;
   if (role === 'buyer') return buyerSections;
   if (role === 'delivery') return deliverySections;
+  if (role === 'supervisor') return supervisorSections;
   return adminSections;
 }
 

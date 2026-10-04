@@ -204,12 +204,15 @@ export function StaffManagement() {
     {
       key: 'role',
       label: 'Role & Department',
-      render: (s: Staff) => (
-        <div>
-          <div className="text-sm font-medium text-gray-900">{s.role}</div>
-          <div className="text-sm text-gray-500">{s.department || 'N/A'}</div>
-        </div>
-      ),
+      render: (s: Staff) => {
+        const displayRole = s.role === 'delivery_partner' ? 'Delivery Partner' : s.role ? s.role.charAt(0).toUpperCase() + s.role.slice(1) : '';
+        return (
+          <div>
+            <div className="text-sm font-medium text-gray-900">{displayRole}</div>
+            <div className="text-sm text-gray-500">{s.department || 'N/A'}</div>
+          </div>
+        );
+      },
     },
     {
       key: 'contact',
@@ -380,10 +383,10 @@ export function StaffManagement() {
               onChange={setRoleFilter}
               options={[
                 { value: 'all', label: 'All Roles' },
-                { value: 'Manager', label: 'Manager' },
-                { value: 'Seller', label: 'Seller' },
-                { value: 'Delivery Partner', label: 'Delivery Partner' },
-                { value: 'Supervisor', label: 'Supervisor' },
+                { value: 'manager', label: 'Manager' },
+                { value: 'seller', label: 'Seller' },
+                { value: 'delivery_partner', label: 'Delivery Partner' },
+                { value: 'supervisor', label: 'Supervisor' },
               ]}
             />
             <FilterSelect
@@ -500,11 +503,10 @@ export function StaffManagement() {
                 }`}
               >
                 <option value="">Select a role</option>
-                <option value="Manager">Manager</option>
-                <option value="Seller">Seller</option>
-                <option value="Delivery Partner">Delivery Partner</option>
-                <option value="Supervisor">Supervisor</option>
-                <option value="Inventory Clerk">Inventory Clerk</option>
+                <option value="manager">Manager</option>
+                <option value="seller">Seller</option>
+                <option value="delivery_partner">Delivery Partner</option>
+                <option value="supervisor">Supervisor</option>
               </select>
               {formErrors.role && <p className="mt-1 text-sm text-red-500">{formErrors.role}</p>}
             </div>
@@ -621,11 +623,10 @@ export function StaffManagement() {
                 }`}
               >
                 <option value="">Select a role</option>
-                <option value="Manager">Manager</option>
-                <option value="Seller">Seller</option>
-                <option value="Delivery Partner">Delivery Partner</option>
-                <option value="Supervisor">Supervisor</option>
-                <option value="Inventory Clerk">Inventory Clerk</option>
+                <option value="manager">Manager</option>
+                <option value="seller">Seller</option>
+                <option value="delivery_partner">Delivery Partner</option>
+                <option value="supervisor">Supervisor</option>
               </select>
               {formErrors.role && <p className="mt-1 text-sm text-red-500">{formErrors.role}</p>}
             </div>
