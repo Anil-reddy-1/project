@@ -30,7 +30,20 @@ export interface Product {
   minStock: number;
   maxStock?: number;
   minOrderQuantity: number;
+  /** Backwards-compat alias — equals sellingPrice */
   price: number;
+  /** Actual per-unit price charged to the buyer */
+  sellingPrice: number;
+  /** MRP / reference price shown with strikethrough. Null if no reference price set. */
+  displayPrice?: number | null;
+  /** Private acquisition cost (available in admin product views) */
+  costPrice?: number | null;
+  /** Floor minimum acceptable margin percentage */
+  minimumMarginPercent?: number | null;
+  /** Savings amount = displayPrice − sellingPrice. Null if no discount. */
+  discountAmount?: number | null;
+  /** Discount percentage = (display − selling) / display × 100. Null if no discount. */
+  discountPercent?: number | null;
   status: ProductStatus;
   primaryImageUrl?: string;
   images: ProductImage[];
@@ -39,6 +52,7 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
 }
+
 
 // Product creation data
 export interface CreateProductData {
@@ -52,6 +66,10 @@ export interface CreateProductData {
   maxStock?: number;
   minOrderQuantity?: number;
   price: number;
+  sellingPrice?: number;
+  costPrice?: number;
+  displayPrice?: number;
+  minimumMarginPercent?: number;
   status?: ProductStatus;
 }
 
@@ -66,6 +84,10 @@ export interface UpdateProductData {
   maxStock?: number;
   minOrderQuantity?: number;
   price?: number;
+  sellingPrice?: number;
+  costPrice?: number;
+  displayPrice?: number;
+  minimumMarginPercent?: number;
   status?: ProductStatus;
 }
 

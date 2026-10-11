@@ -33,8 +33,12 @@ export interface Order {
   totalAmount: number;
   paymentMethod: string;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  orderStatus: 'pending' | 'confirmed' | 'assigned' | 'delivered' | 'completed' | 'cancelled';
+  orderStatus: 'pending' | 'confirmed' | 'preparing' | 'packed' | 'assigned' | 'in_transit' | 'delivered' | 'completed' | 'cancelled';
   deliveryAddress: DeliveryAddress;
+  deliveryOtp?: string | null;
+  deliveryOtpExpiresAt?: string | null;
+  pickupOtp?: string | null;
+  pickupOtpExpiresAt?: string | null;
   notes?: string;
   createdAt: string;
   updatedAt: string;

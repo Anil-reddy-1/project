@@ -1,34 +1,54 @@
 import { api } from './api.service';
 
+/**
+ * Pricing Service
+ * Admin-only API calls for the 4-field pricing model:
+ *   costPrice     → private acquisition cost (never exposed to buyers)
+ *   displayPrice  → MRP / reference price (strikethrough in buyer UI)
+ *   sellingPrice  → actual buyer-facing price
+ *   minimumMarginPercent → floor threshold for margin alerts
+ */
+
 export interface PriceData {
   id: string;
   productId: string;
   productName: string;
   sku: string;
   category?: string;
-  retailPrice: number;
-  wholesalePrice?: number;
-  costPrice?: number;
-  previousRetailPrice?: number;
-  margin?: number;
+  status?: string;
+  quantity?: number;
+  // 4-field pricing model
+  costPrice?: number | null;
+  displayPrice?: number | null;
+  sellingPrice?: number | null;
+  minimumMarginPercent?: number | null;
+  // Computed metrics (read-only)
+  discountAmount?: number | null;
+  discountPercent?: number | null;
+  grossProfit?: number | null;
+  grossMarginPercent?: number | null;
+  markupPercent?: number | null;
+  isBelowMinMargin?: boolean;
+  // Audit
   lastChanged?: string;
   lastUpdated?: string;
   changedBy?: string;
-  updatedBy?: string;
+  changedByName?: string | null;
 }
 
 export interface PricingStats {
   totalProducts: number;
-  avgRetailPrice: number;
+  avgSellingPrice: number;
   avgMargin: number;
-  priceIncreases: number;
-  priceDecreases: number;
+  productsOnOffer: number;
+  lowMarginProducts: number;
 }
 
 export interface UpdatePricePayload {
-  retailPrice: number;
-  wholesalePrice?: number;
   costPrice?: number;
+  displayPrice?: number;
+  sellingPrice?: number;
+  minimumMarginPercent?: number;
   reason?: string;
 }
 
@@ -36,7 +56,7 @@ export interface BulkUpdatePayload {
   productIds: string[];
   adjustmentType: 'percentage' | 'flat';
   adjustmentValue: number;
-  applyTo?: 'retail' | 'wholesale' | 'both';
+  applyTo?: 'selling' | 'display' | 'both';
   reason?: string;
 }
 
@@ -45,19 +65,36 @@ export interface BulkUpdateResult {
 }
 
 export interface PriceHistory {
-  previousPrice: number;
-  newPrice: number;
-  previousWholesale: number;
-  newWholesale: number;
+  previousCost?: number | null;
+  newCost?: number | null;
+  previousDisplayPrice?: number | null;
+  newDisplayPrice?: number | null;
+  previousSellingPrice?: number | null;
+  newSellingPrice?: number | null;
   changeType: string;
   reason: string;
-  changedBy: string;
+  changedByName?: string | null;
   createdAt: string;
 }
 
+export interface SuggestPriceResult {
+  costPrice: number;
+  targetMarginPercent: number;
+  suggestedSellingPrice: number;
+}
+
 export const pricingService = {
-  getAllPrices: async (): Promise<PriceData[]> => {
-    const res = await api.get<{ success: boolean; data: { products: PriceData[] } }>('/pricing');
+  getAllPrices: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    status?: string;
+    minMargin?: number;
+    maxMargin?: number;
+    hasDiscount?: boolean;
+  }): Promise<PriceData[]> => {
+    const res = await api.get<{ success: boolean; data: { products: PriceData[] } }>('/pricing', params);
     return res.data.products;
   },
 
@@ -80,16 +117,18 @@ export const pricingService = {
     const res = await api.get<{ success: boolean; data: { history: PriceHistory[] } }>(`/pricing/${id}/history`);
     return res.data.history;
   },
-  
-  exportPricing: async (): Promise<Blob> => {
-    // Note: Use axios directly or a different config if we need a blob, 
-    // assuming our api client handles it or we'll fetch manually.
-    // Given api.service.ts intercepts and parses JSON by default, we might need a raw fetch.
-    // const token = localStorage.getItem('token') || ''; // Adjust depending on auth system, here api client uses firebase auth internally.
-    
-    // Instead of raw fetch, let's just use window.open if it requires auth we might need to append token.
-    // For now, let's just make it return the api endpoint for the component to handle or fetch it using api.get with responseType: 'blob'
-    // since api.get doesn't support custom config easily, we might need to handle it via a direct fetch.
-    return new Blob(); // Placeholder, will implement download in component if possible.
-  }
+
+  suggestSellingPrice: async (costPrice: number, targetMarginPercent: number): Promise<SuggestPriceResult> => {
+    const res = await api.post<{ success: boolean; data: SuggestPriceResult }>('/pricing/suggest', {
+      costPrice,
+      targetMarginPercent,
+    });
+    return res.data;
+  },
+
+  exportPricing: (): void => {
+    // Direct browser download — requires the user to be authenticated via token in Authorization header.
+    // The component handles this with a raw fetch + blob download.
+    window.open('/api/v1/pricing/export', '_blank');
+  },
 };
