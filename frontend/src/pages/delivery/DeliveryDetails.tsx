@@ -92,7 +92,8 @@ export function DeliveryDetails() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState("");
-  const [otp, setOtp] = useState("");
+  const [pickupOtp, setPickupOtp] = useState("");
+  const [deliveryOtp, setDeliveryOtp] = useState("");
 
   const loadDelivery = useCallback(async () => {
     if (!id) return;
@@ -122,30 +123,35 @@ export function DeliveryDetails() {
   const handleAction = async (action: "accept" | "start" | "complete") => {
     if (!delivery) return;
 
+    if (action === "start" && !pickupOtp.trim()) {
+      showErrorToast("Please enter the Pickup OTP");
+      return;
+    }
+
     if (action === "complete") {
+      if (!deliveryOtp.trim()) {
+        showErrorToast("Please enter the Buyer Delivery OTP");
+        return;
+      }
       if (
         !window.confirm(
-          "Are you sure you want to mark this delivery as completed?",
+          "Are you sure you want to verify the buyer OTP and mark this delivery as completed?",
         )
       )
         return;
-    }
-
-    if (action === "start" && !otp.trim()) {
-      showErrorToast("Please enter the Pickup OTP");
-      return;
     }
 
     setUpdating(true);
     const success = await (action === "accept" 
       ? acceptDelivery(delivery.id, notes || undefined)
       : action === "start" 
-      ? startDelivery(delivery.id, notes || undefined, otp)
-      : completeDelivery(delivery.id, notes || undefined));
+      ? startDelivery(delivery.id, notes || undefined, pickupOtp)
+      : completeDelivery(delivery.id, notes || undefined, deliveryOtp));
     if (success) {
       await loadDelivery();
       setNotes("");
-      setOtp("");
+      setPickupOtp("");
+      setDeliveryOtp("");
     }
     setUpdating(false);
   };
@@ -250,7 +256,7 @@ export function DeliveryDetails() {
             </p>
           </div>
           <div
-            className={`px-5 py-2.5 rounded-xl bg-gradient-to-r ${statusConfig.gradient} text-white font-semibold text-sm shadow-lg`}
+            className={`px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r ${statusConfig.gradient} text-white font-semibold text-sm shadow-lg`}
           >
             <StatusIcon className="w-4 h-4 inline mr-2" />
             {statusConfig.label}
@@ -259,7 +265,7 @@ export function DeliveryDetails() {
 
         {/* Progress Steps */}
         <Card className="p-6">
-          <div className="flex items-center justify-between relative">
+          <div className="flex items-start sm:items-center justify-between relative overflow-x-auto pb-1">
             {/* Connection line */}
             <div className="absolute top-5 left-10 right-10 h-0.5 bg-slate-200" />
             <div
@@ -277,7 +283,7 @@ export function DeliveryDetails() {
               return (
                 <div
                   key={step.key}
-                  className="relative z-10 flex flex-col items-center"
+                  className="relative z-10 flex min-w-[72px] flex-col items-center"
                 >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -506,8 +512,8 @@ export function DeliveryDetails() {
                         </p>
                         <input
                           type="text"
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
+                          value={pickupOtp}
+                          onChange={(e) => setPickupOtp(e.target.value)}
                           placeholder="Enter 6-digit OTP"
                           maxLength={6}
                           className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-xl tracking-[0.5em] font-mono"
@@ -516,7 +522,7 @@ export function DeliveryDetails() {
                       </div>
                       <Button
                         onClick={() => handleAction("start")}
-                        disabled={updating || otp.length < 6}
+                        disabled={updating || pickupOtp.length < 6}
                         className="w-full h-12 text-base bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 border-0"
                       >
                         {updating ? "Verifying..." : "🚚 Verify OTP & Start"}
@@ -525,13 +531,32 @@ export function DeliveryDetails() {
                   )}
 
                   {canComplete && (
-                    <Button
-                      onClick={() => handleAction("complete")}
-                      disabled={updating}
-                      className="w-full h-12 text-base bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0"
-                    >
-                      {updating ? "Completing..." : "📦 Mark as Delivered"}
-                    </Button>
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">
+                          Buyer Delivery OTP
+                        </label>
+                        <p className="text-xs text-slate-500 mb-2">
+                          Ask the buyer for the 6-digit OTP shown on their order screen to confirm delivery.
+                        </p>
+                        <input
+                          type="text"
+                          value={deliveryOtp}
+                          onChange={(e) => setDeliveryOtp(e.target.value)}
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-center text-xl tracking-[0.5em] font-mono font-bold"
+                          disabled={updating}
+                        />
+                      </div>
+                      <Button
+                        onClick={() => handleAction("complete")}
+                        disabled={updating || deliveryOtp.length < 6}
+                        className="w-full h-12 text-base bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0 shadow-md"
+                      >
+                        {updating ? "Verifying & Completing..." : "📦 Verify OTP & Complete Delivery"}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </Card>

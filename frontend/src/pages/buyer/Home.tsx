@@ -53,10 +53,18 @@ function ProductMiniCard({ product }: { product: Product }) {
           <img
             src={imageUrl}
             alt={product.name}
+            width="640"
+            height="400"
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <Package className="w-12 h-12 text-slate-300" />
+        )}
+        {product.discountPercent && product.discountPercent > 0 && !isOutOfStock && (
+          <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-green-600 text-white text-[10px] font-bold rounded shadow-sm">
+            {Math.round(product.discountPercent)}% OFF
+          </span>
         )}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
@@ -80,14 +88,26 @@ function ProductMiniCard({ product }: { product: Product }) {
         <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">
           {product.name}
         </h3>
-        <div className="mt-auto pt-2 flex items-center justify-between">
-          <span className="text-[17px] font-bold text-slate-800">
-            {formatPrice(product.price)}
-          </span>
-          <span className="text-xs text-slate-400">per {product.unit}</span>
+        <div className="mt-auto pt-2">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[17px] font-bold text-slate-800">
+              {formatPrice(product.sellingPrice ?? product.price)}
+            </span>
+            <span className="text-xs text-slate-400">/{product.unit}</span>
+            {product.displayPrice && product.displayPrice > (product.sellingPrice ?? product.price) && (
+              <span className="text-xs text-slate-400 line-through">
+                {formatPrice(product.displayPrice)}
+              </span>
+            )}
+          </div>
+          {product.discountAmount && product.discountAmount > 0 && (
+            <p className="text-[10px] text-green-600 font-medium mt-0.5">
+              You save {formatPrice(product.discountAmount)}
+            </p>
+          )}
         </div>
         {product.minOrderQuantity > 1 && (
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 mt-1">
             Min. order: {product.minOrderQuantity} {product.unit}
           </p>
         )}

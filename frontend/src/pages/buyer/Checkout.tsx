@@ -34,12 +34,23 @@ export function Checkout() {
   const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 
   // Calculate totals
-  const { subtotal, itemCount, hasStockIssues } = useMemo(() => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const { subtotal, itemCount, hasStockIssues, totalSavings } = useMemo(() => {
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + ((item.product.sellingPrice ?? item.product.price ?? 0) * item.quantity),
+      0
+    );
+    const totalSavings = cartItems.reduce((sum, item) => {
+      const selling = item.product.sellingPrice ?? item.product.price ?? 0;
+      const display = item.product.displayPrice ?? 0;
+      if (display > selling) {
+        return sum + ((display - selling) * item.quantity);
+      }
+      return sum;
+    }, 0);
     const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasStockIssues = cartItems.some(item => item.product.hasStockIssue);
     
-    return { subtotal, itemCount, hasStockIssues };
+    return { subtotal, itemCount, hasStockIssues, totalSavings };
   }, [cartItems]);
 
   // Load addresses
@@ -446,6 +457,12 @@ export function Checkout() {
                     <span className="text-slate-600">Subtotal ({itemCount} items)</span>
                     <span className="font-semibold text-slate-800">₹{subtotal.toFixed(2)}</span>
                   </div>
+                  {totalSavings > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="font-medium">Discount Savings</span>
+                      <span className="font-semibold">-₹{totalSavings.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Delivery Charges</span>
                     <span className="font-semibold text-green-600">FREE</span>
@@ -456,6 +473,12 @@ export function Checkout() {
                       <span className="text-xl font-bold text-slate-900">₹{subtotal.toFixed(2)}</span>
                     </div>
                   </div>
+                  {totalSavings > 0 && (
+                    <div className="p-2.5 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between text-xs text-green-800 font-semibold">
+                      <span>🎉 You save on this order</span>
+                      <span>₹{totalSavings.toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-slate-200">

@@ -10,7 +10,6 @@ import {
   Clock,
   DollarSign,
   ShoppingCart,
-  Boxes,
   ArrowRight,
   X,
   Zap,
@@ -33,7 +32,7 @@ export function Dashboard() {
     try {
       setLoading(true);
       const response = await dashboardService.getStats();
-      setStats(response.data);
+      setStats(response);
     } catch (error: any) {
       console.error('Error fetching dashboard stats:', error);
       toast.error(error.message || 'Failed to load dashboard data');
@@ -59,46 +58,6 @@ export function Dashboard() {
       </DashboardLayout>
     );
   }
-
-  // Analytics Dashboard Sections
-  const analyticsSections = [
-    {
-      title: 'Deliveries',
-      icon: Package,
-      iconBg: 'bg-purple-50',
-      iconColor: 'text-purple-600',
-      route: '/admin/deliveries',
-      metrics: [
-        { label: 'Pending', value: '23', color: 'text-amber-600' },
-        { label: 'In Transit', value: '18', color: 'text-blue-600' },
-        { label: 'Completed Today', value: '47', color: 'text-emerald-600' },
-      ],
-    },
-    {
-      title: 'Stock',
-      icon: Boxes,
-      iconBg: 'bg-indigo-50',
-      iconColor: 'text-indigo-600',
-      route: '/admin/stock',
-      metrics: [
-        { label: 'Low Stock Items', value: '14', color: 'text-red-600' },
-        { label: 'Total Products', value: '1,247', color: 'text-slate-700' },
-        { label: 'Restock Needed', value: '8', color: 'text-amber-600' },
-      ],
-    },
-    {
-      title: 'Sales',
-      icon: DollarSign,
-      iconBg: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
-      route: '/admin/sales',
-      metrics: [
-        { label: 'Today', value: '₹1,24,680', color: 'text-emerald-600', trend: '+8.4%' },
-        { label: 'This Week', value: '₹8,45,230', color: 'text-slate-700' },
-        { label: 'Active Orders', value: '34', color: 'text-blue-600' },
-      ],
-    },
-  ];
 
   const products = [
     {
@@ -224,9 +183,9 @@ export function Dashboard() {
         )}
 
         {/* Page Header */}
-        <section className="flex items-center justify-between">
-          <div>
-            <h1 className="text-[22px] font-bold text-slate-800">Store Operations & Floor Execution</h1>
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-[22px] font-bold text-slate-800">Store Operations & Floor Execution</h1>
             <p className="text-sm text-slate-400 mt-0.5 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
               FLOOR_ACTION: Active
@@ -234,12 +193,12 @@ export function Dashboard() {
               <span>Last sync: 12:43 PM</span>
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
-            <button className="h-9 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg flex items-center gap-2 transition-all shadow-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <button className="h-10 sm:h-9 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm">
               <Package className="w-4 h-4 text-slate-500" />
               Add Product
             </button>
-            <button className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-sm shadow-blue-200">
+            <button className="h-10 sm:h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm shadow-blue-200">
               <CheckCircle className="w-4 h-4" />
               Mark Payment
             </button>
@@ -247,13 +206,13 @@ export function Dashboard() {
         </section>
 
         {/* Top Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {topMetrics.map((metric, i) => {
             const Icon = metric.icon;
             return (
               <div
                 key={i}
-                className={`bg-white rounded-xl border p-3.5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+                className={`bg-white rounded-xl border p-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 sm:p-3.5 ${
                   metric.highlight
                     ? 'border-amber-200 shadow-amber-50/80 shadow-sm'
                     : 'border-slate-100 shadow-sm'
@@ -294,14 +253,14 @@ export function Dashboard() {
           {/* Left — Product Inventory Table */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             {/* Card Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4 border-b border-slate-100">
               <div>
                 <h2 className="text-[15px] font-semibold text-slate-800">
                   Critical Retail Status / Inventory
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">Live floor stock levels</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 hover:bg-blue-50 rounded-lg transition-colors">
                   Export
                 </button>
@@ -312,16 +271,19 @@ export function Dashboard() {
             </div>
 
             {/* Table Header */}
-            <div className="grid grid-cols-[2fr_1fr_1.2fr_1fr_auto_auto] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="overflow-x-auto">
+            <div className="min-w-[700px] grid grid-cols-[2fr_1fr_1.2fr_1fr_auto_auto] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-100">
               {['Product & SKU', 'Category', 'Qty / Trigger', 'Location', 'Status', ''].map((h, i) => (
                 <div key={i} className="text-[10.5px] font-semibold text-slate-400 uppercase tracking-wider">
                   {h}
                 </div>
               ))}
             </div>
+            </div>
 
             {/* Product Rows */}
-            <div className="divide-y divide-slate-50">
+            <div className="overflow-x-auto">
+            <div className="min-w-[700px] divide-y divide-slate-50">
               {products.map((product, i) => {
                 const pct = Math.round((product.qty / product.trigger) * 100);
                 return (
@@ -371,6 +333,7 @@ export function Dashboard() {
                 View all inventory <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
+          </div>
           </div>
 
           {/* Right Column */}

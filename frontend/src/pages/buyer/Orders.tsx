@@ -19,10 +19,14 @@ import {
 import { fadeVariants, listContainerVariants, listItemVariants } from '../../utils/animations';
 import { formatDate } from '../../utils/date';
 
-const ORDER_STATUS_CONFIG = {
+const ORDER_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'Pending', color: 'yellow', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'blue', icon: CheckCircle },
+  preparing: { label: 'Preparing', color: 'orange', icon: Package },
+  packed: { label: 'Packed', color: 'indigo', icon: Package },
   assigned: { label: 'Assigned', color: 'purple', icon: Truck },
+  in_transit: { label: 'In Transit', color: 'blue', icon: Truck },
+  out_for_delivery: { label: 'Out for Delivery', color: 'blue', icon: Truck },
   delivered: { label: 'Delivered', color: 'green', icon: CheckCircle },
   completed: { label: 'Completed', color: 'green', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'red', icon: XCircle },

@@ -186,11 +186,28 @@ export function ProductDetails() {
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-gray-900">
-                {formatPrice(product.price)}
-              </span>
-              <span className="text-xl text-gray-500">/ {product.unit}</span>
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="text-4xl font-bold text-gray-900">
+                  {formatPrice(product.sellingPrice ?? product.price)}
+                </span>
+                <span className="text-xl text-gray-500">/ {product.unit}</span>
+                {product.displayPrice && product.displayPrice > (product.sellingPrice ?? product.price) && (
+                  <span className="text-xl text-gray-400 line-through">
+                    {formatPrice(product.displayPrice)}
+                  </span>
+                )}
+                {product.discountPercent && product.discountPercent > 0 && (
+                  <span className="px-2 py-0.5 text-sm font-bold text-white bg-green-600 rounded-md">
+                    {Math.round(product.discountPercent)}% OFF
+                  </span>
+                )}
+              </div>
+              {product.discountAmount && product.discountAmount > 0 && (
+                <p className="text-sm text-green-700 font-medium">
+                  You save {formatPrice(product.discountAmount)}
+                </p>
+              )}
             </div>
 
             {/* Stock Status */}

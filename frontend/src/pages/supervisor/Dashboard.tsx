@@ -114,7 +114,7 @@ export function SupervisorDashboard() {
         animate="visible"
       >
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-8 text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-5 sm:p-8 text-white">
           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full translate-y-1/2 -translate-x-1/2" />
           <div className="relative z-10">
@@ -130,10 +130,10 @@ export function SupervisorDashboard() {
               orders needing attention
             </p>
           </div>
-          <div className="relative z-10 mt-4 flex gap-3">
+          <div className="relative z-10 mt-4 flex flex-col sm:flex-row gap-3">
             <Button
               size="sm"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20"
               variant="outline"
               onClick={() => navigate("/supervisor/orders")}
             >
@@ -142,7 +142,7 @@ export function SupervisorDashboard() {
             </Button>
             <Button
               size="sm"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20"
               variant="outline"
               onClick={loadOrders}
             >
@@ -187,7 +187,7 @@ export function SupervisorDashboard() {
                 whileHover={{ y: -2 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="relative overflow-hidden p-5 border-0 shadow-lg">
+                <Card className="relative overflow-hidden p-4 sm:p-5 border-0 shadow-lg">
                   <div
                     className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5`}
                   />
@@ -197,7 +197,7 @@ export function SupervisorDashboard() {
                     >
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-3xl font-bold text-slate-800">
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-800">
                       {stat.value}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 font-medium">
@@ -258,8 +258,8 @@ export function SupervisorDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-slate-800 truncate">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <h3 className="font-semibold text-slate-800 truncate min-w-0">
                             {order.orderNumber
                               ? `Order #${order.orderNumber}`
                               : `#${order.id.slice(0, 8)}`}

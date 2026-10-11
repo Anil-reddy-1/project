@@ -323,11 +323,11 @@ export function SupervisorOrderDetails() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-4xl font-mono font-bold text-purple-700 tracking-[0.3em] bg-white px-6 py-3 rounded-xl border border-purple-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="w-fit max-w-full break-all text-3xl sm:text-4xl font-mono font-bold text-purple-700 tracking-[0.2em] sm:tracking-[0.3em] bg-white px-4 sm:px-6 py-3 rounded-xl border border-purple-200 shadow-sm">
                 {order.pickupOtp}
               </div>
-              <Button variant="outline" size="sm" onClick={copyOtp}>
+              <Button variant="outline" size="sm" onClick={copyOtp} className="w-full sm:w-auto">
                 <Copy className="w-4 h-4 mr-1" />
                 Copy
               </Button>

@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Package, MapPin, CreditCard, FileText, 
   Clock, CheckCircle, Truck, XCircle, User, Phone,
-  ExternalLink, Image as ImageIcon
+  ExternalLink, Image as ImageIcon, KeyRound, Copy
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useOrders } from '../../hooks/useOrders';
@@ -18,6 +18,7 @@ import {
 } from '../../components/ui';
 import { fadeVariants } from '../../utils/animations';
 import { formatDateTime } from '../../utils/date';
+import { showSuccessToast } from '../../utils/toast';
 import { addressService } from '../../services/address.service';
 import { formatCoordinatesWithLabels } from '../../utils/geolocation';
 import type { Order } from '../../services/order.service';
@@ -138,6 +139,55 @@ export function OrderDetails() {
             <p className="text-sm text-slate-500">Order ID: {order.id.slice(0, 8)}...</p>
           </div>
         </div>
+
+        {/* Delivery Verification OTP for Buyer */}
+        {order.deliveryOtp && (
+          <Card className="overflow-hidden border-2 border-indigo-400 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/90 shadow-md">
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-lg">Delivery Verification OTP</h3>
+                    <Badge variant="default" className="text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0">
+                      Share with Delivery Partner
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    Share this 6-digit OTP with your delivery partner upon arrival to confirm and receive your order.
+                  </p>
+                  {order.deliveryOtpExpiresAt && (
+                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      Valid until {formatDateTime(order.deliveryOtpExpiresAt)}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border-2 border-indigo-200 shadow-sm self-start sm:self-auto">
+                  <span className="font-mono text-2xl font-black tracking-[0.25em] text-indigo-700">
+                    {order.deliveryOtp}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (order?.deliveryOtp) {
+                        navigator.clipboard.writeText(order.deliveryOtp);
+                        showSuccessToast("Delivery OTP copied to clipboard");
+                      }
+                    }}
+                    title="Copy OTP"
+                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 ml-1"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Order Details */}
@@ -358,12 +408,22 @@ export function OrderDetails() {
                     </div>
                   )}
                   
-                  {(order.orderStatus === 'assigned' || order.orderStatus === 'delivered' || order.orderStatus === 'completed') && (
+                  {(order.orderStatus === 'assigned' || order.orderStatus === 'in_transit' || order.orderStatus === 'delivered' || order.orderStatus === 'completed') && (
                     <div className="flex gap-3">
                       <div className="w-2 h-2 rounded-full bg-purple-600 mt-2"></div>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">Delivery Assigned</p>
                         <p className="text-xs text-slate-500">Assigned to delivery partner</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(order.orderStatus === 'in_transit' || order.orderStatus === 'delivered' || order.orderStatus === 'completed' || Boolean(order.deliveryOtp)) && (
+                    <div className="flex gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-600 mt-2"></div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Picked Up & Out for Delivery</p>
+                        <p className="text-xs text-slate-500">Order is on its way with delivery partner</p>
                       </div>
                     </div>
                   )}

@@ -114,12 +114,13 @@ export function Products() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 mb-2">Wholesale catalog</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">Find what your business needs</h1>
+            <p className="text-slate-500 mt-2">
               Browse our catalog of {pagination?.total || 0} products
             </p>
           </div>
@@ -128,10 +129,11 @@ export function Products() {
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${
+              aria-label="Grid view"
+              className={`p-2.5 rounded-xl transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
               title="Grid view"
             >
@@ -139,10 +141,11 @@ export function Products() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${
+              aria-label="List view"
+              className={`p-2.5 rounded-xl transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
               title="List view"
             >
@@ -154,7 +157,7 @@ export function Products() {
         {/* Search Bar */}
         <div className="max-w-2xl">
           <SearchBar
-            placeholder="Search products by name or SKU..."
+            placeholder="Search products by name or SKU…"
             value={searchQuery}
             onChange={setSearchQuery}
             icon={<Search className="w-5 h-5" />}
@@ -163,15 +166,15 @@ export function Products() {
 
         {/* Category Filter */}
         {availableCategories.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Categories</h3>
+          <div className="rounded-2xl bg-white border border-slate-200/80 p-4 sm:p-5 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">Shop by category</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleCategorySelect(null)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === null
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ?                     'bg-slate-900 text-white shadow-sm'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
                 }`}
               >
                 All Products
@@ -182,8 +185,8 @@ export function Products() {
                   onClick={() => handleCategorySelect(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ?                       'bg-slate-900 text-white shadow-sm'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   {category}
@@ -258,7 +261,7 @@ export function Products() {
                       <div key={page} className="flex items-center gap-2">
                         {/* Add ellipsis */}
                         {idx > 0 && arr[idx - 1] !== page - 1 && (
-                          <span className="text-gray-400">...</span>
+                          <span className="text-gray-400">…</span>
                         )}
                         <button
                           onClick={() => handlePageChange(page)}
