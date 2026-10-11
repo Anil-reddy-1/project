@@ -101,9 +101,24 @@ const schemas = {
 
   // Pricing Management
   updatePrice: Joi.object({
-    newPrice: Joi.number().positive().precision(2).required(),
-    reason: Joi.string().max(255).optional(),
-    effectiveDate: Joi.date().iso().optional(),
+    costPrice: Joi.number().min(0).precision(2).optional(),
+    displayPrice: Joi.number().positive().precision(2).optional(),
+    sellingPrice: Joi.number().positive().precision(2).optional(),
+    minimumMarginPercent: Joi.number().min(0).max(100).precision(2).optional(),
+    reason: Joi.string().max(500).optional(),
+  }).min(1),
+
+  bulkUpdatePrice: Joi.object({
+    productIds: Joi.array().items(Joi.string().uuid()).min(1).required(),
+    adjustmentType: Joi.string().valid('percentage', 'flat').required(),
+    adjustmentValue: Joi.number().required(),
+    applyTo: Joi.string().valid('selling', 'display', 'both', 'retail').default('selling'),
+    reason: Joi.string().max(500).optional(),
+  }),
+
+  suggestSellingPrice: Joi.object({
+    costPrice: Joi.number().positive().precision(2).required(),
+    targetMarginPercent: Joi.number().min(0).max(99.99).precision(2).required(),
   }),
 
   // Order Management

@@ -60,11 +60,35 @@ const createProductSchema = Joi.object({
       'number.min': 'Min order quantity must be at least 1'
     }),
   
-  price: Joi.number().min(0).required()
+  price: Joi.number().min(0).optional()
     .messages({
       'number.base': 'Price must be a number',
-      'number.min': 'Price cannot be negative',
-      'any.required': 'Price is required'
+      'number.min': 'Price cannot be negative'
+    }),
+  
+  sellingPrice: Joi.number().min(0).optional()
+    .messages({
+      'number.base': 'Selling price must be a number',
+      'number.min': 'Selling price cannot be negative'
+    }),
+
+  costPrice: Joi.number().min(0).allow(null, '').optional()
+    .messages({
+      'number.base': 'Cost price must be a number',
+      'number.min': 'Cost price cannot be negative'
+    }),
+
+  displayPrice: Joi.number().min(0).allow(null, '').optional()
+    .messages({
+      'number.base': 'Display price must be a number',
+      'number.min': 'Display price cannot be negative'
+    }),
+
+  minimumMarginPercent: Joi.number().min(0).max(100).allow(null, '').optional()
+    .messages({
+      'number.base': 'Minimum margin percent must be a number',
+      'number.min': 'Minimum margin percent cannot be negative',
+      'number.max': 'Minimum margin percent cannot exceed 100'
     }),
   
   status: Joi.string().valid('active', 'inactive').default('active')
@@ -128,6 +152,31 @@ const updateProductSchema = Joi.object({
       'number.min': 'Price cannot be negative'
     }),
   
+  sellingPrice: Joi.number().min(0).optional()
+    .messages({
+      'number.base': 'Selling price must be a number',
+      'number.min': 'Selling price cannot be negative'
+    }),
+
+  costPrice: Joi.number().min(0).allow(null, '').optional()
+    .messages({
+      'number.base': 'Cost price must be a number',
+      'number.min': 'Cost price cannot be negative'
+    }),
+
+  displayPrice: Joi.number().min(0).allow(null, '').optional()
+    .messages({
+      'number.base': 'Display price must be a number',
+      'number.min': 'Display price cannot be negative'
+    }),
+
+  minimumMarginPercent: Joi.number().min(0).max(100).allow(null, '').optional()
+    .messages({
+      'number.base': 'Minimum margin percent must be a number',
+      'number.min': 'Minimum margin percent cannot be negative',
+      'number.max': 'Minimum margin percent cannot exceed 100'
+    }),
+
   status: Joi.string().valid('active', 'inactive')
     .messages({
       'any.only': 'Status must be either active or inactive'
