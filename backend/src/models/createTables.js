@@ -133,6 +133,19 @@ async function initializeTables() {
 
     await client.query(createProductImagesTableQuery);
 
+    // Create wishlists table
+    const createWishlistsTableQuery = `
+      CREATE TABLE IF NOT EXISTS wishlists (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, product_id)
+      );
+    `;
+
+    await client.query(createWishlistsTableQuery);
+
     // Create Price History table
     const createPriceHistoryTableQuery = `
       CREATE TABLE IF NOT EXISTS price_history (
@@ -169,6 +182,8 @@ async function initializeTables() {
         order_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         pickup_otp VARCHAR(6),
         pickup_otp_expires_at TIMESTAMPTZ,
+        delivery_otp VARCHAR(6),
+        delivery_otp_expires_at TIMESTAMPTZ,
         status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
         delivery_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         delivery_address JSONB,
@@ -409,6 +424,8 @@ async function initializeTables() {
     await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'COD';");
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_otp VARCHAR(6);');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_otp_expires_at TIMESTAMPTZ;');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_otp VARCHAR(6);');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_otp_expires_at TIMESTAMPTZ;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
@@ -463,12 +480,31 @@ async function initializeTables() {
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS wholesale_price DECIMAL(15,2);");
     await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price DECIMAL(15,2);");
 
+    // ── New 4-field pricing model ───────────────────────────────────────────
+    // display_price = MRP / reference price shown with strikethrough
+    // selling_price = actual price charged to buyer (was: price / retail_price)
+    // minimum_margin_percent = floor margin threshold for alerts
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS display_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS selling_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS minimum_margin_percent DECIMAL(5,2);");
+
+    // Backfill: where selling_price is null, copy from price (existing selling price field)
+    await client.query(`
+      UPDATE products
+      SET selling_price = price
+      WHERE selling_price IS NULL AND price > 0;
+    `);
+
     // Add pricing history columns
     await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_wholesale DECIMAL(15,2);");
     await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_wholesale DECIMAL(15,2);");
     await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_cost DECIMAL(15,2);");
     await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_cost DECIMAL(15,2);");
     await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS change_type VARCHAR(50) DEFAULT 'manual';");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_display_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_display_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS previous_selling_price DECIMAL(15,2);");
+    await client.query("ALTER TABLE price_history ADD COLUMN IF NOT EXISTS new_selling_price DECIMAL(15,2);");
 
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
@@ -514,6 +550,8 @@ async function initializeTables() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_saved_for_later_product_id ON saved_for_later(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_user_addresses_is_default ON user_addresses(user_id, is_default);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_wishlists_user_id ON wishlists(user_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_wishlists_product_id ON wishlists(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_images_is_primary ON product_images(product_id, is_primary);');
 

@@ -26,6 +26,12 @@ This directory contains SQL migration files for database schema changes.
   - Optimized indexes for cart queries
   - Cascade deletes for data integrity
 
+### 007_wishlists.sql
+- **Purpose**: Create the wishlist table for databases initialized before
+  wishlist support was added
+- **Tables Created**:
+  - `wishlists` - Products saved by a user
+
 ## Running Migrations
 
 ### Prerequisites
@@ -64,6 +70,14 @@ SELECT table_name
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
 AND table_name IN ('cart_items', 'saved_for_later', 'user_addresses');
+```
+
+Check the wishlist table specifically:
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_name = 'wishlists';
 ```
 
 ## Troubleshooting
