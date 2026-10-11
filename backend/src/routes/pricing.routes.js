@@ -8,9 +8,15 @@ const { validateRequest, schemas } = require('../middleware/validateRequest');
 /**
  * Pricing Routes
  * Base path: /api/v1/pricing
+ *
+ * Pricing model:
+ *   cost_price          → private (admin only, never exposed to buyers)
+ *   display_price       → MRP / reference price (strikethrough in buyer UI)
+ *   selling_price       → actual buyer-facing price
+ *   minimum_margin_pct  → floor threshold for margin alerts
  */
 
-// GET /pricing/stats - Get pricing statistics
+// GET /pricing/stats — Dashboard summary stats
 router.get(
   '/stats',
   authenticate,
@@ -18,7 +24,7 @@ router.get(
   pricingController.getPricingStats
 );
 
-// GET /pricing/export - Export pricing data to CSV
+// GET /pricing/export — Download pricing CSV (admin only, includes cost price)
 router.get(
   '/export',
   authenticate,
@@ -26,7 +32,16 @@ router.get(
   pricingController.exportPricing
 );
 
-// PUT /pricing/bulk - Bulk update prices
+// POST /pricing/suggest — Calculate suggested selling price from cost + target margin
+router.post(
+  '/suggest',
+  authenticate,
+  requirePermission('pricing', 'view'),
+  validateRequest(schemas.suggestSellingPrice),
+  pricingController.suggestSellingPrice
+);
+
+// PUT /pricing/bulk — Bulk adjust selling_price and/or display_price
 router.put(
   '/bulk',
   authenticate,
@@ -35,7 +50,7 @@ router.put(
   pricingController.bulkUpdatePrices
 );
 
-// GET /pricing - Get all product pricing
+// GET /pricing — All product pricing (admin view, includes cost_price)
 router.get(
   '/',
   authenticate,
@@ -43,7 +58,7 @@ router.get(
   pricingController.getAllPricing
 );
 
-// GET /pricing/:id/history - Get price change history
+// GET /pricing/:id/history — Price change audit log
 router.get(
   '/:id/history',
   authenticate,
@@ -51,7 +66,7 @@ router.get(
   pricingController.getPriceHistory
 );
 
-// PUT /pricing/:id - Update product price
+// PUT /pricing/:id — Update cost, display, or selling price for a product
 router.put(
   '/:id',
   authenticate,

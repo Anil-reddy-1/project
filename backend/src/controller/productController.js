@@ -56,7 +56,7 @@ async function getAllProducts(req, res) {
       sortOrder
     };
     
-    const result = await productModel.findAllProducts(filters);
+    const result = await productModel.findAllProducts(filters, true);
     
     res.status(200).json({
       success: true,
