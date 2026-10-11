@@ -2,6 +2,22 @@
 
 A modern, comprehensive wholesale & retail bulk commerce platform built with React, TypeScript, and Tailwind CSS.
 
+## 📌 About the Project
+
+Enterprise Operations Manager is an admin dashboard for managing wholesale and
+retail operations in one place. It provides role-based access to users, staff,
+inventory, pricing, deliveries, debts, and operational reports through a
+responsive interface.
+
+## ⚙️ How It Works
+
+The Vite-powered React application renders the admin screens and uses Firebase
+Authentication for sign-in and identity management. After authentication,
+requests go through the shared Axios client in `src/services/api.service.ts`,
+which adds the Firebase ID token and calls the backend REST API. The backend
+enforces permissions and returns the requested operational data, while the
+frontend handles loading, errors, filtering, pagination, and status updates.
+
 ## 🎨 Design System
 
 Based on **Precision Enterprise Ops** design language from Stitch:
@@ -84,8 +100,9 @@ VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
 VITE_FIREBASE_PROJECT_ID=your_project_id
 
-# API Configuration
-VITE_API_BASE_URL=http://localhost:3000/api/v1
+# Backend API configuration
+# Include the API version in the base URL.
+VITE_BACKEND_URL=http://localhost:5000/api/v1
 ```
 
 ## 📁 Project Structure
@@ -275,47 +292,32 @@ roles.view, roles.manage
 
 ## 🔄 API Integration
 
-See `API_REFERENCE.md` in the project root for complete API documentation.
+The frontend uses the shared client in `src/services/api.service.ts`. Set
+`VITE_BACKEND_URL` to the backend API base URL, including `/api/v1`, before
+starting the development server.
 
 ### Example API Call
 
 ```typescript
-import axios from 'axios';
+import { api } from './services/api.service';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// The shared client adds the Firebase ID token and configures request headers.
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+// Authentication is handled by api.service.ts.
 // Fetch users
-const getUsers = async (params) => {
-  const response = await api.get('/users', { params });
-  return response.data;
+const getUsers = async (params?: Record<string, unknown>) => {
+  return api.get('/users', params);
 };
 ```
 
-## 🧪 Testing
+## 🧪 Validation
 
 ```bash
-# Run tests
-npm run test
+# Check code style
+npm run lint
 
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
+# Type-check and create a production build
+npm run build
 ```
 
 ## 📱 Responsive Breakpoints
