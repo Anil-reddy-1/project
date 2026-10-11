@@ -22,6 +22,8 @@ function mapOrderRow(row) {
     orderStatus: row.order_status,
     pickupOtp: row.pickup_otp || null,
     pickupOtpExpiresAt: row.pickup_otp_expires_at || null,
+    deliveryOtp: row.delivery_otp || null,
+    deliveryOtpExpiresAt: row.delivery_otp_expires_at || null,
     deliveryAddress: row.delivery_address,
     notes: row.notes,
     createdAt: row.created_at,

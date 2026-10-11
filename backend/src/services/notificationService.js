@@ -77,17 +77,21 @@ async function sendDeliveryAssigned(partnerId, deliveryData) {
  * Send delivery status update notification to buyer
  */
 async function sendDeliveryStatusUpdate(userId, status, deliveryData) {
+  const inTransitMsg = deliveryData.deliveryOtp
+    ? `Your order #${deliveryData.orderNumber} has been picked up and is out for delivery! Share OTP ${deliveryData.deliveryOtp} with your delivery partner to confirm delivery.`
+    : `Your order #${deliveryData.orderNumber} is out for delivery!`;
+
   const messages = {
     assigned: `Your order #${deliveryData.orderNumber} has been assigned to a delivery partner.`,
     accepted: `Your delivery partner has accepted order #${deliveryData.orderNumber}.`,
-    in_transit: `Your order #${deliveryData.orderNumber} is out for delivery!`,
+    in_transit: inTransitMsg,
     delivered: `Your order #${deliveryData.orderNumber} has been delivered successfully.`
   };
   
   const titles = {
     assigned: 'Order Assigned',
     accepted: 'Delivery Accepted',
-    in_transit: 'Out for Delivery',
+    in_transit: 'Order Picked Up - Out for Delivery',
     delivered: 'Order Delivered'
   };
   
@@ -100,6 +104,7 @@ async function sendDeliveryStatusUpdate(userId, status, deliveryData) {
       deliveryId: deliveryData.id,
       orderId: deliveryData.orderId,
       orderNumber: deliveryData.orderNumber,
+      deliveryOtp: deliveryData.deliveryOtp,
       status
     }
   );

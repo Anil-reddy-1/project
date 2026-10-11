@@ -67,7 +67,8 @@ async function placeOrder(userId, firebaseUid, { addressId, paymentMethod = 'COD
     const orderItemsData = [];
     
     for (const cartItem of cartItems) {
-      const itemTotal = parseFloat(cartItem.product.price) * cartItem.quantity;
+      const unitPrice = parseFloat(cartItem.product.sellingPrice || cartItem.product.price);
+      const itemTotal = unitPrice * cartItem.quantity;
       totalAmount += itemTotal;
       
       orderItemsData.push({
@@ -75,7 +76,7 @@ async function placeOrder(userId, firebaseUid, { addressId, paymentMethod = 'COD
         productName: cartItem.product.name,
         productSku: cartItem.product.sku,
         quantity: cartItem.quantity,
-        unitPrice: parseFloat(cartItem.product.price),
+        unitPrice,
         totalPrice: itemTotal
       });
     }
@@ -149,8 +150,20 @@ async function getOrderDetails(orderId, userId, userRole) {
     throw new NotFoundError(`Order with ID '${orderId}' not found.`, 'Order');
   }
   
-  // Permission check: admin and supervisor can view all, buyer can only view own
-  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId) {
+  // Permission check: admin/supervisor view all, buyer views own, assigned delivery partner views assigned order
+  let isAssignedDeliveryPartner = false;
+  if (userRole === 'delivery') {
+    try {
+      const delivery = await deliveryModel.findDeliveryByOrderId(order.id);
+      if (delivery && delivery.deliveryPartnerId === userId) {
+        isAssignedDeliveryPartner = true;
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
+  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId && !isAssignedDeliveryPartner) {
     throw new ForbiddenError('You do not have permission to view this order.');
   }
   
@@ -158,6 +171,12 @@ async function getOrderDetails(orderId, userId, userRole) {
   if (userRole !== 'supervisor' && userRole !== 'admin') {
     order.pickupOtp = null;
     order.pickupOtpExpiresAt = null;
+  }
+
+  // Hide delivery OTP from delivery partner (buyer, admin, and supervisor see it)
+  if (userRole === 'delivery') {
+    order.deliveryOtp = null;
+    order.deliveryOtpExpiresAt = null;
   }
   
   // Attach delivery partner details if assigned
@@ -191,8 +210,20 @@ async function getOrderByNumber(orderNumber, userId, userRole) {
     throw new NotFoundError(`Order with number '${orderNumber}' not found.`, 'Order');
   }
   
-  // Permission check
-  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId) {
+  // Permission check: admin/supervisor view all, buyer views own, assigned delivery partner views assigned order
+  let isAssignedDeliveryPartner = false;
+  if (userRole === 'delivery') {
+    try {
+      const delivery = await deliveryModel.findDeliveryByOrderId(order.id);
+      if (delivery && delivery.deliveryPartnerId === userId) {
+        isAssignedDeliveryPartner = true;
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
+  if (userRole !== 'admin' && userRole !== 'supervisor' && order.userId !== userId && !isAssignedDeliveryPartner) {
     throw new ForbiddenError('You do not have permission to view this order.');
   }
   
@@ -211,6 +242,18 @@ async function getOrderByNumber(orderNumber, userId, userRole) {
     } catch (err) {
       console.error("Failed to fetch delivery details:", err);
     }
+  }
+
+  // Hide pickup OTP from non-supervisor roles
+  if (userRole !== 'supervisor' && userRole !== 'admin') {
+    order.pickupOtp = null;
+    order.pickupOtpExpiresAt = null;
+  }
+
+  // Hide delivery OTP from delivery partner
+  if (userRole === 'delivery') {
+    order.deliveryOtp = null;
+    order.deliveryOtpExpiresAt = null;
   }
   
   return order;
@@ -387,16 +430,50 @@ async function verifyPickupOtp(orderId, otp, deliveryPartnerId) {
     throw new BadRequestError('Invalid OTP. Please check and try again.');
   }
   
-  // Clear OTP and mark as verified (notes updated)
+  // Generate 6-digit delivery OTP for buyer verification
+  const deliveryOtp = String(Math.floor(100000 + Math.random() * 900000));
+  const deliveryOtpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  // Clear pickup OTP, set buyer delivery OTP, and update order status to in_transit
   const query = `
     UPDATE orders
-    SET pickup_otp = NULL, pickup_otp_expires_at = NULL,
-        notes = COALESCE(notes || E'\n', '') || $1, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $2
+    SET pickup_otp = NULL, 
+        pickup_otp_expires_at = NULL,
+        delivery_otp = $1,
+        delivery_otp_expires_at = $2,
+        order_status = 'in_transit',
+        notes = COALESCE(notes || E'\n', '') || $3, 
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $4
     RETURNING *;
   `;
-  const result = await pool.query(query, [`OTP verified by delivery partner.`, orderId]);
-  return orderModel.mapOrderRow(result.rows[0]);
+  const result = await pool.query(query, [
+    deliveryOtp,
+    deliveryOtpExpiresAt,
+    'Order picked up by delivery partner. Buyer delivery OTP generated.',
+    orderId
+  ]);
+  const updatedOrder = orderModel.mapOrderRow(result.rows[0]);
+
+  // Sync delivery record if exists
+  try {
+    const delivery = await deliveryModel.findDeliveryByOrderId(orderId);
+    if (delivery && delivery.status !== 'in_transit') {
+      await deliveryModel.updateDeliveryStatus(delivery.id, 'in_transit', deliveryPartnerId, 'Order picked up by partner', pool);
+      await deliveryModel.createStatusHistory(delivery.id, 'in_transit', deliveryPartnerId, 'Out for delivery', pool);
+    }
+  } catch (deliveryErr) {
+    console.error('Failed to sync delivery status during pickup:', deliveryErr);
+  }
+
+  // Notify buyer with the delivery verification OTP
+  notificationService.sendDeliveryStatusUpdate(order.userId, 'in_transit', {
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    deliveryOtp
+  }).catch(err => console.error('Failed to send pickup notification:', err));
+
+  return updatedOrder;
 }
 
 /**

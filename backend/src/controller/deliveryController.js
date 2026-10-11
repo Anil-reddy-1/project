@@ -325,10 +325,10 @@ async function startDelivery(req, res, next) {
 async function completeDelivery(req, res, next) {
   try {
     const { id } = req.params;
-    const { notes } = req.body;
+    const { notes, otp } = req.body;
     const partnerId = req.user.dbId;
     
-    const delivery = await deliveryService.completeDelivery(id, partnerId, notes);
+    const delivery = await deliveryService.completeDelivery(id, partnerId, notes, otp);
     
     logger.info('Delivery completed', {
       deliveryId: id,
@@ -355,12 +355,12 @@ async function completeDelivery(req, res, next) {
 /**
  * Update delivery status (generic)
  * PATCH /api/v1/deliveries/:id/status
- * Body: { status, notes? }
+ * Body: { status, notes?, otp? }
  */
 async function updateDeliveryStatus(req, res, next) {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, otp } = req.body;
     const userId = req.user.dbId;
     const userRole = req.user.role;
     
@@ -373,7 +373,8 @@ async function updateDeliveryStatus(req, res, next) {
       status,
       userId,
       userRole,
-      notes
+      notes,
+      otp
     );
     
     logger.info('Delivery status updated', {

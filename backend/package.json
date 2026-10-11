@@ -12,6 +12,7 @@
     "seed:admin": "node scripts/seedAdmin.js",
     "migrate": "node scripts/runMigration.js",
     "migrate:products": "node scripts/runMigration.js 001_unified_products_migration.sql",
+    "migrate:wishlist": "node scripts/runMigration.js 007_wishlists.sql",
     "migrate:cart": "node scripts/migrateCart.js",
     "test:cloudinary": "node scripts/testCloudinary.js",
     "test": "jest --forceExit --detectOpenHandles",

@@ -273,25 +273,48 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
       throw new NotFoundError('Order not found', 'Order');
     }
 
-    if (!otp) {
-      throw new BadRequestError('Pickup OTP is required to start delivery');
-    }
-
-    if (order.pickupOtp !== otp) {
-      throw new BadRequestError('Invalid Pickup OTP');
+    // Verify supervisor pickup OTP if one was generated
+    if (order.pickupOtp) {
+      if (!otp) {
+        throw new BadRequestError('Pickup OTP is required to start delivery');
+      }
+      if (order.pickupOtpExpiresAt && new Date(order.pickupOtpExpiresAt) < new Date()) {
+        throw new BadRequestError('Pickup OTP has expired. Please ask the supervisor to re-pack.');
+      }
+      if (order.pickupOtp !== otp.trim()) {
+        throw new BadRequestError('Invalid Pickup OTP');
+      }
     }
     
     // Check current status
     if (delivery.status !== 'accepted') {
       throw new BadRequestError(`Cannot start delivery with status '${delivery.status}'. Only accepted deliveries can be started.`);
     }
+
+    // Generate 6-digit delivery OTP for buyer verification upon arrival
+    const deliveryOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const deliveryOtpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     
-    // Update to in_transit
+    // Update order: clear pickup OTP, set buyer delivery OTP, update status to in_transit
+    await client.query(
+      `UPDATE orders 
+       SET pickup_otp = NULL, 
+           pickup_otp_expires_at = NULL,
+           delivery_otp = $1, 
+           delivery_otp_expires_at = $2,
+           order_status = 'in_transit',
+           notes = COALESCE(notes || E'\n', '') || $3, 
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $4`,
+      [deliveryOtp, deliveryOtpExpiresAt, 'Order picked up by delivery partner. Buyer delivery OTP generated.', delivery.orderId]
+    );
+
+    // Update delivery to in_transit
     const updatedDelivery = await deliveryModel.updateDeliveryStatus(
       deliveryId,
       'in_transit',
       partnerId,
-      notes || 'Delivery started',
+      notes || 'Delivery started / Order picked up',
       client
     );
     
@@ -305,6 +328,14 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
     );
     
     await client.query('COMMIT');
+
+    // Notify buyer with the delivery verification OTP
+    notificationService.sendDeliveryStatusUpdate(order.userId, 'in_transit', {
+      id: deliveryId,
+      orderId: delivery.orderId,
+      orderNumber: order.orderNumber,
+      deliveryOtp
+    }).catch(err => console.error('Failed to send pickup notification:', err));
     
     return updatedDelivery;
   } catch (error) {
@@ -317,11 +348,12 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
 
 /**
  * Complete delivery (delivery partner)
+ * - Verifies buyer OTP with delivery partner
  * - Mark delivery as delivered
  * - Updates status from 'in_transit' to 'delivered'
- * - IMPORTANT: Syncs order status to 'delivered' (order-delivery synchronization)
+ * - Syncs order status to 'delivered'
  */
-async function completeDelivery(deliveryId, partnerId, notes = null) {
+async function completeDelivery(deliveryId, partnerId, notes = null, otp = null) {
   const client = await pool.connect();
   
   try {
@@ -342,6 +374,25 @@ async function completeDelivery(deliveryId, partnerId, notes = null) {
     if (delivery.status !== 'in_transit') {
       throw new BadRequestError(`Cannot complete delivery with status '${delivery.status}'. Only in-transit deliveries can be completed.`);
     }
+
+    // Fetch associated order to verify buyer delivery OTP
+    const order = await orderModel.findOrderById(delivery.orderId);
+    if (!order) {
+      throw new NotFoundError('Order not found', 'Order');
+    }
+
+    // Verify OTP between buyer and delivery partner
+    if (order.deliveryOtp) {
+      if (!otp) {
+        throw new BadRequestError('Buyer Delivery OTP is required to complete delivery');
+      }
+      if (order.deliveryOtpExpiresAt && new Date(order.deliveryOtpExpiresAt) < new Date()) {
+        throw new BadRequestError('Delivery OTP has expired. Please contact support.');
+      }
+      if (order.deliveryOtp !== otp.trim()) {
+        throw new BadRequestError('Invalid Buyer Delivery OTP. Please verify with the customer and try again.');
+      }
+    }
     
     // Update to delivered
     const updatedDelivery = await deliveryModel.updateDeliveryStatus(
@@ -352,10 +403,16 @@ async function completeDelivery(deliveryId, partnerId, notes = null) {
       client
     );
     
-    // Sync order status to delivered (Order-Delivery Status Synchronization)
+    // Sync order status to delivered, clear delivery_otp
     await client.query(
-      `UPDATE orders SET order_status = 'delivered', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [delivery.orderId]
+      `UPDATE orders 
+       SET order_status = 'delivered', 
+           delivery_otp = NULL, 
+           delivery_otp_expires_at = NULL, 
+           notes = COALESCE(notes || E'\n', '') || $1,
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2`,
+      ['Delivery completed with buyer OTP verification.', delivery.orderId]
     );
     
     // Create status history
@@ -363,21 +420,18 @@ async function completeDelivery(deliveryId, partnerId, notes = null) {
       deliveryId,
       'delivered',
       partnerId,
-      notes || 'Delivery completed successfully',
+      notes || 'Delivery completed successfully with buyer OTP verification',
       client
     );
     
     await client.query('COMMIT');
     
     // Send notification to buyer (non-blocking)
-    const order = await orderModel.findOrderById(delivery.orderId);
-    if (order) {
-      notificationService.sendDeliveryStatusUpdate(order.userId, 'delivered', {
-        id: deliveryId,
-        orderId: delivery.orderId,
-        orderNumber: delivery.orderNumber
-      }).catch(err => console.error('Failed to send delivery completed notification:', err));
-    }
+    notificationService.sendDeliveryStatusUpdate(order.userId, 'delivered', {
+      id: deliveryId,
+      orderId: delivery.orderId,
+      orderNumber: order.orderNumber
+    }).catch(err => console.error('Failed to send delivery completed notification:', err));
     
     return updatedDelivery;
   } catch (error) {
@@ -393,7 +447,7 @@ async function completeDelivery(deliveryId, partnerId, notes = null) {
  * - Validates status transitions
  * - Updates order status accordingly
  */
-async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, notes = null) {
+async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, notes = null, otp = null) {
   const client = await pool.connect();
   
   try {
@@ -433,6 +487,41 @@ async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, not
     if (!allowedTransitions[currentStatus].includes(newStatus) && userRole !== 'admin') {
       throw new BadRequestError(`Cannot change delivery status from ${currentStatus} to ${newStatus}`);
     }
+
+    const order = await orderModel.findOrderById(delivery.orderId);
+
+    // If transitioning to in_transit, generate buyer delivery OTP if not already set
+    let generatedDeliveryOtp = null;
+    if (newStatus === 'in_transit' && order) {
+      generatedDeliveryOtp = order.deliveryOtp || String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpires = order.deliveryOtpExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await client.query(
+        `UPDATE orders 
+         SET pickup_otp = NULL, 
+             pickup_otp_expires_at = NULL,
+             delivery_otp = $1, 
+             delivery_otp_expires_at = $2,
+             order_status = 'in_transit',
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $3`,
+        [generatedDeliveryOtp, otpExpires, delivery.orderId]
+      );
+    }
+
+    // If transitioning to delivered, verify buyer delivery OTP
+    if (newStatus === 'delivered' && order && userRole !== 'admin') {
+      if (order.deliveryOtp) {
+        if (!otp) {
+          throw new BadRequestError('Buyer Delivery OTP is required to complete delivery');
+        }
+        if (order.deliveryOtpExpiresAt && new Date(order.deliveryOtpExpiresAt) < new Date()) {
+          throw new BadRequestError('Delivery OTP has expired. Please contact support.');
+        }
+        if (order.deliveryOtp !== otp.trim()) {
+          throw new BadRequestError('Invalid Buyer Delivery OTP. Please verify with the customer and try again.');
+        }
+      }
+    }
     
     // Update delivery status
     const updatedDelivery = await deliveryModel.updateDeliveryStatus(
@@ -444,16 +533,23 @@ async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, not
     );
     
     // Update order status based on delivery status (Order-Delivery Status Synchronization)
-    // Only sync major milestones to keep order status customer-focused
     let orderStatus = null;
     if (newStatus === 'assigned') {
-      orderStatus = 'assigned';  // Partner assigned to delivery
+      orderStatus = 'assigned';
     } else if (newStatus === 'delivered') {
-      orderStatus = 'delivered';  // Delivery completed
+      orderStatus = 'delivered';
+      await client.query(
+        `UPDATE orders 
+         SET order_status = 'delivered', 
+             delivery_otp = NULL, 
+             delivery_otp_expires_at = NULL, 
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [delivery.orderId]
+      );
     }
-    // Note: 'accepted' and 'in_transit' are partner-specific states that don't update order status
     
-    if (orderStatus) {
+    if (orderStatus && newStatus !== 'delivered') {
       await client.query(
         `UPDATE orders SET order_status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
         [orderStatus, delivery.orderId]
@@ -470,6 +566,21 @@ async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, not
     );
     
     await client.query('COMMIT');
+
+    if (newStatus === 'in_transit' && order && generatedDeliveryOtp) {
+      notificationService.sendDeliveryStatusUpdate(order.userId, 'in_transit', {
+        id: deliveryId,
+        orderId: delivery.orderId,
+        orderNumber: order.orderNumber,
+        deliveryOtp: generatedDeliveryOtp
+      }).catch(err => console.error('Failed to send pickup notification:', err));
+    } else if (newStatus === 'delivered' && order) {
+      notificationService.sendDeliveryStatusUpdate(order.userId, 'delivered', {
+        id: deliveryId,
+        orderId: delivery.orderId,
+        orderNumber: order.orderNumber
+      }).catch(err => console.error('Failed to send delivery completed notification:', err));
+    }
     
     return updatedDelivery;
   } catch (error) {

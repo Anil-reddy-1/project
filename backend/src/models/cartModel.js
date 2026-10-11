@@ -54,7 +54,9 @@ async function getUserCart(userId) {
       p.quantity as available_quantity,
       p.unit,
       p.min_order_quantity,
-      p.price,
+      COALESCE(p.selling_price, p.price) as price,
+      p.selling_price,
+      p.display_price,
       p.status,
       p.primary_image_url,
       CASE
@@ -89,29 +91,42 @@ async function getUserCart(userId) {
   
   const result = await pool.query(query, [userId]);
   
-  return result.rows.map(row => ({
-    cartItemId: row.cart_item_id,
-    quantity: parseInt(row.cart_quantity, 10),
-    addedAt: row.added_at,
-    updatedAt: row.updated_at,
-    product: {
-      id: row.id,
-      sku: row.sku,
-      name: row.name,
-      description: row.description,
-      categoryTags: row.category_tags || [],
-      availableQuantity: parseInt(row.available_quantity, 10),
-      unit: row.unit,
-      minOrderQuantity: parseInt(row.min_order_quantity, 10),
-      price: parseFloat(row.price),
-      status: row.status,
-      primaryImageUrl: row.primary_image_url,
-      stockStatus: row.stock_status,
-      hasStockIssue: row.has_stock_issue,
-      images: row.images
-    }
-  }));
+  return result.rows.map(row => {
+    const sellingPrice = row.selling_price ? parseFloat(row.selling_price) : parseFloat(row.price || 0);
+    const displayPrice = row.display_price ? parseFloat(row.display_price) : null;
+    const discountPercent = displayPrice !== null && displayPrice > 0 && sellingPrice > 0
+      ? parseFloat(((displayPrice - sellingPrice) / displayPrice * 100).toFixed(2))
+      : null;
+
+    return {
+      cartItemId: row.cart_item_id,
+      quantity: parseInt(row.cart_quantity, 10),
+      addedAt: row.added_at,
+      updatedAt: row.updated_at,
+      product: {
+        id: row.id,
+        sku: row.sku,
+        name: row.name,
+        description: row.description,
+        categoryTags: row.category_tags || [],
+        availableQuantity: parseInt(row.available_quantity, 10),
+        unit: row.unit,
+        minOrderQuantity: parseInt(row.min_order_quantity, 10),
+        // Buyer-facing prices — cost_price intentionally omitted
+        price: sellingPrice,
+        sellingPrice,
+        displayPrice,
+        discountPercent: discountPercent !== null && discountPercent > 0 ? discountPercent : null,
+        status: row.status,
+        primaryImageUrl: row.primary_image_url,
+        stockStatus: row.stock_status,
+        hasStockIssue: row.has_stock_issue,
+        images: row.images
+      }
+    };
+  });
 }
+
 
 /**
  * Update cart item quantity
