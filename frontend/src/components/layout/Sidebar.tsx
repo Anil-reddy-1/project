@@ -19,6 +19,7 @@ import {
   User,
   Boxes,
   Navigation,
+  X,
 } from 'lucide-react';
 
 interface NavItem {
@@ -224,7 +225,12 @@ function getRoleMeta(role: Role): RoleMeta {
   return ROLE_META[role] ?? ROLE_META.admin;
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ open = false, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -257,7 +263,18 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-50 flex flex-col shadow-sm">
+    <>
+    {open && (
+      <button
+        type="button"
+        aria-label="Close navigation"
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden"
+      />
+    )}
+    <aside className={`fixed left-0 top-0 h-full w-72 max-w-[85vw] bg-white border-r border-slate-200 z-50 flex flex-col shadow-sm transition-transform duration-200 lg:w-64 lg:translate-x-0 ${
+      open ? 'translate-x-0' : '-translate-x-full'
+    }`}>
 
       {/* ── Brand Header ── */}
       <div className="h-14 flex items-center px-4 border-b border-slate-200 shrink-0">
@@ -275,6 +292,14 @@ export function Sidebar() {
           <span className={`ml-auto shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${meta.accentBg} ${meta.accentText}`}>
             {role}
           </span>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={onClose}
+            className="ml-1 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 lg:hidden"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -301,6 +326,7 @@ export function Sidebar() {
                         ? `${meta.accentBg} ${meta.accentText}`
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     }`}
+                    onClick={onClose}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
@@ -361,5 +387,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

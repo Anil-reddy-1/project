@@ -59,8 +59,23 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-x: hidden;
   }
-  
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    button,
+    a {
+      touch-action: manipulation;
+    }
+  }
 }
 
 @layer utilities {
@@ -83,6 +98,8 @@
   /* Admin page fade-in */
   .admin-page-enter {
     animation: adminPageEnter 0.25s ease-out both;
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* Custom Scrollbar Utilities */

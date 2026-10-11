@@ -53,22 +53,24 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             size="icon"
             className="lg:hidden"
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={sidebarOpen}
           >
             <Menu className="h-5 w-5" />
           </Button>
           
           <div className="flex items-center gap-2 font-semibold">
             <Package className="h-6 w-6 text-primary" />
-            <span className="text-lg">Enterprise Ops</span>
+            <span className="text-base sm:text-lg truncate">Enterprise Ops</span>
           </div>
 
           <div className="ml-auto flex items-center gap-4">
             <div className="hidden text-sm text-muted-foreground md:block">
               <span className="font-medium text-foreground">Admin</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="px-2 sm:px-3">
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>

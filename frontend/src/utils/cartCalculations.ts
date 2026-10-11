@@ -36,14 +36,30 @@ export interface InvoiceCalculation {
   shouldApplyCharge: boolean;
   warningMessage: string | null;
   hintMessage: string | null;
+  totalSavings: number;
 }
 
 /**
- * Calculate subtotal from cart items
+ * Calculate subtotal from cart items using effective selling price
  */
 export function calculateSubtotal(cartItems: CartItem[]): number {
   return cartItems.reduce((sum, item) => {
-    return sum + (item.product.price * item.quantity);
+    const price = item.product.sellingPrice ?? item.product.price ?? 0;
+    return sum + (price * item.quantity);
+  }, 0);
+}
+
+/**
+ * Calculate total discount savings compared to reference display price (MRP)
+ */
+export function calculateSavings(cartItems: CartItem[]): number {
+  return cartItems.reduce((sum, item) => {
+    const selling = item.product.sellingPrice ?? item.product.price ?? 0;
+    const display = item.product.displayPrice ?? 0;
+    if (display > selling) {
+      return sum + ((display - selling) * item.quantity);
+    }
+    return sum;
   }, 0);
 }
 
@@ -182,11 +198,13 @@ export function calculateInvoice(cartItems: CartItem[]): InvoiceCalculation {
       shouldApplyCharge: false,
       warningMessage: null,
       hintMessage: null,
+      totalSavings: 0,
     };
   }
   
   // Calculate values
   const subtotal = calculateSubtotal(cartItems);
+  const totalSavings = calculateSavings(cartItems);
   const moqViolations = checkMOQViolations(cartItems);
   const extraCharge = calculateExtraCharge(subtotal, moqViolations);
   const total = subtotal + extraCharge;
@@ -216,6 +234,7 @@ export function calculateInvoice(cartItems: CartItem[]): InvoiceCalculation {
     shouldApplyCharge,
     warningMessage,
     hintMessage,
+    totalSavings,
   };
 }
 
