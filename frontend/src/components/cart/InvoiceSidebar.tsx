@@ -89,17 +89,34 @@ export function InvoiceSidebar({
                 </span>
               </div>
             )}
+            {/* Total Savings from MRP */}
+            {invoice.totalSavings > 0 && (
+              <div className="flex items-center justify-between text-green-600">
+                <span className="text-sm font-medium">Discount Savings</span>
+                <span className="text-base font-semibold">
+                  -{formatCurrency(invoice.totalSavings)}
+                </span>
+              </div>
+            )}
           </div>
 
           <Separator className="my-5" />
 
           {/* Total */}
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-lg font-bold text-slate-900">Total</span>
             <span className="text-2xl font-bold text-slate-900">
               {formatCurrency(invoice.total)}
             </span>
           </div>
+
+          {/* Total Savings Banner */}
+          {invoice.totalSavings > 0 && (
+            <div className="mb-4 p-2.5 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between text-xs text-green-800 font-semibold">
+              <span>🎉 You save</span>
+              <span>{formatCurrency(invoice.totalSavings)}</span>
+            </div>
+          )}
 
           {/* MOQ Violations Warning */}
           {invoice.hasMOQViolations && (

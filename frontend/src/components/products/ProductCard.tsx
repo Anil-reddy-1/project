@@ -86,6 +86,9 @@ export function ProductCard({
         <img
           src={getPrimaryImageUrl(product, '/placeholder-product.png')}
           alt={product.name}
+          width="480"
+          height="320"
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
@@ -108,7 +111,12 @@ export function ProductCard({
         )}
 
         {/* Status badges — top-left stack */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+          {product.discountPercent && product.discountPercent > 0 && (
+            <span className="px-1.5 py-0.5 rounded-md bg-green-600 text-white text-[10px] font-bold shadow-sm">
+              {Math.round(product.discountPercent)}% OFF
+            </span>
+          )}
           {isOutOfStock && (
             <span className="px-2 py-0.5 rounded-md bg-red-500 text-white text-[10px] font-bold uppercase tracking-wide">
               Sold Out
@@ -151,19 +159,23 @@ export function ProductCard({
         <p className="text-[10px] text-slate-400 mt-0.5 mb-2">{product.sku}</p>
 
         {/* Price row */}
-        <div className="flex items-baseline justify-between mb-2">
-          <div className="flex items-baseline gap-1">
+        <div className="mb-2">
+          <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold text-slate-900">
-              {formatPrice(product.price)}
+              {formatPrice(product.sellingPrice ?? product.price)}
             </span>
             <span className="text-[10px] text-slate-400">/{product.unit}</span>
+            {product.displayPrice && product.displayPrice > (product.sellingPrice ?? product.price) && (
+              <span className="text-[11px] text-slate-400 line-through">
+                {formatPrice(product.displayPrice)}
+              </span>
+            )}
           </div>
-          <span className="text-[10px] text-slate-400">
-            {product.quantity} {product.unit}
-            {product.lowStockPercentage !== null &&
-              product.lowStockPercentage !== undefined &&
-              ` · ${Number(product.lowStockPercentage).toFixed(0)}%`}
-          </span>
+          {product.discountAmount && product.discountAmount > 0 && (
+            <p className="text-[10px] text-green-600 font-medium mt-0.5">
+              You save {formatPrice(product.discountAmount)}
+            </p>
+          )}
         </div>
 
         {/* Actions */}
@@ -178,7 +190,7 @@ export function ProductCard({
                   : 'bg-red-50 text-red-600 hover:bg-red-100'
               }`}
             >
-              {isWishlistLoading ? '...' : 'Remove'}
+              {isWishlistLoading ? '…' : 'Remove'}
             </button>
           )}
 
@@ -195,7 +207,7 @@ export function ProductCard({
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock || isCartLoading || !onAddToCart}
-              className={`${showRemoveButton ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`${showRemoveButton ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-[color,background-color,box-shadow] ${
                 showAddedFeedback
                   ? 'bg-green-600 text-white'
                   : isOutOfStock || isCartLoading || !onAddToCart
@@ -204,7 +216,7 @@ export function ProductCard({
               }`}
             >
               {isCartLoading ? (
-                '...'
+                '…'
               ) : showAddedFeedback ? (
                 <>
                   <Check className="w-3.5 h-3.5" />

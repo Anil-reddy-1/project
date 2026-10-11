@@ -109,7 +109,7 @@ export const BarChart: React.FC<BarChartProps> = ({
             radius={[4, 4, 0, 0]}
           >
             {colorByValue &&
-              data.map((entry, idx) => (
+              data.map((_entry, idx) => (
                 <Cell
                   key={`cell-${idx}`}
                   fill={DEFAULT_COLORS[idx % DEFAULT_COLORS.length]}

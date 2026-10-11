@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus, LucideIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, type LucideIcon } from 'lucide-react';
 
 export interface MetricCardProps {
   title: string;

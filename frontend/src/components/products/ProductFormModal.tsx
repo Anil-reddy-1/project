@@ -40,7 +40,10 @@ export function ProductFormModal({
     sku: '',
     name: '',
     description: '',
+    costPrice: '',
     price: '',
+    displayPrice: '',
+    minimumMarginPercent: '',
     quantity: '',
     unit: 'pcs',
     minStock: '',
@@ -62,7 +65,10 @@ export function ProductFormModal({
         sku: product.sku,
         name: product.name,
         description: product.description || '',
-        price: product.price.toString(),
+        costPrice: product.costPrice != null ? product.costPrice.toString() : '',
+        price: (product.sellingPrice ?? product.price ?? '').toString(),
+        displayPrice: product.displayPrice != null ? product.displayPrice.toString() : '',
+        minimumMarginPercent: product.minimumMarginPercent != null ? product.minimumMarginPercent.toString() : '',
         quantity: product.quantity.toString(),
         unit: product.unit,
         minStock: product.minStock.toString(),
@@ -86,7 +92,10 @@ export function ProductFormModal({
         sku: '',
         name: '',
         description: '',
+        costPrice: '',
         price: '',
+        displayPrice: '',
+        minimumMarginPercent: '',
         quantity: '',
         unit: 'pcs',
         minStock: '',
@@ -145,7 +154,14 @@ export function ProductFormModal({
     if (!formData.sku.trim()) newErrors.sku = 'SKU is required';
     if (!formData.name.trim()) newErrors.name = 'Product name is required';
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      newErrors.price = 'Valid price is required';
+      newErrors.price = 'Valid selling price is required';
+    }
+    if (formData.displayPrice && formData.price) {
+      const disp = parseFloat(formData.displayPrice);
+      const sell = parseFloat(formData.price);
+      if (disp > 0 && sell > 0 && sell > disp) {
+        newErrors.displayPrice = 'Display price (MRP) must be greater than or equal to selling price';
+      }
     }
     if (!formData.quantity || parseInt(formData.quantity) < 0) {
       newErrors.quantity = 'Valid quantity is required';
@@ -175,24 +191,20 @@ export function ProductFormModal({
       // Upload new images first
       const newImageFiles = images.filter((img) => img.file).map((img) => img.file!);
       
-      // DEBUG LOGGING - Bug Condition Exploration Test
-      console.log('=== PRODUCT FORM DEBUG ===');
-      console.log('Submitting product with images:', {
-        imageCount: newImageFiles.length,
-        files: newImageFiles.map(f => ({
-          name: f.name,
-          size: f.size,
-          type: f.type,
-          constructor: f.constructor.name
-        }))
-      });
-      console.log('=== END DEBUG ===');
-      
+      const costVal = formData.costPrice ? parseFloat(formData.costPrice) : undefined;
+      const displayVal = formData.displayPrice ? parseFloat(formData.displayPrice) : undefined;
+      const minMarginVal = formData.minimumMarginPercent ? parseFloat(formData.minimumMarginPercent) : undefined;
+      const sellingVal = parseFloat(formData.price);
+
       // Prepare product data
       const productData: CreateProductData | UpdateProductData = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
-        price: parseFloat(formData.price),
+        price: sellingVal,
+        sellingPrice: sellingVal,
+        costPrice: costVal,
+        displayPrice: displayVal,
+        minimumMarginPercent: minMarginVal,
         quantity: parseInt(formData.quantity),
         unit: formData.unit,
         minStock: parseInt(formData.minStock),
@@ -211,7 +223,11 @@ export function ProductFormModal({
           sku: formData.sku.trim(),
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          price: parseFloat(formData.price),
+          price: sellingVal,
+          sellingPrice: sellingVal,
+          costPrice: costVal,
+          displayPrice: displayVal,
+          minimumMarginPercent: minMarginVal,
           quantity: parseInt(formData.quantity),
           unit: formData.unit,
           minStock: parseInt(formData.minStock),
@@ -366,14 +382,63 @@ export function ProductFormModal({
 
         {/* Stock & Pricing */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
             Stock & Pricing
           </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            All four price fields can also be managed on the{' '}
+            <a href="/admin/pricing" className="text-blue-500 hover:underline">
+              Pricing &amp; Margins
+            </a>{' '}
+            page after the product is created.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Price */}
+            {/* Cost Price */}
+            <div>
+              <Label htmlFor="costPrice">
+                Cost Price <span className="text-gray-400 font-normal text-xs">(private)</span>
+              </Label>
+              <Input
+                id="costPrice"
+                name="costPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.costPrice}
+                onChange={handleChange}
+                placeholder="0.00"
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-400 mt-1">Your acquisition cost. Never shown to buyers.</p>
+            </div>
+
+            {/* Display Price (MRP) */}
+            <div>
+              <Label htmlFor="displayPrice">
+                Display Price / MRP <span className="text-gray-400 font-normal text-xs">(optional)</span>
+              </Label>
+              <Input
+                id="displayPrice"
+                name="displayPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.displayPrice}
+                onChange={handleChange}
+                placeholder="0.00"
+                disabled={loading}
+                className={errors.displayPrice ? 'border-red-500' : ''}
+              />
+              {errors.displayPrice && (
+                <p className="text-xs text-red-500 mt-1">{errors.displayPrice}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">Shown with strikethrough to communicate discount.</p>
+            </div>
+
+            {/* Selling Price */}
             <div>
               <Label htmlFor="price">
-                Price <span className="text-red-500">*</span>
+                Selling Price <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="price"
@@ -390,7 +455,42 @@ export function ProductFormModal({
               {errors.price && (
                 <p className="text-xs text-red-500 mt-1">{errors.price}</p>
               )}
+              {/* Live margin indicator */}
+              {formData.costPrice && formData.price && parseFloat(formData.costPrice) > 0 && parseFloat(formData.price) > 0 && (() => {
+                const cost = parseFloat(formData.costPrice);
+                const sell = parseFloat(formData.price);
+                const margin = ((sell - cost) / sell * 100).toFixed(1);
+                const profit = (sell - cost).toFixed(2);
+                const isGood = parseFloat(margin) >= 20;
+                return (
+                  <p className={`text-xs mt-1 ${isGood ? 'text-green-600' : 'text-amber-600'}`}>
+                    ₹{profit} profit · {margin}% margin
+                  </p>
+                );
+              })()}
+              <p className="text-xs text-gray-400 mt-1">Actual price charged to the buyer.</p>
             </div>
+
+            {/* Minimum Margin % */}
+            <div>
+              <Label htmlFor="minimumMarginPercent">
+                Min. Acceptable Margin % <span className="text-gray-400 font-normal text-xs">(optional)</span>
+              </Label>
+              <Input
+                id="minimumMarginPercent"
+                name="minimumMarginPercent"
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={formData.minimumMarginPercent}
+                onChange={handleChange}
+                placeholder="e.g. 20"
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-400 mt-1">Alert when margin falls below this threshold.</p>
+            </div>
+
 
             {/* Current Stock */}
             <div>

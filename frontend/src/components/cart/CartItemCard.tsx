@@ -33,7 +33,8 @@ export function CartItemCard({
   const [isMovingToWishlist, setIsMovingToWishlist] = useState(false);
 
   const { product, quantity } = item;
-  const itemTotal = product.price * quantity;
+  const unitPrice = product.sellingPrice ?? product.price;
+  const itemTotal = unitPrice * quantity;
   const isBelowMOQ = quantity < product.minOrderQuantity;
   const hasStockIssue = product.hasStockIssue;
   const isOutOfStock = product.stockStatus === 'out';
@@ -173,7 +174,13 @@ export function CartItemCard({
                   {formatPrice(itemTotal)}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {formatPrice(product.price)} × {quantity}
+                  {formatPrice(unitPrice)}
+                  {product.displayPrice && product.displayPrice > unitPrice && (
+                    <span className="ml-1 line-through text-slate-400">
+                      {formatPrice(product.displayPrice)}
+                    </span>
+                  )}
+                  {' '} × {quantity}
                 </p>
               </div>
             </div>
@@ -324,7 +331,13 @@ export function CartItemCard({
                     {formatPrice(itemTotal)}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {formatPrice(product.price)} × {quantity}
+                    {formatPrice(unitPrice)}
+                    {product.displayPrice && product.displayPrice > unitPrice && (
+                      <span className="ml-1 line-through text-slate-400">
+                        {formatPrice(product.displayPrice)}
+                      </span>
+                    )}
+                    {' '} × {quantity}
                   </p>
                 </div>
               </div>
