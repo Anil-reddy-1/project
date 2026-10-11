@@ -8,10 +8,23 @@ const pool = require('../config/db');
 /**
  * Map database row to product object with images
  */
-function mapProductRow(row) {
+function mapProductRow(row, includeCost = false) {
   if (!row) return null;
-  
-  return {
+
+  const sellingPrice = row.selling_price
+    ? parseFloat(row.selling_price)
+    : parseFloat(row.price || 0);
+  const displayPrice = row.display_price ? parseFloat(row.display_price) : null;
+
+  // Discount is calculated from display vs selling — NEVER from cost
+  const discountAmount = displayPrice !== null && sellingPrice > 0
+    ? parseFloat((displayPrice - sellingPrice).toFixed(2))
+    : null;
+  const discountPercent = displayPrice !== null && displayPrice > 0 && sellingPrice > 0
+    ? parseFloat(((displayPrice - sellingPrice) / displayPrice * 100).toFixed(2))
+    : null;
+
+  const product = {
     id: row.id,
     sku: row.sku,
     name: row.name,
@@ -22,7 +35,12 @@ function mapProductRow(row) {
     minStock: parseInt(row.min_stock, 10),
     maxStock: parseInt(row.max_stock, 10),
     minOrderQuantity: parseInt(row.min_order_quantity, 10),
-    price: parseFloat(row.price),
+    // Buyer-facing prices (cost_price is intentionally omitted unless includeCost is explicitly true for admin)
+    price: sellingPrice,          // backwards-compat alias
+    sellingPrice,
+    displayPrice,                  // null means no reference price / MRP
+    discountAmount: discountAmount !== null && discountAmount > 0 ? discountAmount : null,
+    discountPercent: discountPercent !== null && discountPercent > 0 ? discountPercent : null,
     status: row.status,
     primaryImageUrl: row.primary_image_url,
     images: row.images || [],
@@ -32,6 +50,13 @@ function mapProductRow(row) {
     stockStatus: row.stock_status,
     lowStockPercentage: row.low_stock_percentage
   };
+
+  if (includeCost) {
+    product.costPrice = row.cost_price ? parseFloat(row.cost_price) : null;
+    product.minimumMarginPercent = row.minimum_margin_percent ? parseFloat(row.minimum_margin_percent) : null;
+  }
+
+  return product;
 }
 
 /**
@@ -45,8 +70,22 @@ async function createProduct(productData, imageUrls = []) {
     
     const {
       sku, name, description, categoryTags, quantity, unit,
-      minStock, maxStock, minOrderQuantity, price, status
+      minStock, maxStock, minOrderQuantity, price, status,
+      sellingPrice, costPrice, displayPrice, minimumMarginPercent
     } = productData;
+
+    const effectiveSelling = sellingPrice !== undefined && sellingPrice !== null && sellingPrice !== ''
+      ? parseFloat(sellingPrice)
+      : (price !== undefined && price !== null && price !== '' ? parseFloat(price) : 0);
+    const effectiveCost = costPrice !== undefined && costPrice !== null && costPrice !== ''
+      ? parseFloat(costPrice)
+      : null;
+    const effectiveDisplay = displayPrice !== undefined && displayPrice !== null && displayPrice !== ''
+      ? parseFloat(displayPrice)
+      : null;
+    const effectiveMinMargin = minimumMarginPercent !== undefined && minimumMarginPercent !== null && minimumMarginPercent !== ''
+      ? parseFloat(minimumMarginPercent)
+      : null;
     
     // Set primary image URL
     const primaryImageUrl = imageUrls.length > 0 ? imageUrls[0].url : null;
@@ -55,9 +94,10 @@ async function createProduct(productData, imageUrls = []) {
     const productQuery = `
       INSERT INTO products (
         sku, name, description, category_tags, quantity, unit,
-        min_stock, max_stock, min_order_quantity, price, status, primary_image_url
+        min_stock, max_stock, min_order_quantity, price, status, primary_image_url,
+        cost_price, display_price, selling_price, minimum_margin_percent
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *;
     `;
     
@@ -66,12 +106,34 @@ async function createProduct(productData, imageUrls = []) {
       JSON.stringify(categoryTags || []),
       quantity || 0, unit || 'unit',
       minStock || 0, maxStock || null,
-      minOrderQuantity || 1, price || 0,
-      status || 'active', primaryImageUrl
+      minOrderQuantity || 1, effectiveSelling,
+      status || 'active', primaryImageUrl,
+      effectiveCost, effectiveDisplay, effectiveSelling, effectiveMinMargin
     ];
     
     const productResult = await client.query(productQuery, productValues);
     const product = productResult.rows[0];
+
+    // Record initial price history if pricing is set
+    if (effectiveCost !== null || effectiveDisplay !== null || effectiveSelling > 0) {
+      await client.query(`
+        INSERT INTO price_history (
+          product_id,
+          new_cost,
+          new_display_price,
+          new_selling_price,
+          change_type,
+          reason
+        ) VALUES ($1, $2, $3, $4, $5, $6);
+      `, [
+        product.id,
+        effectiveCost,
+        effectiveDisplay,
+        effectiveSelling,
+        'create',
+        'Initial product creation pricing'
+      ]);
+    }
     
     // Insert images if provided
     if (imageUrls.length > 0) {
@@ -87,8 +149,8 @@ async function createProduct(productData, imageUrls = []) {
     
     await client.query('COMMIT');
     
-    // Fetch and return complete product with images
-    return await findProductById(product.id);
+    // Fetch and return complete product with images (including cost for admin creator)
+    return await findProductById(product.id, true);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -100,7 +162,8 @@ async function createProduct(productData, imageUrls = []) {
 /**
  * Find all products with advanced filtering and pagination
  */
-async function findAllProducts(filters = {}) {
+async function findAllProducts(filters = {}, includeCost = false) {
+  const shouldIncludeCost = Boolean(includeCost || filters.includeCost);
   const {
     page = 1,
     limit = 20,
@@ -205,7 +268,7 @@ async function findAllProducts(filters = {}) {
   const dataResult = await pool.query(dataQuery, dataParams);
   
   return {
-    items: dataResult.rows.map(mapProductRow),
+    items: dataResult.rows.map(row => mapProductRow(row, shouldIncludeCost)),
     pagination: {
       page,
       limit,
@@ -218,7 +281,7 @@ async function findAllProducts(filters = {}) {
 /**
  * Find product by ID with images
  */
-async function findProductById(id) {
+async function findProductById(id, includeCost = false) {
   const query = `
     SELECT 
       p.*,
@@ -250,13 +313,13 @@ async function findProductById(id) {
   `;
   
   const result = await pool.query(query, [id]);
-  return mapProductRow(result.rows[0]);
+  return mapProductRow(result.rows[0], includeCost);
 }
 
 /**
  * Find product by SKU
  */
-async function findProductBySku(sku) {
+async function findProductBySku(sku, includeCost = false) {
   const query = `
     SELECT 
       p.*,
@@ -279,7 +342,7 @@ async function findProductBySku(sku) {
   `;
   
   const result = await pool.query(query, [sku]);
-  return mapProductRow(result.rows[0]);
+  return mapProductRow(result.rows[0], includeCost);
 }
 
 /**
@@ -303,22 +366,40 @@ async function updateProduct(id, updates, newImageUrls = []) {
       minStock: 'min_stock',
       maxStock: 'max_stock',
       minOrderQuantity: 'min_order_quantity',
-      price: 'price',
-      status: 'status'
+      status: 'status',
+      costPrice: 'cost_price',
+      displayPrice: 'display_price',
+      minimumMarginPercent: 'minimum_margin_percent'
     };
     
     Object.keys(updates).forEach((key) => {
       if (allowedFields[key] && updates[key] !== undefined) {
+        const val = updates[key] === '' ? null : updates[key];
         queryParams.push(
-          key === 'categoryTags' ? JSON.stringify(updates[key]) : updates[key]
+          key === 'categoryTags' ? JSON.stringify(val) : val
         );
         setClauses.push(`${allowedFields[key]} = $${queryParams.length}`);
       }
     });
+
+    // Handle sellingPrice and price synchronization
+    if (updates.sellingPrice !== undefined) {
+      const sp = updates.sellingPrice === '' ? null : parseFloat(updates.sellingPrice);
+      queryParams.push(sp);
+      setClauses.push(`selling_price = $${queryParams.length}`);
+      queryParams.push(sp);
+      setClauses.push(`price = $${queryParams.length}`);
+    } else if (updates.price !== undefined) {
+      const sp = updates.price === '' ? null : parseFloat(updates.price);
+      queryParams.push(sp);
+      setClauses.push(`price = $${queryParams.length}`);
+      queryParams.push(sp);
+      setClauses.push(`selling_price = $${queryParams.length}`);
+    }
     
     if (setClauses.length === 0 && newImageUrls.length === 0) {
       await client.query('ROLLBACK');
-      return await findProductById(id);
+      return await findProductById(id, true);
     }
     
     // Update product if there are changes
@@ -370,7 +451,7 @@ async function updateProduct(id, updates, newImageUrls = []) {
     
     await client.query('COMMIT');
     
-    return await findProductById(id);
+    return await findProductById(id, true);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -633,65 +714,107 @@ async function setPrimaryImage(productId, imageId) {
 
 // ============= Pricing & Margin Management =============
 
+/**
+ * Calculate all derived pricing metrics from the 4-field model
+ * IMPORTANT: cost_price is NEVER returned in buyer-facing API responses.
+ */
+function calcPricingMetrics(costPrice, displayPrice, sellingPrice) {
+  const cost = parseFloat(costPrice || 0);
+  const display = parseFloat(displayPrice || 0);
+  const selling = parseFloat(sellingPrice || 0);
+
+  const discountAmount = display > 0 && selling > 0 ? display - selling : null;
+  const discountPercent = display > 0 && selling > 0 ? ((display - selling) / display) * 100 : null;
+  const grossProfit = selling > 0 && cost > 0 ? selling - cost : null;
+  const grossMarginPercent = selling > 0 && cost > 0 ? ((selling - cost) / selling) * 100 : null;
+  const markupPercent = cost > 0 && selling > 0 ? ((selling - cost) / cost) * 100 : null;
+
+  return {
+    discountAmount: discountAmount !== null ? parseFloat(discountAmount.toFixed(2)) : null,
+    discountPercent: discountPercent !== null ? parseFloat(discountPercent.toFixed(2)) : null,
+    grossProfit: grossProfit !== null ? parseFloat(grossProfit.toFixed(2)) : null,
+    grossMarginPercent: grossMarginPercent !== null ? parseFloat(grossMarginPercent.toFixed(2)) : null,
+    markupPercent: markupPercent !== null ? parseFloat(markupPercent.toFixed(2)) : null,
+  };
+}
+
+/**
+ * Suggest selling price for a given cost and target margin.
+ * Formula: sellingPrice = costPrice / (1 - targetMargin)
+ */
+function suggestSellingPrice(costPrice, targetMarginPercent) {
+  const cost = parseFloat(costPrice || 0);
+  const margin = parseFloat(targetMarginPercent || 0) / 100;
+  if (cost <= 0 || margin >= 1 || margin < 0) return null;
+  return parseFloat((cost / (1 - margin)).toFixed(2));
+}
+
 async function getAllPricingData(filters = {}) {
-  const { page = 1, limit = 20, search, category, status } = filters;
-  const offset = (page - 1) * limit;
+  const { search, category, status, minMargin, maxMargin, hasDiscount } = filters;
+  const pageNum = Number.isFinite(Number(filters.page)) && Number(filters.page) > 0 ? Math.floor(Number(filters.page)) : 1;
+  const limitNum = Number.isFinite(Number(filters.limit)) && Number(filters.limit) > 0 ? Math.floor(Number(filters.limit)) : 20;
+  const offset = (pageNum - 1) * limitNum;
   const queryParams = [];
   const whereClauses = [];
 
   if (search) {
     queryParams.push(`%${search.toLowerCase()}%`);
-    whereClauses.push(`(LOWER(name) LIKE $${queryParams.length} OR LOWER(sku) LIKE $${queryParams.length})`);
+    whereClauses.push(`(LOWER(p.name) LIKE $${queryParams.length} OR LOWER(p.sku) LIKE $${queryParams.length})`);
   }
-  
+
   if (category) {
-    queryParams.push(`"%${category}%"`); 
-    whereClauses.push(`category_tags::text LIKE $${queryParams.length}`);
+    queryParams.push(`"%${category}%"`);
+    whereClauses.push(`p.category_tags::text LIKE $${queryParams.length}`);
   }
 
   if (status) {
     queryParams.push(status);
-    whereClauses.push(`status = $${queryParams.length}`);
+    whereClauses.push(`p.status = $${queryParams.length}`);
   } else {
-    whereClauses.push(`status != 'inactive'`);
+    whereClauses.push(`p.status != 'inactive'`);
   }
 
   const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-  
-  const countQuery = `SELECT COUNT(*) FROM products ${whereString};`;
+
+  const countQuery = `SELECT COUNT(*) FROM products p ${whereString};`;
   const countResult = await pool.query(countQuery, queryParams);
   const total = parseInt(countResult.rows[0].count, 10);
 
-  const dataParams = [...queryParams, limit, offset];
+  const dataParams = [...queryParams, limitNum, offset];
   const query = `
-    SELECT 
-      id, sku, name, category_tags,
-      price as "retailPrice",
-      wholesale_price as "wholesalePrice",
-      cost_price as "costPrice",
-      previous_price as "previousRetailPrice",
-      last_changed as "lastChanged",
-      changed_by as "changedBy",
-      updated_at as "lastUpdated"
-    FROM products
+    SELECT
+      p.id, p.sku, p.name, p.category_tags, p.status, p.quantity,
+      p.cost_price      AS "costPrice",
+      p.display_price   AS "displayPrice",
+      p.selling_price   AS "sellingPrice",
+      COALESCE(p.selling_price, p.price) AS "effectiveSellingPrice",
+      p.minimum_margin_percent AS "minimumMarginPercent",
+      p.last_changed    AS "lastChanged",
+      p.changed_by      AS "changedBy",
+      p.updated_at      AS "lastUpdated",
+      u.name            AS "changedByName"
+    FROM products p
+    LEFT JOIN users u ON p.changed_by = u.id
     ${whereString}
-    ORDER BY name ASC
+    ORDER BY p.name ASC
     LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length};
   `;
-  
+
   const result = await pool.query(query, dataParams);
-  
-  const products = result.rows.map(row => {
+
+  let products = result.rows.map(row => {
+    const cost = row.costPrice ? parseFloat(row.costPrice) : null;
+    const display = row.displayPrice ? parseFloat(row.displayPrice) : null;
+    const selling = row.effectiveSellingPrice ? parseFloat(row.effectiveSellingPrice) : null;
+    const metrics = calcPricingMetrics(cost, display, selling);
+    const minMarginPct = row.minimumMarginPercent ? parseFloat(row.minimumMarginPercent) : null;
+    const isBelowMinMargin = minMarginPct !== null && metrics.grossMarginPercent !== null
+      ? metrics.grossMarginPercent < minMarginPct
+      : false;
+
     let category = null;
     if (row.category_tags && row.category_tags.length > 0) {
       category = row.category_tags[0];
-    }
-    
-    let margin = null;
-    const retail = parseFloat(row.retailPrice || 0);
-    const cost = parseFloat(row.costPrice || 0);
-    if (retail > 0 && cost > 0) {
-      margin = ((retail - cost) / retail) * 100;
     }
 
     return {
@@ -700,16 +823,37 @@ async function getAllPricingData(filters = {}) {
       productName: row.name,
       sku: row.sku,
       category,
-      retailPrice: retail,
-      wholesalePrice: row.wholesalePrice ? parseFloat(row.wholesalePrice) : null,
-      costPrice: cost > 0 ? cost : null,
-      previousRetailPrice: row.previousRetailPrice ? parseFloat(row.previousRetailPrice) : null,
-      margin,
+      status: row.status,
+      quantity: parseInt(row.quantity, 10),
+      costPrice: cost,
+      displayPrice: display,
+      sellingPrice: selling,
+      minimumMarginPercent: minMarginPct,
+      // Computed metrics
+      discountAmount: metrics.discountAmount,
+      discountPercent: metrics.discountPercent,
+      grossProfit: metrics.grossProfit,
+      grossMarginPercent: metrics.grossMarginPercent,
+      markupPercent: metrics.markupPercent,
+      isBelowMinMargin,
+      // Audit
       lastChanged: row.lastChanged,
       lastUpdated: row.lastUpdated,
-      changedBy: row.changedBy
+      changedBy: row.changedBy,
+      changedByName: row.changedByName || null,
     };
   });
+
+  // Post-query filters that require computed values
+  if (minMargin !== undefined) {
+    products = products.filter(p => p.grossMarginPercent !== null && p.grossMarginPercent >= parseFloat(minMargin));
+  }
+  if (maxMargin !== undefined) {
+    products = products.filter(p => p.grossMarginPercent !== null && p.grossMarginPercent <= parseFloat(maxMargin));
+  }
+  if (hasDiscount === 'true' || hasDiscount === true) {
+    products = products.filter(p => p.discountPercent !== null && p.discountPercent > 0);
+  }
 
   return { products, total };
 }
@@ -717,43 +861,68 @@ async function getAllPricingData(filters = {}) {
 async function getPricingStats() {
   const query = `
     SELECT
-      COUNT(*) as total_products,
-      AVG(price) as avg_retail_price,
-      COUNT(CASE WHEN price > previous_price THEN 1 END) as price_increases,
-      COUNT(CASE WHEN price < previous_price THEN 1 END) as price_decreases,
-      AVG(CASE WHEN price > 0 AND cost_price > 0 THEN ((price - cost_price) / price) * 100 ELSE NULL END) as avg_margin
+      COUNT(*)                                                        AS total_products,
+      AVG(COALESCE(selling_price, price))                             AS avg_selling_price,
+      AVG(
+        CASE
+          WHEN COALESCE(selling_price, price) > 0 AND cost_price > 0
+          THEN ((COALESCE(selling_price, price) - cost_price) / COALESCE(selling_price, price)) * 100
+          ELSE NULL
+        END
+      )                                                               AS avg_margin,
+      COUNT(
+        CASE
+          WHEN display_price IS NOT NULL
+            AND COALESCE(selling_price, price) < display_price THEN 1
+        END
+      )                                                               AS products_on_offer,
+      COUNT(
+        CASE
+          WHEN minimum_margin_percent IS NOT NULL
+            AND cost_price IS NOT NULL
+            AND COALESCE(selling_price, price) > 0
+            AND ((COALESCE(selling_price, price) - cost_price) / COALESCE(selling_price, price)) * 100
+              < minimum_margin_percent
+          THEN 1
+        END
+      )                                                               AS low_margin_products
     FROM products
-    WHERE status != 'inactive' AND price > 0;
+    WHERE status != 'inactive';
   `;
   const result = await pool.query(query);
   const stats = result.rows[0];
-  
+
   return {
     totalProducts: parseInt(stats.total_products || 0, 10),
-    avgRetailPrice: parseFloat(stats.avg_retail_price || 0),
+    avgSellingPrice: parseFloat(stats.avg_selling_price || 0),
     avgMargin: parseFloat(stats.avg_margin || 0),
-    priceIncreases: parseInt(stats.price_increases || 0, 10),
-    priceDecreases: parseInt(stats.price_decreases || 0, 10)
+    productsOnOffer: parseInt(stats.products_on_offer || 0, 10),
+    lowMarginProducts: parseInt(stats.low_margin_products || 0, 10),
   };
 }
 
-async function updateProductPricing(id, { retailPrice, wholesalePrice, costPrice }, reason, changedBy) {
+async function updateProductPricing(id, { costPrice, displayPrice, sellingPrice, minimumMarginPercent }, reason, changedBy) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
-    const getProductQuery = 'SELECT price, wholesale_price, cost_price FROM products WHERE id = $1 FOR UPDATE';
+
+    const getProductQuery = `
+      SELECT cost_price, display_price, selling_price, price
+      FROM products WHERE id = $1 FOR UPDATE
+    `;
     const productResult = await client.query(getProductQuery, [id]);
-    
+
     if (productResult.rows.length === 0) {
       throw new Error('Product not found');
     }
-    
+
     const current = productResult.rows[0];
-    const prevRetail = parseFloat(current.price || 0);
-    const prevWholesale = parseFloat(current.wholesale_price || 0);
-    const prevCost = parseFloat(current.cost_price || 0);
-    
+    const prevCost = current.cost_price ? parseFloat(current.cost_price) : null;
+    const prevDisplay = current.display_price ? parseFloat(current.display_price) : null;
+    const prevSelling = current.selling_price
+      ? parseFloat(current.selling_price)
+      : current.price ? parseFloat(current.price) : null;
+
     let adminId = null;
     if (changedBy) {
       const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -766,50 +935,74 @@ async function updateProductPricing(id, { retailPrice, wholesalePrice, costPrice
         }
       }
     }
-    
+
+    // Validate: selling_price must not exceed display_price when both are provided
+    const newSelling = sellingPrice !== undefined ? parseFloat(sellingPrice) : prevSelling;
+    const newDisplay = displayPrice !== undefined ? parseFloat(displayPrice) : prevDisplay;
+    if (newDisplay !== null && newSelling !== null && newSelling > newDisplay) {
+      throw new Error('Selling price cannot exceed display price (MRP)');
+    }
+
     const updateQuery = `
-      UPDATE products 
-      SET 
-        previous_price = price,
-        price = COALESCE($1, price),
-        wholesale_price = COALESCE($2, wholesale_price),
-        cost_price = COALESCE($3, cost_price),
-        last_changed = CURRENT_TIMESTAMP,
-        changed_by = $4,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $5
-      RETURNING *;
+      UPDATE products
+      SET
+        cost_price              = COALESCE($1, cost_price),
+        display_price           = COALESCE($2, display_price),
+        selling_price           = COALESCE($3, selling_price),
+        price                   = COALESCE($3, selling_price, price),
+        minimum_margin_percent  = COALESCE($4, minimum_margin_percent),
+        last_changed            = CURRENT_TIMESTAMP,
+        changed_by              = $5,
+        updated_at              = CURRENT_TIMESTAMP
+      WHERE id = $6
+      RETURNING
+        cost_price, display_price, selling_price, minimum_margin_percent;
     `;
-    const updateResult = await client.query(updateQuery, [retailPrice, wholesalePrice, costPrice, adminId, id]);
-    
-    const newRetail = parseFloat(updateResult.rows[0].price || 0);
-    
+    const updateResult = await client.query(updateQuery, [
+      costPrice !== undefined ? costPrice : null,
+      displayPrice !== undefined ? displayPrice : null,
+      sellingPrice !== undefined ? sellingPrice : null,
+      minimumMarginPercent !== undefined ? minimumMarginPercent : null,
+      adminId,
+      id,
+    ]);
+
+    const updated = updateResult.rows[0];
+    const metrics = calcPricingMetrics(
+      updated.cost_price,
+      updated.display_price,
+      updated.selling_price
+    );
+
+    // Audit history
     const historyQuery = `
       INSERT INTO price_history (
-        product_id, previous_price, new_price, 
-        previous_wholesale, new_wholesale, 
+        product_id,
         previous_cost, new_cost,
+        previous_display_price, new_display_price,
+        previous_selling_price, new_selling_price,
         change_type, reason, changed_by
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     `;
-    
     await client.query(historyQuery, [
-      id, prevRetail, retailPrice, 
-      prevWholesale, wholesalePrice, 
-      prevCost, costPrice,
-      'manual', reason || 'Manual update', adminId
+      id,
+      prevCost, costPrice !== undefined ? costPrice : prevCost,
+      prevDisplay, displayPrice !== undefined ? displayPrice : prevDisplay,
+      prevSelling, sellingPrice !== undefined ? sellingPrice : prevSelling,
+      'manual', reason || 'Manual update', adminId,
     ]);
-    
+
     await client.query('COMMIT');
-    
+
     return {
       productId: id,
-      previousPrice: prevRetail,
-      newPrice: retailPrice || newRetail,
-      change: (retailPrice || newRetail) - prevRetail,
-      changePercentage: prevRetail > 0 ? (((retailPrice || newRetail) - prevRetail) / prevRetail) * 100 : 0,
+      costPrice: updated.cost_price ? parseFloat(updated.cost_price) : null,
+      displayPrice: updated.display_price ? parseFloat(updated.display_price) : null,
+      sellingPrice: updated.selling_price ? parseFloat(updated.selling_price) : null,
+      minimumMarginPercent: updated.minimum_margin_percent ? parseFloat(updated.minimum_margin_percent) : null,
+      ...metrics,
       updatedBy: changedBy,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -819,11 +1012,15 @@ async function updateProductPricing(id, { retailPrice, wholesalePrice, costPrice
   }
 }
 
+/**
+ * Bulk update: adjust selling_price and/or display_price by percentage or flat amount.
+ * applyTo: 'selling' | 'display' | 'both'
+ */
 async function bulkUpdatePricing(productIds, { adjustmentType, adjustmentValue, applyTo, reason }, changedBy) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
     let updatedCount = 0;
 
     let adminId = null;
@@ -838,64 +1035,79 @@ async function bulkUpdatePricing(productIds, { adjustmentType, adjustmentValue, 
         }
       }
     }
-    
+
     for (const id of productIds) {
-      const getProductQuery = 'SELECT price, wholesale_price, cost_price FROM products WHERE id = $1 FOR UPDATE';
-      const productResult = await client.query(getProductQuery, [id]);
-      
+      const productResult = await client.query(
+        'SELECT cost_price, display_price, selling_price, price FROM products WHERE id = $1 FOR UPDATE',
+        [id]
+      );
       if (productResult.rows.length === 0) continue;
-      
-      const current = productResult.rows[0];
-      const prevRetail = parseFloat(current.price || 0);
-      const prevWholesale = parseFloat(current.wholesale_price || 0);
-      
-      let newRetail = prevRetail;
-      let newWholesale = prevWholesale;
-      
-      if (applyTo === 'retail' || applyTo === 'both') {
+
+      const cur = productResult.rows[0];
+      const prevDisplay = cur.display_price ? parseFloat(cur.display_price) : null;
+      const prevSelling = cur.selling_price
+        ? parseFloat(cur.selling_price)
+        : cur.price ? parseFloat(cur.price) : null;
+
+      let newDisplay = prevDisplay;
+      let newSelling = prevSelling;
+
+      const applyAdjustment = (val) => {
+        if (val === null) return null;
         if (adjustmentType === 'percentage') {
-          newRetail = prevRetail * (1 + (adjustmentValue / 100));
-        } else {
-          newRetail = prevRetail + adjustmentValue;
+          return Math.max(0, val * (1 + adjustmentValue / 100));
         }
-        newRetail = Math.max(0, newRetail); // ensure not negative
+        return Math.max(0, val + adjustmentValue);
+      };
+
+      if (applyTo === 'display' || applyTo === 'both') {
+        newDisplay = applyAdjustment(prevDisplay);
       }
-      
-      if (applyTo === 'wholesale' || applyTo === 'both') {
-        if (adjustmentType === 'percentage') {
-          newWholesale = prevWholesale * (1 + (adjustmentValue / 100));
-        } else {
-          newWholesale = prevWholesale + adjustmentValue;
-        }
-        newWholesale = Math.max(0, newWholesale);
+      if (applyTo === 'selling' || applyTo === 'both' || applyTo === 'retail') {
+        newSelling = applyAdjustment(prevSelling);
       }
-      
-      // Update if changed
-      if (newRetail !== prevRetail || newWholesale !== prevWholesale) {
+
+      // Ensure selling does not exceed display
+      if (newDisplay !== null && newSelling !== null && newSelling > newDisplay) {
+        newSelling = newDisplay;
+      }
+
+      const changed =
+        (newDisplay !== prevDisplay) || (newSelling !== prevSelling);
+
+      if (changed) {
         await client.query(`
-          UPDATE products 
-          SET previous_price = price, price = $1, wholesale_price = $2,
-              last_changed = CURRENT_TIMESTAMP, changed_by = $3, updated_at = CURRENT_TIMESTAMP
+          UPDATE products
+          SET
+            display_price  = $1,
+            selling_price  = $2,
+            price          = $2,
+            last_changed   = CURRENT_TIMESTAMP,
+            changed_by     = $3,
+            updated_at     = CURRENT_TIMESTAMP
           WHERE id = $4
-        `, [newRetail, newWholesale, adminId, id]);
-        
+        `, [newDisplay, newSelling, adminId, id]);
+
         await client.query(`
           INSERT INTO price_history (
-            product_id, previous_price, new_price, 
-            previous_wholesale, new_wholesale, 
+            product_id,
             previous_cost, new_cost,
+            previous_display_price, new_display_price,
+            previous_selling_price, new_selling_price,
             change_type, reason, changed_by
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `, [
-          id, prevRetail, newRetail, prevWholesale, newWholesale,
-          current.cost_price, current.cost_price,
-          'bulk', reason || 'Bulk update', adminId
+          id,
+          cur.cost_price, cur.cost_price,
+          prevDisplay, newDisplay,
+          prevSelling, newSelling,
+          'bulk', reason || 'Bulk update', adminId,
         ]);
-        
+
         updatedCount++;
       }
     }
-    
+
     await client.query('COMMIT');
     return { updated: updatedCount };
   } catch (error) {
@@ -907,23 +1119,38 @@ async function bulkUpdatePricing(productIds, { adjustmentType, adjustmentValue, 
 }
 
 async function getPriceHistory(productId, limit = 50) {
+  const limitNum = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Math.floor(Number(limit)) : 50;
   const query = `
-    SELECT 
-      previous_price as "previousPrice",
-      new_price as "newPrice",
-      previous_wholesale as "previousWholesale",
-      new_wholesale as "newWholesale",
-      change_type as "changeType",
-      reason,
-      changed_by as "changedBy",
-      created_at as "createdAt"
-    FROM price_history
-    WHERE product_id = $1
-    ORDER BY created_at DESC
+    SELECT
+      ph.previous_cost           AS "previousCost",
+      ph.new_cost                AS "newCost",
+      ph.previous_display_price  AS "previousDisplayPrice",
+      ph.new_display_price       AS "newDisplayPrice",
+      ph.previous_selling_price  AS "previousSellingPrice",
+      ph.new_selling_price       AS "newSellingPrice",
+      ph.change_type             AS "changeType",
+      ph.reason,
+      u.name                     AS "changedByName",
+      ph.created_at              AS "createdAt"
+    FROM price_history ph
+    LEFT JOIN users u ON ph.changed_by = u.id
+    WHERE ph.product_id = $1
+    ORDER BY ph.created_at DESC
     LIMIT $2
   `;
-  const result = await pool.query(query, [productId, limit]);
-  return result.rows;
+  const result = await pool.query(query, [productId, limitNum]);
+  return result.rows.map(row => ({
+    previousCost: row.previousCost ? parseFloat(row.previousCost) : null,
+    newCost: row.newCost ? parseFloat(row.newCost) : null,
+    previousDisplayPrice: row.previousDisplayPrice ? parseFloat(row.previousDisplayPrice) : null,
+    newDisplayPrice: row.newDisplayPrice ? parseFloat(row.newDisplayPrice) : null,
+    previousSellingPrice: row.previousSellingPrice ? parseFloat(row.previousSellingPrice) : null,
+    newSellingPrice: row.newSellingPrice ? parseFloat(row.newSellingPrice) : null,
+    changeType: row.changeType,
+    reason: row.reason,
+    changedByName: row.changedByName || null,
+    createdAt: row.createdAt,
+  }));
 }
 
 module.exports = {
@@ -946,5 +1173,7 @@ module.exports = {
   getPricingStats,
   updateProductPricing,
   bulkUpdatePricing,
-  getPriceHistory
+  getPriceHistory,
+  calcPricingMetrics,
+  suggestSellingPrice,
 };
