@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { SocketProvider } from "./context/SocketContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleBasedHome } from "./components/RoleBasedHome";
@@ -76,6 +77,7 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
+          <SocketProvider>
           <CartProvider>
             <Toaster />
             <Routes>
@@ -395,6 +397,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </CartProvider>
+        </SocketProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

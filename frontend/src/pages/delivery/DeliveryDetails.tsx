@@ -17,6 +17,9 @@ import {
   FileText,
   Package,
   Navigation,
+  ShoppingBag,
+  CreditCard,
+  Banknote,
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { useDeliveries } from "../../hooks/useDeliveries";
@@ -429,6 +432,56 @@ export function DeliveryDetails() {
               </div>
             </Card>
 
+            {/* Order Items */}
+            {delivery.orderItems && delivery.orderItems.length > 0 && (
+              <Card>
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                      <ShoppingBag className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-800">
+                        Order Items
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        {delivery.orderItems.length} {delivery.orderItems.length === 1 ? 'item' : 'items'} in this order
+                      </p>
+                    </div>
+                  </div>
+                  {delivery.totalAmount !== undefined && (
+                    <span className="font-bold text-slate-800 text-lg">
+                      Total: ₹{delivery.totalAmount.toLocaleString('en-IN')}
+                    </span>
+                  )}
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {delivery.orderItems.map((item) => (
+                    <div key={item.id} className="p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          {item.productName}
+                        </p>
+                        {item.productSku && (
+                          <p className="text-xs text-slate-400 font-mono mt-0.5">
+                            SKU: {item.productSku}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 mt-1">
+                          Qty: <span className="font-semibold text-slate-700">{item.quantity}</span> × ₹{item.unitPrice.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-slate-800 text-sm">
+                          ₹{item.totalPrice.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Delivery Notes */}
             {delivery.notes && (
               <Card>
@@ -453,6 +506,79 @@ export function DeliveryDetails() {
 
           {/* Right Column - Actions & Timeline */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Amount to Collect / Payment Info Card */}
+            <Card className="overflow-hidden border border-slate-200 shadow-sm">
+              {(() => {
+                const total = delivery.totalAmount ?? delivery.orderAmount ?? 0;
+                const isCOD = (delivery.paymentMethod || '').toLowerCase() === 'cod' || 
+                              (delivery.paymentMethod || '').toLowerCase().includes('cash');
+                const isPaid = (delivery.paymentStatus || '').toLowerCase() === 'paid';
+                const needCollection = isCOD && !isPaid;
+
+                return (
+                  <div>
+                    <div className={`p-5 ${
+                      needCollection 
+                        ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-inner' 
+                        : isPaid 
+                          ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-inner' 
+                          : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs uppercase tracking-wider font-semibold opacity-90 flex items-center gap-1.5">
+                          {needCollection ? (
+                            <>
+                              <Banknote className="w-4 h-4" />
+                              Amount to Collect
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="w-4 h-4" />
+                              Payment Status
+                            </>
+                          )}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 uppercase tracking-wide">
+                          {delivery.paymentMethod || 'COD'}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-baseline gap-1">
+                        <span className="text-3xl font-extrabold tracking-tight">
+                          ₹{total.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <p className="text-xs opacity-95 mt-2 font-medium">
+                        {needCollection 
+                          ? '⚠️ Cash on Delivery: Collect ₹' + total.toLocaleString('en-IN') + ' from customer' 
+                          : isPaid 
+                            ? '✓ Order is Prepaid Online. Do NOT collect any cash.' 
+                            : `Payment Status: ${delivery.paymentStatus || 'Pending'}`}
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-slate-50 divide-y divide-slate-100 text-xs">
+                      <div className="pb-2.5 flex items-center justify-between text-slate-600">
+                        <span>Payment Mode</span>
+                        <span className="font-bold text-slate-800 uppercase">
+                          {delivery.paymentMethod || 'COD'}
+                        </span>
+                      </div>
+                      <div className="pt-2.5 flex items-center justify-between text-slate-600">
+                        <span>Payment Status</span>
+                        <span className={`font-bold uppercase px-2 py-0.5 rounded ${
+                          isPaid 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {delivery.paymentStatus || 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </Card>
+
             {/* Action Card */}
             {!isCompleted && (canAccept || canStart || canComplete) && (
               <Card className="overflow-hidden">

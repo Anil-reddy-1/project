@@ -593,6 +593,7 @@ async function updateDeliveryStatus(deliveryId, newStatus, userId, userRole, not
 
 /**
  * Get delivery details with permission check
+ * Includes order items, total amount, payment info for delivery partner
  */
 async function getDeliveryDetails(deliveryId, userId, userRole) {
   const delivery = await deliveryModel.findDeliveryById(deliveryId);
@@ -609,8 +610,58 @@ async function getDeliveryDetails(deliveryId, userId, userRole) {
   // Get status history
   const history = await deliveryModel.getDeliveryStatusHistory(deliveryId);
   
+  // Fetch associated order with items for delivery partner visibility
+  let orderDetails = {};
+  try {
+    const orderQuery = `
+      SELECT 
+        o.id, o.order_number, o.total_amount, 
+        o.payment_method, o.payment_status, o.order_status, o.notes as order_notes
+      FROM orders o
+      WHERE o.id = $1
+    `;
+    const orderResult = await pool.query(orderQuery, [delivery.orderId]);
+    
+    if (orderResult.rows.length > 0) {
+      const orderRow = orderResult.rows[0];
+      
+      // Fetch order items
+      const itemsQuery = `
+        SELECT 
+          oi.id, oi.product_id, oi.product_name, oi.product_sku,
+          oi.quantity, oi.unit_price, oi.total_price
+        FROM order_items oi
+        WHERE oi.order_id = $1
+        ORDER BY oi.created_at ASC
+      `;
+      const itemsResult = await pool.query(itemsQuery, [delivery.orderId]);
+      
+      orderDetails = {
+        orderNumber: orderRow.order_number,
+        totalAmount: parseFloat(orderRow.total_amount),
+        paymentMethod: orderRow.payment_method,
+        paymentStatus: orderRow.payment_status,
+        orderStatus: orderRow.order_status,
+        orderNotes: orderRow.order_notes,
+        orderItems: itemsResult.rows.map(item => ({
+          id: item.id,
+          productId: item.product_id,
+          productName: item.product_name,
+          productSku: item.product_sku,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.unit_price),
+          totalPrice: parseFloat(item.total_price),
+        })),
+      };
+    }
+  } catch (err) {
+    // Non-critical — delivery still works without order details
+    console.error('[DeliveryService] Error fetching order details:', err.message);
+  }
+  
   return {
     ...delivery,
+    ...orderDetails,
     statusHistory: history
   };
 }

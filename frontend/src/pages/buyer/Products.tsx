@@ -118,22 +118,26 @@ export function Products() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 mb-2">Wholesale catalog</p>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">Find what your business needs</h1>
-            <p className="text-slate-500 mt-2">
-              Browse our catalog of {pagination?.total || 0} products
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200/70 rounded-full text-indigo-700 font-bold text-xs uppercase tracking-wider mb-2.5">
+              <span>✦</span> Verified Wholesale Inventory
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+              Bulk Wholesale Catalog
+            </h1>
+            <p className="text-slate-500 mt-1.5 text-sm">
+              Explore {pagination?.total || 0} direct factory & warehouse products ready for fast dispatch
             </p>
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
             <button
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
-              className={`p-2.5 rounded-xl transition-colors ${
+              className={`p-2.5 rounded-xl transition-all duration-200 ${
                 viewMode === 'grid'
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
               title="Grid view"
             >
@@ -142,10 +146,10 @@ export function Products() {
             <button
               onClick={() => setViewMode('list')}
               aria-label="List view"
-              className={`p-2.5 rounded-xl transition-colors ${
+              className={`p-2.5 rounded-xl transition-all duration-200 ${
                 viewMode === 'list'
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
               title="List view"
             >
@@ -157,7 +161,7 @@ export function Products() {
         {/* Search Bar */}
         <div className="max-w-2xl">
           <SearchBar
-            placeholder="Search products by name or SKU…"
+            placeholder="Search products by title, SKU, or category…"
             value={searchQuery}
             onChange={setSearchQuery}
             icon={<Search className="w-5 h-5" />}
@@ -166,27 +170,29 @@ export function Products() {
 
         {/* Category Filter */}
         {availableCategories.length > 0 && (
-          <div className="rounded-2xl bg-white border border-slate-200/80 p-4 sm:p-5 shadow-sm">
-            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">Shop by category</h3>
-            <div className="flex flex-wrap gap-2">
+          <div className="rounded-3xl bg-white border border-slate-200/80 p-5 sm:p-6 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-3.5">
+              Filter By Department
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
               <button
                 onClick={() => handleCategorySelect(null)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
                   selectedCategory === null
-                    ?                     'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20 scale-[1.02]'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
                 }`}
               >
-                All Products
+                All Departments
               </button>
               {availableCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => handleCategorySelect(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
                     selectedCategory === category
-                      ?                       'bg-slate-900 text-white shadow-sm'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20 scale-[1.02]'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
                   }`}
                 >
                   {category}
@@ -265,10 +271,10 @@ export function Products() {
                         )}
                         <button
                           onClick={() => handlePageChange(page)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          className={`w-10 h-10 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center ${
                             filters.page === page
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 scale-105'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                           }`}
                         >
                           {page}

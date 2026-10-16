@@ -140,67 +140,67 @@ export function Orders() {
       >
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
+          <Card className="p-5 rounded-2xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Total Orders</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalOrders}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Total Orders</p>
+                <p className="text-3xl font-black text-slate-900 mt-1 tracking-tight">{stats.totalOrders}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <Package className="w-6 h-6" />
               </div>
             </div>
           </Card>
           
-          <Card className="p-4">
+          <Card className="p-5 rounded-2xl border border-amber-100/80 bg-gradient-to-br from-amber-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pendingOrders}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Pending</p>
+                <p className="text-3xl font-black text-amber-600 mt-1 tracking-tight">{stats.pendingOrders}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                <Clock className="w-6 h-6" />
               </div>
             </div>
           </Card>
           
-          <Card className="p-4">
+          <Card className="p-5 rounded-2xl border border-blue-100/80 bg-gradient-to-br from-blue-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Confirmed</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">{stats.confirmedOrders}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Confirmed</p>
+                <p className="text-3xl font-black text-blue-600 mt-1 tracking-tight">{stats.confirmedOrders}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                <CheckCircle className="w-6 h-6" />
               </div>
             </div>
           </Card>
           
-          <Card className="p-4">
+          <Card className="p-5 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-emerald-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Delivered</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.deliveredOrders}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Delivered</p>
+                <p className="text-3xl font-black text-emerald-600 mt-1 tracking-tight">{stats.deliveredOrders}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                <CheckCircle className="w-6 h-6" />
               </div>
             </div>
           </Card>
         </div>
 
         {/* Filters */}
-        <Card className="p-4">
+        <Card className="p-4 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search by order number, name, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               />
             </div>
 
@@ -210,7 +210,7 @@ export function Orders() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-semibold text-slate-700 bg-white"
               >
                 <option value="all">All Orders</option>
                 <option value="pending">Pending</option>
@@ -226,7 +226,7 @@ export function Orders() {
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
-          <Card className="p-8">
+          <Card className="p-8 rounded-2xl border border-slate-200/80 text-center">
             <EmptyState
               icon={AlertCircle}
               title="No orders found"
@@ -241,8 +241,8 @@ export function Orders() {
             animate="visible"
           >
             {filteredOrders.map((order) => {
-              const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus];
-              const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus];
+              const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus] || { label: order.orderStatus, color: 'gray', icon: Package };
+              const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus as keyof typeof PAYMENT_STATUS_CONFIG] || { label: order.paymentStatus, color: 'gray' };
               const StatusIcon = statusConfig.icon;
               
               return (
@@ -251,58 +251,58 @@ export function Orders() {
                   variants={listItemVariants}
                 >
                   <Card 
-                    className="p-6 hover:shadow-lg transition-all cursor-pointer group"
+                    className="p-6 rounded-2xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group bg-white"
                     onClick={() => handleOrderClick(order.id)}
                   >
                     <div className="flex items-start gap-4">
                       {/* Order Icon */}
-                      <div className={`w-12 h-12 rounded-xl bg-${statusConfig.color}-100 flex items-center justify-center flex-shrink-0`}>
-                        <StatusIcon className={`w-6 h-6 text-${statusConfig.color}-600`} />
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-indigo-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <StatusIcon className="w-6 h-6 text-indigo-600" />
                       </div>
 
                       {/* Order Details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4 mb-2">
                           <div>
-                            <h3 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                            <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                               Order #{order.orderNumber}
                             </h3>
-                            <p className="text-sm text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5 font-medium">
                               Placed on {formatDate(order.createdAt)}
                             </p>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                          <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
                         </div>
 
                         {/* Order Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">Items</p>
-                            <p className="text-sm font-semibold text-slate-800">{order.items.length} items</p>
+                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Items</p>
+                            <p className="text-sm font-bold text-slate-800 mt-0.5">{order.items.length} items</p>
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">Total Amount</p>
-                            <p className="text-sm font-semibold text-slate-800">₹{order.totalAmount.toFixed(2)}</p>
+                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Total Amount</p>
+                            <p className="text-base font-extrabold text-indigo-600 mt-0.5">₹{order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">Delivery To</p>
-                            <p className="text-sm font-semibold text-slate-800 truncate">
+                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Delivery To</p>
+                            <p className="text-sm font-bold text-slate-800 truncate mt-0.5">
                               {order.deliveryAddress.name}
                             </p>
                           </div>
                         </div>
 
                         {/* Status Badges */}
-                        <div className="flex flex-wrap gap-2 mt-4">
-                          <Badge variant={statusConfig.color as any}>
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          <Badge variant={statusConfig.color as any} className="font-semibold text-xs">
                             {statusConfig.label}
                           </Badge>
-                          <Badge variant={paymentConfig.color as any}>
-                            {paymentConfig.label}
+                          <Badge variant={paymentConfig.color as any} className="font-semibold text-xs">
+                            Payment: {paymentConfig.label}
                           </Badge>
-                          <Badge variant="outline">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">
                             {order.paymentMethod}
-                          </Badge>
+                          </span>
                         </div>
                       </div>
                     </div>

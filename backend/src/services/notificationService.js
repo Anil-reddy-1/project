@@ -1,11 +1,11 @@
 const pool = require('../config/db');
+const { emitToUser } = require('../utils/socketEmitter');
 
 /**
  * Notification Service
  * Handles creation and management of user notifications
  * 
- * Currently implements in-app notifications stored in database.
- * Future enhancements: Email, SMS, Push notifications
+ * Implements in-app notifications stored in database + real-time Socket.IO push.
  */
 
 /**
@@ -28,9 +28,14 @@ async function createNotification(userId, type, title, message, data = {}) {
     const values = [userId, type, title, message, JSON.stringify(data)];
     const result = await pool.query(query, values);
     
+    const notification = mapNotificationRow(result.rows[0]);
+    
     console.log(`[Notification] Created ${type} for user ${userId}: ${title}`);
     
-    return mapNotificationRow(result.rows[0]);
+    // Push real-time notification via Socket.IO
+    emitToUser(userId, 'notification:new', notification);
+    
+    return notification;
   } catch (error) {
     console.error('[Notification] Error creating notification:', error);
     // Don't throw - notifications are non-critical

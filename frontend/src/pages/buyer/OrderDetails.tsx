@@ -43,6 +43,21 @@ const PAYMENT_STATUS_CONFIG = {
   refunded: { label: 'Refunded', color: 'gray' },
 };
 
+const BUYER_STEPS = [
+  { key: 'placed', label: 'Order Placed', icon: Clock },
+  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle },
+  { key: 'in_transit', label: 'In Transit', icon: Truck },
+  { key: 'delivered', label: 'Delivered', icon: CheckCircle },
+];
+
+function getBuyerStepIndex(status: string): number {
+  if (['delivered', 'completed'].includes(status)) return 3;
+  if (['assigned', 'in_transit', 'out_for_delivery'].includes(status)) return 2;
+  if (['confirmed', 'preparing', 'packed'].includes(status)) return 1;
+  if (['pending'].includes(status)) return 0;
+  return -1;
+}
+
 export function OrderDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -140,33 +155,82 @@ export function OrderDetails() {
           </div>
         </div>
 
+        {/* Visual Progress Stepper */}
+        {order.orderStatus !== 'cancelled' && (
+          <Card className="p-6 rounded-3xl border border-slate-200/80 shadow-sm bg-white overflow-hidden">
+            <div className="flex items-start sm:items-center justify-between relative overflow-x-auto pb-1">
+              <div className="absolute top-5 left-10 right-10 h-0.5 bg-slate-100" />
+              <div
+                className="absolute top-5 left-10 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
+                style={{
+                  width: `${Math.max(0, (getBuyerStepIndex(order.orderStatus) / (BUYER_STEPS.length - 1)) * (100 - 15))}%`,
+                }}
+              />
+
+              {BUYER_STEPS.map((step, idx) => {
+                const StepIcon = step.icon;
+                const currentStep = getBuyerStepIndex(order.orderStatus);
+                const isActive = idx <= currentStep;
+                const isCurrent = idx === currentStep;
+
+                return (
+                  <div key={step.key} className="relative z-10 flex min-w-[72px] flex-col items-center">
+                    <div
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                        isCurrent
+                          ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30 ring-4 ring-indigo-50"
+                          : isActive
+                            ? "bg-emerald-500 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-400"
+                      }`}
+                    >
+                      <StepIcon className="w-5 h-5" />
+                    </div>
+                    <span
+                      className={`text-xs mt-2 font-bold tracking-tight ${
+                        isCurrent
+                          ? "text-indigo-600"
+                          : isActive
+                            ? "text-emerald-600"
+                            : "text-slate-400"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
         {/* Delivery Verification OTP for Buyer */}
         {order.deliveryOtp && (
-          <Card className="overflow-hidden border-2 border-indigo-400 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/90 shadow-md">
+          <Card className="overflow-hidden border border-indigo-200/80 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white rounded-3xl shadow-xl">
             <div className="p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-md">
                       <KeyRound className="w-4 h-4" />
                     </div>
-                    <h3 className="font-bold text-slate-800 text-lg">Delivery Verification OTP</h3>
-                    <Badge variant="default" className="text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0">
-                      Share with Delivery Partner
-                    </Badge>
+                    <h3 className="font-bold text-white text-lg tracking-tight">Delivery Verification OTP</h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      Share with Partner
+                    </span>
                   </div>
-                  <p className="text-sm text-slate-600">
-                    Share this 6-digit OTP with your delivery partner upon arrival to confirm and receive your order.
+                  <p className="text-sm text-slate-300">
+                    Share this 6-digit secure OTP with the delivery partner upon arrival to confirm receipt.
                   </p>
                   {order.deliveryOtpExpiresAt && (
-                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       Valid until {formatDateTime(order.deliveryOtpExpiresAt)}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border-2 border-indigo-200 shadow-sm self-start sm:self-auto">
-                  <span className="font-mono text-2xl font-black tracking-[0.25em] text-indigo-700">
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 shadow-inner self-start sm:self-auto">
+                  <span className="font-mono text-3xl font-black tracking-[0.3em] text-white">
                     {order.deliveryOtp}
                   </span>
                   <Button
@@ -179,7 +243,7 @@ export function OrderDetails() {
                       }
                     }}
                     title="Copy OTP"
-                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 ml-1"
+                    className="text-white/80 hover:text-white hover:bg-white/10 ml-1 rounded-xl"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -193,27 +257,29 @@ export function OrderDetails() {
           {/* Left Column - Order Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Items */}
-            <Card>
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-slate-600" />
-                  <h2 className="text-lg font-semibold text-slate-800">Order Items</h2>
+            <Card className="rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden bg-white">
+              <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/60">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <Package className="w-5 h-5" />
                 </div>
+                <h2 className="text-base font-bold text-slate-800">Order Items ({order.items.length})</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-6 divide-y divide-slate-100">
                 {order.items.map((item) => (
-                  <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0 items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-800">{item.productName}</h3>
-                      <p className="text-sm text-slate-500">SKU: {item.productSku}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-sm text-slate-600">Qty: {item.quantity}</span>
-                        <span className="text-sm text-slate-400">×</span>
-                        <span className="text-sm font-semibold text-slate-800">₹{item.unitPrice.toFixed(2)}</span>
+                      <h3 className="font-bold text-slate-900 text-sm">{item.productName}</h3>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">SKU: {item.productSku}</p>
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700">Qty: {item.quantity}</span>
+                        <span>×</span>
+                        <span className="font-semibold text-slate-800">₹{item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-slate-800">₹{item.totalPrice.toFixed(2)}</p>
+                      <p className="font-extrabold text-slate-900 text-sm">
+                        ₹{item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -354,27 +420,29 @@ export function OrderDetails() {
             </Card>
 
             {/* Order Summary */}
-            <Card>
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-slate-600" />
-                  <h2 className="text-lg font-semibold text-slate-800">Order Summary</h2>
+            <Card className="rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden bg-white">
+              <div className="p-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50/60">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <CreditCard className="w-4 h-4" />
                 </div>
+                <h2 className="text-base font-bold text-slate-800">Order Summary</h2>
               </div>
               <div className="p-6 space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Subtotal ({order.items.length} items)</span>
-                    <span className="font-semibold text-slate-800">₹{subtotal.toFixed(2)}</span>
+                    <span className="text-slate-500">Subtotal ({order.items.length} items)</span>
+                    <span className="font-semibold text-slate-800">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Delivery Charges</span>
-                    <span className="font-semibold text-green-600">FREE</span>
+                    <span className="text-slate-500">Delivery Charges</span>
+                    <span className="font-bold text-emerald-600 uppercase text-xs tracking-wider">FREE DELIVERY</span>
                   </div>
                   <Separator />
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-slate-800">Total Amount</span>
-                    <span className="text-xl font-bold text-slate-900">₹{order.totalAmount.toFixed(2)}</span>
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="font-bold text-slate-800 text-base">Total Amount</span>
+                    <span className="text-2xl font-black text-indigo-600">
+                      ₹{order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </div>
               </div>

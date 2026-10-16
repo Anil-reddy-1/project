@@ -36,12 +36,14 @@ export function InvoiceSidebar({
 
   return (
     <div className={`${sticky ? 'sticky top-6' : ''}`}>
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-slate-600" />
-            <h2 className="text-lg font-bold text-slate-900">Order Summary</h2>
+        <div className="px-6 py-4.5 bg-slate-50/70 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <ShoppingCart className="w-4 h-4" />
+            </div>
+            <h2 className="text-base font-bold text-slate-900">Order Summary</h2>
           </div>
         </div>
 
@@ -189,9 +191,9 @@ export function InvoiceSidebar({
             disabled={!canCheckout}
             whileHover={canCheckout ? { scale: 1.02 } : {}}
             whileTap={canCheckout ? { scale: 0.98 } : {}}
-            className={`w-full py-3 px-4 rounded-lg font-bold text-base transition-all duration-200 ${
+            className={`w-full py-3.5 px-4 rounded-2xl font-bold text-base transition-all duration-200 ${
               canCheckout
-                ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-600/30'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
@@ -253,15 +255,15 @@ export function InvoiceSidebar({
       )}
 
       {/* Help Section */}
-      <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-900 mb-2">
-          Need Help?
+      <div className="mt-4 p-4.5 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+          Need Wholesale Assistance?
         </h3>
-        <p className="text-xs text-slate-600 leading-relaxed mb-3">
-          Have questions about minimum order quantities or bulk pricing? Our team is here to help.
+        <p className="text-xs text-slate-500 leading-relaxed mb-3">
+          Have questions about bulk orders, payment terms, or freight? Our operations team is ready to help.
         </p>
-        <button className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
-          Contact Support
+        <button className="text-xs font-bold text-indigo-600 hover:text-indigo-700">
+          Contact Support →
         </button>
       </div>
     </div>

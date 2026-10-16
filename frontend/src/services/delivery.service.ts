@@ -9,6 +9,16 @@ export interface DeliveryStatusHistory {
   createdAt: string;
 }
 
+export interface DeliveryOrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
 export interface Delivery {
   id: string;
   deliveryId?: string;
@@ -42,6 +52,12 @@ export interface Delivery {
   updatedAt: string;
   orderNumber?: string;
   orderAmount?: number;
+  totalAmount?: number;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  orderStatus?: string;
+  orderNotes?: string;
+  orderItems?: DeliveryOrderItem[];
   partnerName?: string;
   partnerPhone?: string;
   partnerContact?: string;

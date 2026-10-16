@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService, type Notification } from '../services/notification.service';
 import { Button } from './ui';
 import { formatRelativeTime } from '../utils/date';
-import { showSuccessToast, showErrorToast } from '../utils/toast';
+import { showSuccessToast, showErrorToast, showInfoToast } from '../utils/toast';
+import { useSocketEvent } from '../context/SocketContext';
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -18,12 +19,23 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Real-time notification receiver via Socket.IO
+  useSocketEvent<Notification>('notification:new', (newNotification) => {
+    if (!newNotification) return;
+    setUnreadCount((prev) => prev + 1);
+    setNotifications((prev) => [
+      newNotification,
+      ...prev.filter((n) => n.id !== newNotification.id),
+    ]);
+    showInfoToast(`🔔 ${newNotification.title}: ${newNotification.message}`);
+  });
+
   // Fetch unread count on mount
   useEffect(() => {
     fetchUnreadCount();
     
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Poll for new notifications every 60 seconds as a fallback
+    const interval = setInterval(fetchUnreadCount, 60000);
     return () => clearInterval(interval);
   }, []);
 
