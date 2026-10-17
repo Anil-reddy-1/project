@@ -17,10 +17,11 @@ export function CartLoadingSkeleton({
   showSavedSection = false,
 }: CartLoadingSkeletonProps) {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full">
       {/* Page Header */}
-      <div className="mb-8">
-        <Skeleton className="h-8 w-32 mb-2" />
+      <div className="mb-10">
+        <Skeleton className="h-3 w-24 mb-3" />
+        <Skeleton className="h-9 w-56 mb-3" />
         <Skeleton className="h-4 w-48" />
       </div>
 
@@ -28,9 +29,9 @@ export function CartLoadingSkeleton({
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
           {/* Cart Items Section */}
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-ivory-200 overflow-hidden">
             {/* Section Header */}
-            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+            <div className="px-6 py-4 border-b border-ivory-200">
               <Skeleton className="h-6 w-40" />
             </div>
 
@@ -44,9 +45,9 @@ export function CartLoadingSkeleton({
 
           {/* Saved Items Section */}
           {showSavedSection && (
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-ivory-200 overflow-hidden">
               {/* Section Header */}
-              <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+              <div className="px-6 py-4 border-b border-ivory-200">
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-6 w-48" />
                   <Skeleton className="h-5 w-5 rounded" />
@@ -72,10 +73,10 @@ export function CartLoadingSkeleton({
  */
 function CartItemSkeleton() {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
+    <div className="bg-white rounded-2xl border border-ivory-200 p-4">
       <div className="flex gap-4">
         {/* Image */}
-        <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+        <Skeleton className="w-24 h-24 rounded-xl flex-shrink-0" />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -93,23 +94,23 @@ function CartItemSkeleton() {
 
           {/* Badges Row */}
           <div className="flex gap-2 mb-3">
-            <Skeleton className="h-6 w-20 rounded-md" />
-            <Skeleton className="h-6 w-24 rounded-md" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-6 w-24 rounded-full" />
           </div>
 
           {/* Controls Row */}
           <div className="flex flex-wrap items-center gap-3">
-            <Skeleton className="h-9 w-32 rounded-lg" />
-            <div className="hidden sm:block w-px h-6 bg-slate-200" />
+            <Skeleton className="h-9 w-32 rounded-full" />
+            <div className="hidden sm:block w-px h-6 bg-ivory-200" />
             <div className="flex gap-2">
-              <Skeleton className="h-7 w-16 rounded-md" />
-              <Skeleton className="h-7 w-20 rounded-md" />
-              <Skeleton className="h-7 w-20 rounded-md" />
+              <Skeleton className="h-7 w-16 rounded-full" />
+              <Skeleton className="h-7 w-20 rounded-full" />
+              <Skeleton className="h-7 w-20 rounded-full" />
             </div>
           </div>
 
           {/* Mobile Price */}
-          <div className="sm:hidden mt-3 pt-3 border-t border-slate-200">
+          <div className="sm:hidden mt-3 pt-3 border-t border-ivory-200">
             <div className="flex justify-between">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-5 w-24" />
@@ -126,9 +127,9 @@ function CartItemSkeleton() {
  */
 function InvoiceSidebarSkeleton() {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden sticky top-6">
+    <div className="bg-white rounded-2xl border border-ivory-200 overflow-hidden lg:sticky lg:top-28">
       {/* Header */}
-      <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+      <div className="px-6 py-4 border-b border-ivory-200">
         <Skeleton className="h-6 w-40" />
       </div>
 
@@ -146,7 +147,7 @@ function InvoiceSidebarSkeleton() {
           </div>
         </div>
 
-        <div className="h-px bg-slate-200" />
+        <div className="h-px bg-ivory-200" />
 
         {/* Price Breakdown */}
         <div className="space-y-3">
@@ -160,7 +161,7 @@ function InvoiceSidebarSkeleton() {
           </div>
         </div>
 
-        <div className="h-px bg-slate-200" />
+        <div className="h-px bg-ivory-200" />
 
         {/* Total */}
         <div className="flex justify-between items-center">
@@ -169,17 +170,17 @@ function InvoiceSidebarSkeleton() {
         </div>
 
         {/* Alert Box */}
-        <Skeleton className="h-20 w-full rounded-lg" />
+        <Skeleton className="h-20 w-full rounded-xl" />
 
         {/* Checkout Button */}
-        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-full" />
 
         {/* Info Text */}
         <Skeleton className="h-3 w-full" />
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
+      <div className="px-6 py-4 bg-ivory-50 border-t border-ivory-200">
         <div className="space-y-2">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-4/5" />
@@ -196,9 +197,9 @@ export function SimpleCartLoadingSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 2 }).map((_, index) => (
-        <div key={index} className="bg-white rounded-lg border border-slate-200 p-4">
+        <div key={index} className="bg-white rounded-2xl border border-ivory-200 p-4">
           <div className="flex gap-3">
-            <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
+            <Skeleton className="w-16 h-16 rounded-xl flex-shrink-0" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-3 w-1/2" />
@@ -216,9 +217,9 @@ export function SimpleCartLoadingSkeleton() {
  */
 export function SavedItemsSkeleton({ itemCount = 2 }: { itemCount?: number }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-ivory-200 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+      <div className="px-6 py-4 border-b border-ivory-200">
         <div className="flex justify-between items-center">
           <div className="space-y-1">
             <Skeleton className="h-5 w-32" />
@@ -231,16 +232,16 @@ export function SavedItemsSkeleton({ itemCount = 2 }: { itemCount?: number }) {
       {/* Items */}
       <div className="p-6 space-y-4">
         {Array.from({ length: itemCount }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg border border-slate-200 p-4">
+          <div key={index} className="bg-white rounded-2xl border border-ivory-200 p-4">
             <div className="flex gap-4">
-              <Skeleton className="w-20 h-20 rounded-lg flex-shrink-0" />
+              <Skeleton className="w-20 h-20 rounded-xl flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-24" />
                 <div className="flex gap-2 mt-3">
-                  <Skeleton className="h-7 w-24 rounded-md" />
-                  <Skeleton className="h-7 w-20 rounded-md" />
-                  <Skeleton className="h-7 w-20 rounded-md" />
+                  <Skeleton className="h-7 w-24 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
                 </div>
               </div>
             </div>

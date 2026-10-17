@@ -28,6 +28,8 @@ function mapOrderRow(row) {
     notes: row.notes,
     cashHandoverStatus: row.cash_handover_status || null,
     cashHandoverAt: row.cash_handover_at || null,
+    deliveryOtpVerifiedAt: row.delivery_otp_verified_at || null,
+    completedAt: row.completed_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -364,19 +366,35 @@ async function markCashPendingHandover(orderId, client = pool) {
 }
 
 /**
- * Supervisor confirms they have physically received the cash from the delivery partner.
+ * Supervisor marks a delivered order as completed. When the order's COD cash is still
+ * with the delivery partner, the same update records the cash handover as collected and
+ * the order as paid. The status guards make this safe against double submission.
  */
-async function confirmCashHandover(orderId) {
-  const query = `
-    UPDATE orders
-    SET cash_handover_status = 'collected',
-        cash_handover_at = CURRENT_TIMESTAMP,
-        payment_status = 'paid',
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $1 AND cash_handover_status = 'pending'
-    RETURNING *;
-  `;
-  const result = await pool.query(query, [orderId]);
+async function markOrderCompleted(orderId, { settleCash = false, note = null } = {}) {
+  const query = settleCash
+    ? `
+      UPDATE orders
+      SET order_status = 'completed',
+          completed_at = CURRENT_TIMESTAMP,
+          cash_handover_status = 'collected',
+          cash_handover_at = CURRENT_TIMESTAMP,
+          payment_status = 'paid',
+          notes = COALESCE(notes || E'\n', '') || $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND order_status = 'delivered' AND cash_handover_status = 'pending'
+      RETURNING *;
+    `
+    : `
+      UPDATE orders
+      SET order_status = 'completed',
+          completed_at = CURRENT_TIMESTAMP,
+          notes = COALESCE(notes || E'\n', '') || $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND order_status = 'delivered'
+        AND (cash_handover_status IS NULL OR cash_handover_status <> 'pending')
+      RETURNING *;
+    `;
+  const result = await pool.query(query, [orderId, note || 'Order marked complete by supervisor.']);
   return result.rows.length ? mapOrderRow(result.rows[0]) : null;
 }
 
@@ -449,7 +467,7 @@ module.exports = {
   updateOrderStatus,
   updatePaymentStatus,
   markCashPendingHandover,
-  confirmCashHandover,
+  markOrderCompleted,
   findOrdersPendingCashHandover,
   getUserOrderStats,
   getOrderItems,

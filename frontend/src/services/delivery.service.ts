@@ -59,6 +59,8 @@ export interface Delivery {
   orderNotes?: string;
   cashHandoverStatus?: 'pending' | 'collected' | null;
   cashHandoverAt?: string | null;
+  /** Set once the partner verified the buyer's OTP at the door (COD: cash still to collect) */
+  deliveryOtpVerifiedAt?: string | null;
   orderItems?: DeliveryOrderItem[];
   partnerName?: string;
   partnerPhone?: string;
@@ -97,6 +99,39 @@ export interface AssignDeliveryPayload {
   partnerId?: string;
   deliveryId?: string;
   notes?: string;
+}
+
+export interface PartnerDeliveryStats {
+  totalDeliveries: number;
+  assignedDeliveries: number;
+  acceptedDeliveries: number;
+  inTransitDeliveries: number;
+  deliveredDeliveries: number;
+  /** Delivered and settled: prepaid, or COD cash confirmed by a supervisor */
+  successfulDeliveries: number;
+  /** Delivered COD orders whose cash must still be returned to a supervisor */
+  cashPendingDeliveries: number;
+  cashPendingAmount: number;
+  failedDeliveries: number;
+}
+
+/**
+ * A delivered COD order whose cash the partner still holds. It doesn't count as a
+ * successful delivery until a supervisor confirms receiving the cash.
+ */
+export function isCashPendingReturn(delivery: Pick<Delivery, 'status' | 'cashHandoverStatus'>): boolean {
+  return delivery.status === 'delivered' && delivery.cashHandoverStatus === 'pending';
+}
+
+export interface VerifyDeliveryOtpResponse {
+  success: boolean;
+  message: string;
+  data: {
+    otpVerified: boolean;
+    needsCashCollection: boolean;
+    delivered: boolean;
+    amount?: number;
+  };
 }
 
 export interface UpdateDeliveryStatusPayload {
@@ -163,6 +198,10 @@ export const deliveryService = {
     status?: string;
   }) => api.get<DeliveriesListResponse>('/deliveries/me', params),
 
+  // Delivery statistics for the current delivery partner
+  getMyStats: () =>
+    api.get<{ success: boolean; message: string; data: PartnerDeliveryStats }>('/deliveries/stats/me'),
+
   // Get delivery status history
   getDeliveryHistory: (id: string) =>
     api.get<DeliveryHistoryResponse>(`/deliveries/${id}/history`),
@@ -187,6 +226,11 @@ export const deliveryService = {
   // Start delivery / mark in transit (delivery partner)
   startDelivery: (id: string, payload?: UpdateDeliveryStatusPayload) =>
     api.post<DeliveryResponse>(`/deliveries/${id}/start`, payload || {}),
+
+  // Verify the buyer's delivery OTP at the door (delivery partner).
+  // Prepaid orders are delivered immediately; COD orders then need cash collection.
+  verifyDeliveryOtp: (id: string, otp: string) =>
+    api.post<VerifyDeliveryOtpResponse>(`/deliveries/${id}/verify-otp`, { otp }),
 
   // Complete delivery / mark as delivered (delivery partner)
   completeDelivery: (id: string, payload?: UpdateDeliveryStatusPayload) =>

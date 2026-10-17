@@ -110,7 +110,11 @@ export const supervisorService = {
   // List COD orders whose cash is still with the delivery partner
   getCashPendingOrders: () => api.get<any>('/orders/cash-pending'),
 
-  // Confirm physical receipt of COD cash from a delivery partner
+  // Confirm physical receipt of COD cash from a delivery partner (also completes the order)
   confirmCashHandover: (orderId: string) =>
     api.post<any>(`/orders/${orderId}/confirm-cash-handover`, {}),
+
+  // Mark a delivered order as complete; COD orders need cashReceived = true
+  completeOrder: (orderId: string, cashReceived = false) =>
+    api.post<any>(`/orders/${orderId}/complete`, { cashReceived }),
 };

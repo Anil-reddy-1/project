@@ -118,7 +118,7 @@ export function SupervisorOrders() {
     try {
       setConfirmingId(orderId);
       await supervisorService.confirmCashHandover(orderId);
-      toast.success("Cash handover confirmed");
+      toast.success("Cash received — order marked complete");
       setCashPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || "Failed to confirm cash handover");
@@ -253,7 +253,7 @@ export function SupervisorOrders() {
                           onClick={() => handleConfirmCashHandover(order.id)}
                           className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0"
                         >
-                          {confirmingId === order.id ? "Confirming..." : "Confirm Cash Received"}
+                          {confirmingId === order.id ? "Completing..." : "Cash Received · Mark Complete"}
                         </Button>
                       </div>
                     </Card>

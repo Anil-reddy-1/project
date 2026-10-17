@@ -4,13 +4,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { MapPin, Plus } from "lucide-react";
+import { Loader2, MapPin, Plus } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { AddressCard, AddressForm } from "../../components/address";
-import { EmptyState } from "../../components/ui/EmptyState";
-import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
 import { addressService } from "../../services/address.service";
 import { showToast } from "../../utils/toast";
 import type { Address, AddressFormData } from "../../types/address.types";
@@ -158,9 +154,10 @@ export function Addresses() {
   if (isLoading) {
     return (
       <DashboardLayout title="Store" subtitle="Addresses">
-        <div className="max-w-4xl mx-auto py-8">
-          <div className="flex items-center justify-center py-16">
-            <LoadingSpinner size="lg" />
+        <div className="max-w-4xl mx-auto py-2">
+          <div className="flex flex-col items-center justify-center gap-3 py-24">
+            <Loader2 className="w-7 h-7 text-brass-600 animate-spin" aria-hidden="true" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Loading addresses</p>
           </div>
         </div>
       </DashboardLayout>
@@ -169,49 +166,57 @@ export function Addresses() {
 
   return (
     <DashboardLayout title="Store" subtitle="Addresses">
-      <div className="max-w-4xl mx-auto py-8 space-y-6">
+      <div className="max-w-4xl mx-auto py-2 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              Delivery Addresses
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="shop-eyebrow">Your account</p>
+            <h1 className="shop-title mt-2">Delivery addresses</h1>
+            <p className="shop-subtitle mt-2">
               Manage your saved delivery locations
             </p>
           </div>
           {!showAddForm && addresses.length > 0 && (
-            <Button onClick={handleShowAddForm}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Address
-            </Button>
+            <button type="button" className="shop-btn-primary self-start sm:self-auto" onClick={handleShowAddForm}>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Add address
+            </button>
           )}
         </div>
 
         {/* Add Address Form */}
         {showAddForm && (
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Add New Address</h2>
-            <AddressForm
-              mode="create"
-              onSubmit={handleAddAddress}
-              onCancel={handleCancelAddForm}
-              submitLabel="Add Address"
-              isLoading={isCreating}
-            />
-          </Card>
+          <div className="shop-card">
+            <div className="shop-card-header">
+              <h2 className="shop-heading">Add a new address</h2>
+            </div>
+            <div className="p-5 sm:p-6">
+              <AddressForm
+                mode="create"
+                onSubmit={handleAddAddress}
+                onCancel={handleCancelAddForm}
+                submitLabel="Add Address"
+                isLoading={isCreating}
+              />
+            </div>
+          </div>
         )}
 
         {/* Empty State */}
         {addresses.length === 0 && !showAddForm && (
-          <EmptyState
-            icon={MapPin}
-            title="No addresses saved"
-            description="Add your business delivery address to speed up checkout"
-            action={
-              <Button onClick={handleShowAddForm}>Add First Address</Button>
-            }
-          />
+          <div className="shop-card px-6 py-16 sm:py-20 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-ivory-100 border border-ivory-200 flex items-center justify-center">
+              <MapPin className="w-7 h-7 text-brass-600" strokeWidth={1.5} aria-hidden="true" />
+            </div>
+            <h2 className="shop-heading text-2xl mt-6">No addresses saved</h2>
+            <p className="shop-subtitle mt-2 max-w-sm">
+              Add your business delivery address to speed up checkout
+            </p>
+            <button type="button" className="shop-btn-primary mt-8" onClick={handleShowAddForm}>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Add your first address
+            </button>
+          </div>
         )}
 
         {/* Address List */}
@@ -234,35 +239,35 @@ export function Addresses() {
 
         {/* Info Card */}
         {addresses.length > 0 && (
-          <Card className="p-5 bg-blue-50 border-blue-200">
-            <p className="text-sm font-semibold text-blue-900 mb-3">
-              Address Tips
+          <div className="rounded-2xl border border-ivory-200 bg-ivory-50 p-5 sm:p-6">
+            <p className="shop-eyebrow">
+              Address tips
             </p>
-            <ul className="space-y-2 text-xs text-blue-700">
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5">•</span>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2 text-sm text-ink-500">
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1 w-1 rounded-full bg-brass shrink-0" aria-hidden="true" />
                 <span>
                   Add shop/location image for easy identification by delivery
                   partners
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5">•</span>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1 w-1 rounded-full bg-brass shrink-0" aria-hidden="true" />
                 <span>Capture location coordinates for accurate delivery</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5">•</span>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1 w-1 rounded-full bg-brass shrink-0" aria-hidden="true" />
                 <span>Set a default address for faster checkout</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5">•</span>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1 w-1 rounded-full bg-brass shrink-0" aria-hidden="true" />
                 <span>
                   You can edit or delete addresses anytime (except default
                   address)
                 </span>
               </li>
             </ul>
-          </Card>
+          </div>
         )}
       </div>
     </DashboardLayout>

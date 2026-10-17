@@ -442,17 +442,19 @@ async function regeneratePickupOtp(req, res, next) {
 }
 
 /**
- * Regenerate buyer delivery OTP (supervisor) — used when the original OTP has expired
+ * Regenerate buyer delivery OTP (buyer for own order, supervisor, admin) — used when the
+ * original OTP has expired or was lost
  * POST /api/v1/orders/:id/regenerate-delivery-otp
  */
 async function regenerateDeliveryOtp(req, res, next) {
   try {
     const { id } = req.params;
-    const supervisorId = req.user.dbId;
+    const userId = req.user.dbId;
+    const userRole = req.user.role;
 
-    const order = await orderService.regenerateDeliveryOtp(id);
+    const order = await orderService.regenerateDeliveryOtp(id, userId, userRole);
 
-    logger.info('Delivery OTP regenerated', { orderId: id, supervisorId });
+    logger.info('Delivery OTP regenerated', { orderId: id, userId, userRole });
 
     res.status(200).json({
       success: true,
@@ -478,17 +480,47 @@ async function confirmCashHandover(req, res, next) {
     const { id } = req.params;
     const supervisorId = req.user.dbId;
 
-    const order = await orderService.confirmCashHandover(id);
+    const order = await orderService.confirmCashHandover(id, supervisorId);
 
-    logger.info('Cash handover confirmed', { orderId: id, supervisorId });
+    logger.info('Cash handover confirmed, order completed', { orderId: id, supervisorId });
 
     res.status(200).json({
       success: true,
-      message: 'Cash handover confirmed',
+      message: 'Cash handover confirmed. Order marked complete.',
       data: { order }
     });
   } catch (error) {
     logger.error('Confirm cash handover error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Mark a delivered order as complete (supervisor). COD orders require `cashReceived: true`,
+ * confirming the delivery partner handed over the collected cash.
+ * POST /api/v1/orders/:id/complete
+ */
+async function completeOrder(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+    const cashReceived = req.body?.cashReceived === true;
+
+    const order = await orderService.completeOrder(id, supervisorId, { cashReceived });
+
+    logger.info('Order marked complete', { orderId: id, supervisorId, cashReceived });
+
+    res.status(200).json({
+      success: true,
+      message: 'Order marked as complete',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Complete order error:', {
       error: error.message,
       orderId: req.params.id,
       userId: req.user?.dbId
@@ -530,6 +562,7 @@ module.exports = {
   regeneratePickupOtp,
   regenerateDeliveryOtp,
   confirmCashHandover,
+  completeOrder,
   getCashPendingOrders,
   verifyPickupOtp
 };

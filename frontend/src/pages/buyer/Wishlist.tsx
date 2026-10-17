@@ -5,7 +5,7 @@
 
 import { DashboardLayout } from '../../components/layout';
 import { ProductCard } from '../../components/products';
-import { LoadingSpinner, EmptyState, ActionButton } from '../../components/ui';
+import { LoadingSpinner } from '../../components/ui';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useCart } from '../../context/CartContext';
 import { Heart } from 'lucide-react';
@@ -73,15 +73,13 @@ export function Wishlist() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6 border-b border-ivory-200">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-              My Wishlist
-            </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="shop-eyebrow">Saved for you</p>
+            <h1 className="shop-title mt-2">Wishlist</h1>
+            <p className="shop-subtitle mt-2">
               {wishlistCount > 0
                 ? `You have ${wishlistCount} ${wishlistCount === 1 ? 'item' : 'items'} in your wishlist`
                 : 'Your wishlist is empty'}
@@ -90,56 +88,62 @@ export function Wishlist() {
 
           {/* Actions */}
           {wishlistCount > 0 && (
-            <div className="flex gap-3">
-              <ActionButton variant="secondary" onClick={refetch}>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={refetch} className="shop-btn-outline h-10 px-5">
                 <svg
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={1.75}
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
                 Refresh
-              </ActionButton>
-              <ActionButton variant="danger" onClick={handleClearAll}>
-                Clear All
-              </ActionButton>
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full border border-red-200 bg-white text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+              >
+                Clear all
+              </button>
             </div>
           )}
         </div>
 
         {/* Error State */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">Error: {error}</p>
+          <div className="px-4 py-3.5 bg-red-50 border border-red-200 rounded-2xl">
+            <p className="text-sm text-red-700">Error: {error}</p>
           </div>
         )}
 
         {/* Empty State */}
         {wishlistCount === 0 && !loading ? (
-          <EmptyState
-            icon={Heart}
-            title="Your wishlist is empty"
-            description="Start adding products to your wishlist to save them for later"
-            action={
-              <ActionButton
-                variant="primary"
-                onClick={() => (window.location.href = '/buyer/products')}
-              >
-                Browse Products
-              </ActionButton>
-            }
-          />
+          <div className="shop-card px-6 py-14 sm:py-20 text-center">
+            <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-ivory-50 border border-ivory-300 flex items-center justify-center ring-1 ring-brass-100 ring-offset-4">
+              <Heart className="w-7 h-7 text-ink" strokeWidth={1.25} />
+            </div>
+            <h2 className="shop-heading text-2xl">Your wishlist is empty</h2>
+            <p className="shop-subtitle mt-2 max-w-sm mx-auto">
+              Start adding products to your wishlist to save them for later
+            </p>
+            <button
+              onClick={() => (window.location.href = '/buyer/products')}
+              className="shop-btn-primary mt-8"
+            >
+              Browse products
+            </button>
+          </div>
         ) : (
           <>
             {/* Wishlist Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
               {wishlistItems.map((item) => (
                 <ProductCard
                   key={item.wishlistId}
@@ -154,8 +158,8 @@ export function Wishlist() {
 
             {/* Loading State */}
             {loading && wishlistItems.length > 0 && (
-              <div className="text-center py-4">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <div className="text-center py-4" role="status" aria-label="Loading">
+                <div className="inline-block animate-spin rounded-full h-7 w-7 border-2 border-ivory-300 border-t-ink"></div>
               </div>
             )}
           </>
@@ -163,26 +167,27 @@ export function Wishlist() {
 
         {/* Info Card */}
         {wishlistCount > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              💡 Wishlist Tips
+          <div className="rounded-2xl border border-ivory-200 bg-ivory-50 p-6 sm:p-8">
+            <p className="shop-eyebrow">Good to know</p>
+            <h3 className="shop-heading mt-1.5 mb-4">
+              Wishlist tips
             </h3>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600">•</span>
-                <span>
+            <ul className="grid gap-4 sm:grid-cols-3 text-sm text-ink-700">
+              <li className="flex items-start gap-3">
+                <span className="font-display text-brass-600 tabular-nums">01</span>
+                <span className="leading-relaxed">
                   Your wishlist is saved and synced across all your devices
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600">•</span>
-                <span>
+              <li className="flex items-start gap-3">
+                <span className="font-display text-brass-600 tabular-nums">02</span>
+                <span className="leading-relaxed">
                   Click the heart icon on any product to add it to your wishlist
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600">•</span>
-                <span>
+              <li className="flex items-start gap-3">
+                <span className="font-display text-brass-600 tabular-nums">03</span>
+                <span className="leading-relaxed">
                   Quickly add wishlist items to cart when you're ready to purchase
                 </span>
               </li>

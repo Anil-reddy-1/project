@@ -3,7 +3,7 @@
  * Modern overview with live stats, pending actions, and quick navigation
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -15,11 +15,19 @@ import {
   MapPin,
   User,
   RefreshCw,
+  Banknote,
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { useDeliveries } from "../../hooks/useDeliveries";
 import { useAuth } from "../../context/AuthContext";
 import { Button, Card, Badge, Skeleton } from "../../components/ui";
+import {
+  deliveryService,
+  isCashPendingReturn,
+  type PartnerDeliveryStats,
+} from "../../services/delivery.service";
+import { useSocketEvent } from "../../context/SocketContext";
+import type { Notification } from "../../services/notification.service";
 import {
   fadeVariants,
   listContainerVariants,
@@ -31,6 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
   accepted: "from-blue-500 to-indigo-500",
   in_transit: "from-violet-500 to-purple-500",
   delivered: "from-emerald-500 to-green-500",
+  cash_pending: "from-amber-500 to-orange-600",
 };
 
 export function DeliveryDashboard() {
@@ -40,6 +49,32 @@ export function DeliveryDashboard() {
     autoLoad: true,
   });
   const [greeting, setGreeting] = useState("Good day");
+  const [serverStats, setServerStats] = useState<PartnerDeliveryStats | null>(null);
+
+  // Counts across all deliveries (the list itself is paginated)
+  const loadStats = useCallback(async () => {
+    try {
+      const res = await deliveryService.getMyStats();
+      setServerStats(res.data);
+    } catch {
+      setServerStats(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    deliveryService
+      .getMyStats()
+      .then((res) => setServerStats(res.data))
+      .catch(() => setServerStats(null));
+  }, []);
+
+  const refreshAll = useCallback(() => {
+    loadDeliveries();
+    loadStats();
+  }, [loadDeliveries, loadStats]);
+
+  // Supervisor confirming a cash handover (or any delivery update) changes the counts
+  useSocketEvent<Notification>("notification:new", refreshAll);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -49,24 +84,39 @@ export function DeliveryDashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    const assigned = deliveries.filter((d) => d.status === "assigned").length;
-    const accepted = deliveries.filter((d) => d.status === "accepted").length;
-    const inTransit = deliveries.filter(
-      (d) => d.status === "in_transit",
-    ).length;
-    const delivered = deliveries.filter((d) => d.status === "delivered").length;
+    if (serverStats) {
+      return {
+        assigned: serverStats.assignedDeliveries,
+        accepted: serverStats.acceptedDeliveries,
+        inTransit: serverStats.inTransitDeliveries,
+        successful: serverStats.successfulDeliveries,
+        cashPending: serverStats.cashPendingDeliveries,
+        cashPendingAmount: serverStats.cashPendingAmount,
+        total: serverStats.totalDeliveries,
+      };
+    }
+    const cashPendingList = deliveries.filter(isCashPendingReturn);
     return {
-      assigned,
-      accepted,
-      inTransit,
-      delivered,
+      assigned: deliveries.filter((d) => d.status === "assigned").length,
+      accepted: deliveries.filter((d) => d.status === "accepted").length,
+      inTransit: deliveries.filter((d) => d.status === "in_transit").length,
+      // A delivery only counts as successful once its COD cash reached the supervisor
+      successful:
+        deliveries.filter((d) => d.status === "delivered").length - cashPendingList.length,
+      cashPending: cashPendingList.length,
+      cashPendingAmount: cashPendingList.reduce(
+        (sum, d) => sum + (d.totalAmount ?? d.orderAmount ?? 0),
+        0,
+      ),
       total: deliveries.length,
     };
-  }, [deliveries]);
+  }, [deliveries, serverStats]);
 
   const pendingActions = useMemo(() => {
-    return deliveries.filter((d) =>
-      ["assigned", "accepted", "in_transit"].includes(d.status),
+    return deliveries.filter(
+      (d) =>
+        ["assigned", "accepted", "in_transit"].includes(d.status) ||
+        isCashPendingReturn(d),
     );
   }, [deliveries]);
 
@@ -125,7 +175,7 @@ export function DeliveryDashboard() {
               size="sm"
               className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20"
               variant="outline"
-              onClick={() => loadDeliveries()}
+              onClick={refreshAll}
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
@@ -133,8 +183,26 @@ export function DeliveryDashboard() {
           </div>
         </div>
 
+        {/* Cash to return to the supervisor */}
+        {stats.cashPending > 0 && (
+          <Card className="p-5 border-2 border-amber-300 bg-amber-50 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0">
+              <Banknote className="w-6 h-6 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-amber-900">
+                Return ₹{stats.cashPendingAmount.toLocaleString("en-IN")} cash to your supervisor
+              </p>
+              <p className="text-sm text-amber-800/80">
+                {stats.cashPending} {stats.cashPending === 1 ? "delivery is" : "deliveries are"} pending.
+                They count as successful once the supervisor confirms receiving the cash.
+              </p>
+            </div>
+          </Card>
+        )}
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
             {
               label: "Awaiting Accept",
@@ -155,10 +223,16 @@ export function DeliveryDashboard() {
               gradient: STATUS_COLORS.in_transit,
             },
             {
-              label: "Delivered",
-              value: stats.delivered,
+              label: "Successful",
+              value: stats.successful,
               icon: CheckCircle,
               gradient: STATUS_COLORS.delivered,
+            },
+            {
+              label: "Cash to Return",
+              value: stats.cashPending,
+              icon: Banknote,
+              gradient: STATUS_COLORS.cash_pending,
             },
           ].map((stat) => {
             const Icon = stat.icon;
@@ -226,8 +300,9 @@ export function DeliveryDashboard() {
                   <Card
                     className="p-4 hover:shadow-md transition-all cursor-pointer group border-l-4"
                     style={{
-                      borderLeftColor:
-                        delivery.status === "assigned"
+                      borderLeftColor: isCashPendingReturn(delivery)
+                        ? "#ea580c"
+                        : delivery.status === "assigned"
                           ? "#f59e0b"
                           : delivery.status === "accepted"
                             ? "#3b82f6"
@@ -245,20 +320,28 @@ export function DeliveryDashboard() {
                               ? `Order #${delivery.orderNumber}`
                               : `#${delivery.id.slice(0, 8)}`}
                           </h3>
-                          <Badge
-                            variant={
-                              delivery.status === "assigned"
-                                ? ("yellow" as any)
-                                : delivery.status === "accepted"
-                                  ? ("blue" as any)
-                                  : ("purple" as any)
-                            }
-                          >
-                            {delivery.status === "in_transit"
-                              ? "In Transit"
-                              : delivery.status.charAt(0).toUpperCase() +
-                                delivery.status.slice(1)}
-                          </Badge>
+                          {isCashPendingReturn(delivery) ? (
+                            <Badge variant="warning">
+                              Pending · Return ₹
+                              {(delivery.totalAmount ?? delivery.orderAmount ?? 0).toLocaleString("en-IN")} to
+                              supervisor
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant={
+                                delivery.status === "assigned"
+                                  ? ("yellow" as any)
+                                  : delivery.status === "accepted"
+                                    ? ("blue" as any)
+                                    : ("purple" as any)
+                              }
+                            >
+                              {delivery.status === "in_transit"
+                                ? "In Transit"
+                                : delivery.status.charAt(0).toUpperCase() +
+                                  delivery.status.slice(1)}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
                           <span className="flex items-center gap-1">
@@ -298,9 +381,9 @@ export function DeliveryDashboard() {
             <h3 className="font-semibold text-slate-800">Total Deliveries</h3>
           </div>
           <p className="text-sm text-slate-500">
-            You have completed{" "}
+            You have successfully completed{" "}
             <span className="font-semibold text-slate-800">
-              {stats.delivered}
+              {stats.successful}
             </span>{" "}
             out of{" "}
             <span className="font-semibold text-slate-800">{stats.total}</span>{" "}

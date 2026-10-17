@@ -62,37 +62,37 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
     name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] flex flex-col text-slate-900">
-      <div className="bg-slate-950 text-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-center sm:justify-between text-[11px] font-medium tracking-wide">
+    <div className="min-h-screen bg-ivory flex flex-col text-ink">
+      <div className="bg-ink text-ivory-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-center sm:justify-between text-[11px] font-medium tracking-[0.14em] uppercase">
           <span className="hidden sm:inline">Wholesale ordering, made simple.</span>
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <Sparkles className="w-3.5 h-3.5 text-brass-300" />
             New season pricing is live
-            <ArrowRight className="w-3 h-3 text-slate-400" />
+            <ArrowRight className="w-3 h-3 text-ink-300" />
           </span>
         </div>
       </div>
       {/* ── TOP NAV ── */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+      <header className="sticky top-0 z-40 bg-ivory-50/95 backdrop-blur-xl border-b border-ivory-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-4 h-[4.5rem]">
 
             {/* Brand */}
             <Link to="/buyer/home" className="flex items-center gap-2 shrink-0 mr-2">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 flex items-center justify-center shadow-lg shadow-blue-200/60">
-                <span className="text-white font-black text-sm tracking-tight">GJ</span>
+              <div className="w-10 h-10 rounded-full bg-ink flex items-center justify-center ring-1 ring-brass-300 ring-offset-2 ring-offset-ivory-50">
+                <span className="font-display text-brass-100 font-semibold text-sm tracking-wide">GJ</span>
               </div>
               <div className="hidden sm:block leading-tight">
-                <span className="font-extrabold text-slate-900 text-[15px] tracking-tight block">Ganga Jamuna</span>
-                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-[0.18em]">Wholesale</span>
+                <span className="font-display font-semibold text-ink text-[17px] tracking-tight block">Ganga Jamuna</span>
+                <span className="text-[10px] text-brass-600 font-semibold uppercase tracking-[0.28em]">Wholesale</span>
               </div>
             </Link>
 
             {/* Global Search */}
             <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl hidden md:block">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
                 <input
                   name="catalog-search"
                   aria-label="Search products"
@@ -101,7 +101,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="w-full h-10 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-[color,background-color,border-color,box-shadow]"
+                  className="w-full h-10 pl-9 pr-4 bg-white border border-ivory-300 rounded-full text-sm text-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brass-100 focus:border-ink-300 transition-[color,background-color,border-color,box-shadow]"
                 />
               </div>
             </form>
@@ -115,9 +115,9 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   <Link
                     key={path}
                     to={path}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-[color,background-color] ${isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
+                    className={`relative flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors after:absolute after:left-3 after:right-3 after:-bottom-[1px] after:h-[2px] after:rounded-full after:transition-colors ${isActive
+                        ? 'text-ink after:bg-brass'
+                        : 'text-ink-500 hover:text-ink after:bg-transparent'
                       }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -134,13 +134,13 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
               {/* Cart */}
               <Link
                 to="/buyer/cart"
-                className="relative p-2.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-[color,background-color]"
+                className="relative p-2.5 rounded-full text-ink-500 hover:text-ink hover:bg-ivory-100 transition-[color,background-color]"
                 title="Cart"
                 aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
               >
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">
+                  <span className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-brass text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-ivory-50">
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
@@ -153,30 +153,30 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   onClick={() => setProfileOpen((v) => !v)}
                   aria-label="Open account menu"
                   aria-expanded={profileOpen}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-ivory-100 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-ink text-brass-100 font-semibold text-xs flex items-center justify-center">
                     {user ? getInitials(user.name) : '?'}
                   </div>
-                  <span className="text-sm font-medium text-slate-700 hidden sm:block max-w-[100px] truncate">
+                  <span className="text-sm font-medium text-ink hidden sm:block max-w-[100px] truncate">
                     {user?.name?.split(' ')[0] ?? 'Account'}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                  <ChevronDown className="w-3.5 h-3.5 text-ink-300 hidden sm:block" />
                 </button>
 
                 {profileOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 overflow-hidden py-1.5">
-                      <div className="px-4 py-3 border-b border-slate-100">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{user?.name}</p>
-                        <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-ivory-200 rounded-2xl shadow-[0_18px_40px_-12px_rgba(20,33,61,0.18)] z-20 overflow-hidden py-1.5">
+                      <div className="px-4 py-3 border-b border-ivory-200">
+                        <p className="font-display text-[15px] font-medium text-ink truncate">{user?.name}</p>
+                        <p className="text-xs text-stone-500 truncate">{user?.email}</p>
                       </div>
                       <DropdownLink to="/buyer/profile" icon={User} label="My Profile" onClick={() => setProfileOpen(false)} />
                       <DropdownLink to="/buyer/addresses" icon={MapPin} label="Addresses" onClick={() => setProfileOpen(false)} />
                       <DropdownLink to="/buyer/orders" icon={ClipboardList} label="My Orders" onClick={() => setProfileOpen(false)} />
                       <DropdownLink to="/buyer/wishlist" icon={Heart} label="Wishlist" onClick={() => setProfileOpen(false)} />
-                      <div className="border-t border-slate-100 mt-1 pt-1">
+                      <div className="border-t border-ivory-200 mt-1 pt-1">
                         <button
                           onClick={handleLogout}
                           className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -196,7 +196,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                 onClick={() => setMobileMenuOpen((v) => !v)}
                 aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={mobileMenuOpen}
-                className="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
+                className="lg:hidden p-2 rounded-full text-ink-500 hover:bg-ivory-100 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -206,7 +206,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
           {/* Mobile Search */}
           <div className="md:hidden pb-3">
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
               <input
                 name="catalog-search-mobile"
                 aria-label="Search products"
@@ -215,7 +215,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-10 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="w-full h-10 pl-9 pr-4 bg-white border border-ivory-300 rounded-full text-sm text-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brass-100 focus:border-ink-300"
               />
             </form>
           </div>
@@ -223,7 +223,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
 
         {/* Mobile Nav Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-100 bg-white">
+          <div className="lg:hidden border-t border-ivory-200 bg-ivory-50">
             {NAV_LINKS.map(({ path, label, icon: Icon }) => {
               const isActive = location.pathname === path ||
                 (path === '/buyer/products' && location.pathname.startsWith('/buyer/products'));
@@ -232,7 +232,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   key={path}
                   to={path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-b border-slate-50 last:border-0 ${isActive ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
+                  className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-b border-ivory-100 last:border-b-0 border-l-2 ${isActive ? 'text-ink bg-white border-l-brass' : 'text-ink-500 border-l-transparent hover:bg-white'
                     }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -243,13 +243,13 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
             <Link
               to="/buyer/cart"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-t border-slate-100 ${location.pathname === '/buyer/cart' ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
+              className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-t border-ivory-200 ${location.pathname === '/buyer/cart' ? 'text-ink bg-white' : 'text-ink-500 hover:bg-white'
                 }`}
             >
               <ShoppingCart className="w-4 h-4" />
               Cart
               {cartCount > 0 && (
-                <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[10px] font-bold text-white">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
@@ -257,7 +257,7 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
             <Link
               to="/buyer/profile"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-6 py-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 border-t border-slate-100"
+              className="flex items-center gap-3 px-6 py-3.5 text-sm font-medium text-ink-500 hover:bg-white border-t border-ivory-200"
             >
               <User className="w-4 h-4" />
               Account & addresses
@@ -274,12 +274,35 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-white border-t border-slate-200 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>© 2026 Ganga Jamuna Wholesale. All rights reserved.</span>
-          <div className="flex items-center gap-4">
-            <Link to="/buyer/orders" className="hover:text-slate-600 transition-colors">Track Order</Link>
-            <Link to="/buyer/profile" className="hover:text-slate-600 transition-colors">Profile</Link>
+      <footer className="bg-ink text-ivory-100 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid gap-8 sm:grid-cols-3">
+          <div>
+            <p className="font-display text-xl font-medium text-white">Ganga Jamuna</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-brass-300">Wholesale</p>
+            <p className="mt-4 text-sm text-ink-300 leading-relaxed max-w-xs">
+              Trusted wholesale supplies, delivered to your counter with OTP-verified handover.
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brass-300">Shop</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link to="/buyer/products" className="text-ivory-100/80 hover:text-white transition-colors">All products</Link></li>
+              <li><Link to="/buyer/wishlist" className="text-ivory-100/80 hover:text-white transition-colors">Wishlist</Link></li>
+              <li><Link to="/buyer/cart" className="text-ivory-100/80 hover:text-white transition-colors">Cart</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brass-300">Account</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link to="/buyer/orders" className="text-ivory-100/80 hover:text-white transition-colors">Track order</Link></li>
+              <li><Link to="/buyer/addresses" className="text-ivory-100/80 hover:text-white transition-colors">Addresses</Link></li>
+              <li><Link to="/buyer/profile" className="text-ivory-100/80 hover:text-white transition-colors">Profile</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 text-xs text-ink-300">
+            © 2026 Ganga Jamuna Wholesale. All rights reserved.
           </div>
         </div>
       </footer>
@@ -302,9 +325,9 @@ function DropdownLink({
     <Link
       to={to}
       onClick={onClick}
-      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-700 hover:bg-ivory-50 transition-colors"
     >
-      <Icon className="w-4 h-4 text-slate-400" />
+      <Icon className="w-4 h-4 text-brass-500" />
       {label}
     </Link>
   );

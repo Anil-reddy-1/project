@@ -23,6 +23,15 @@ const updateDeliveryStatusSchema = Joi.object({
   cashCollected: Joi.boolean()
 });
 
+// Verify buyer delivery OTP schema
+const verifyDeliveryOtpSchema = Joi.object({
+  otp: Joi.string().pattern(/^\d{6}$/).required().messages({
+    'any.required': 'Buyer Delivery OTP is required',
+    'string.empty': 'Buyer Delivery OTP is required',
+    'string.pattern.base': 'OTP must be 6 digits'
+  })
+});
+
 // Delivery query parameters
 const deliveryQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
@@ -36,5 +45,6 @@ const deliveryQuerySchema = Joi.object({
 module.exports = {
   assignDeliverySchema,
   updateDeliveryStatusSchema,
+  verifyDeliveryOtpSchema,
   deliveryQuerySchema
 };

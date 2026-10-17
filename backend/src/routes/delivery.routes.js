@@ -7,6 +7,7 @@ const validate = require('../middleware/validate');
 const {
   assignDeliverySchema,
   updateDeliveryStatusSchema,
+  verifyDeliveryOtpSchema,
   deliveryQuerySchema
 } = require('../validation/deliveryValidation');
 
@@ -104,10 +105,19 @@ router.post('/:id/accept', requireRole('delivery'), validate(updateDeliveryStatu
 router.post('/:id/start', requireRole('delivery'), validate(updateDeliveryStatusSchema), deliveryController.startDelivery);
 
 /**
- * @route   POST /api/v1/deliveries/:id/complete
- * @desc    Complete delivery (mark as delivered)
+ * @route   POST /api/v1/deliveries/:id/verify-otp
+ * @desc    Verify the buyer's delivery OTP at the door. Prepaid orders complete immediately;
+ *          COD orders notify the partner to collect cash, then require /complete.
  * @access  Private (delivery partner)
- * @body    { notes?: string }
+ * @body    { otp: string }
+ */
+router.post('/:id/verify-otp', requireRole('delivery'), validate(verifyDeliveryOtpSchema), deliveryController.verifyDeliveryOtp);
+
+/**
+ * @route   POST /api/v1/deliveries/:id/complete
+ * @desc    Complete delivery (mark as delivered). COD orders need cashCollected: true.
+ * @access  Private (delivery partner)
+ * @body    { notes?: string, otp?: string, cashCollected?: boolean }
  */
 router.post('/:id/complete', requireRole('delivery'), validate(updateDeliveryStatusSchema), deliveryController.completeDelivery);
 

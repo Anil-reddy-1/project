@@ -6,44 +6,67 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Package, Search, Filter, ChevronRight, 
-  Clock, CheckCircle, Truck, XCircle, AlertCircle 
+import {
+  Package, Search, Filter, ChevronRight,
+  Clock, CheckCircle, Truck, XCircle, AlertCircle,
+  type LucideIcon,
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useOrders } from '../../hooks/useOrders';
-import { 
-  Button, EmptyState, Badge, 
-  Skeleton, Card 
-} from '../../components/ui';
+import { Skeleton } from '../../components/ui';
 import { fadeVariants, listContainerVariants, listItemVariants } from '../../utils/animations';
 import { formatDate } from '../../utils/date';
 
-const ORDER_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: 'Pending', color: 'yellow', icon: Clock },
-  confirmed: { label: 'Confirmed', color: 'blue', icon: CheckCircle },
-  preparing: { label: 'Preparing', color: 'orange', icon: Package },
-  packed: { label: 'Packed', color: 'indigo', icon: Package },
-  assigned: { label: 'Assigned', color: 'purple', icon: Truck },
-  in_transit: { label: 'In Transit', color: 'blue', icon: Truck },
-  out_for_delivery: { label: 'Out for Delivery', color: 'blue', icon: Truck },
-  delivered: { label: 'Delivered', color: 'green', icon: CheckCircle },
-  completed: { label: 'Completed', color: 'green', icon: CheckCircle },
-  cancelled: { label: 'Cancelled', color: 'red', icon: XCircle },
+// Soft semantic pills for the storefront ("classic & modern")
+const TONE = {
+  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  ink: 'bg-ink-50 text-ink-700 border-ink-100',
+  brass: 'bg-brass-50 text-brass-700 border-brass-100',
+  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  red: 'bg-red-50 text-red-700 border-red-200',
+  stone: 'bg-stone-50 text-stone-600 border-stone-200',
+} as const;
+
+const ORDER_STATUS_CONFIG: Record<string, { label: string; tone: string; icon: LucideIcon }> = {
+  pending: { label: 'Pending', tone: TONE.amber, icon: Clock },
+  confirmed: { label: 'Confirmed', tone: TONE.ink, icon: CheckCircle },
+  preparing: { label: 'Preparing', tone: TONE.ink, icon: Package },
+  packed: { label: 'Packed', tone: TONE.ink, icon: Package },
+  assigned: { label: 'Partner assigned', tone: TONE.brass, icon: Truck },
+  in_transit: { label: 'Out for delivery', tone: TONE.brass, icon: Truck },
+  out_for_delivery: { label: 'Out for delivery', tone: TONE.brass, icon: Truck },
+  delivered: { label: 'Delivered', tone: TONE.emerald, icon: CheckCircle },
+  completed: { label: 'Completed', tone: TONE.emerald, icon: CheckCircle },
+  cancelled: { label: 'Cancelled', tone: TONE.red, icon: XCircle },
 };
 
 const PAYMENT_STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'yellow' },
-  paid: { label: 'Paid', color: 'green' },
-  failed: { label: 'Failed', color: 'red' },
-  refunded: { label: 'Refunded', color: 'gray' },
+  pending: { label: 'Pending', tone: TONE.amber },
+  paid: { label: 'Paid', tone: TONE.emerald },
+  failed: { label: 'Failed', tone: TONE.red },
+  refunded: { label: 'Refunded', tone: TONE.stone },
 };
+
+const PILL = 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap';
+const META_LABEL = 'text-[11px] uppercase font-semibold tracking-[0.16em] text-stone-400';
+
+function OrdersHeader() {
+  return (
+    <div>
+      <p className="shop-eyebrow">Your account</p>
+      <h1 className="shop-title mt-2">My orders</h1>
+      <p className="shop-subtitle mt-2 max-w-xl">
+        Track current deliveries and look back over everything you have ordered.
+      </p>
+    </div>
+  );
+}
 
 export function Orders() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const { orders, loading } = useOrders({
     autoLoad: true,
     limit: 20,
@@ -52,22 +75,23 @@ export function Orders() {
   // Filter orders based on status and search
   const filteredOrders = useMemo(() => {
     let filtered = orders;
-    
+
     // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(order => order.orderStatus === statusFilter);
     }
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(order => 
-        order.orderNumber.toLowerCase().includes(query) ||
+      filtered = filtered.filter(order =>
+        (order.orderNumber || '').toLowerCase().includes(query) ||
+        order.id.toLowerCase().includes(query) ||
         order.deliveryAddress.name.toLowerCase().includes(query) ||
         order.deliveryAddress.phone.includes(query)
       );
     }
-    
+
     return filtered;
   }, [orders, statusFilter, searchQuery]);
 
@@ -77,7 +101,7 @@ export function Orders() {
     const pendingOrders = orders.filter(o => o.orderStatus === 'pending').length;
     const confirmedOrders = orders.filter(o => o.orderStatus === 'confirmed').length;
     const deliveredOrders = orders.filter(o => o.orderStatus === 'delivered' || o.orderStatus === 'completed').length;
-    
+
     return { totalOrders, pendingOrders, confirmedOrders, deliveredOrders };
   }, [orders]);
 
@@ -89,15 +113,16 @@ export function Orders() {
   if (loading && orders.length === 0) {
     return (
       <DashboardLayout title="Orders" subtitle="Your order history">
-        <div className="py-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="py-2 space-y-8">
+          <OrdersHeader />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
+              <Skeleton key={i} className="h-24 rounded-2xl bg-ivory-100" />
             ))}
           </div>
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
+              <Skeleton key={i} className="h-40 rounded-2xl bg-ivory-100" />
             ))}
           </div>
         </div>
@@ -109,204 +134,187 @@ export function Orders() {
   if (!loading && orders.length === 0) {
     return (
       <DashboardLayout title="Orders" subtitle="Your order history">
-        <motion.div 
-          className="py-8"
+        <motion.div
+          className="py-2 space-y-8"
           variants={fadeVariants}
           initial="hidden"
           animate="visible"
         >
-          <EmptyState
-            icon={Package}
-            title="No orders yet"
-            description="You haven't placed any orders. Start shopping to see your orders here."
-            action={
-              <Button onClick={() => navigate('/buyer/products')}>
-                Browse Products
-              </Button>
-            }
-          />
+          <OrdersHeader />
+          <div className="shop-card px-6 py-16 sm:py-20 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-ivory-100 border border-ivory-200 flex items-center justify-center">
+              <Package className="w-7 h-7 text-brass-600" strokeWidth={1.5} aria-hidden="true" />
+            </div>
+            <h2 className="shop-heading text-2xl mt-6">No orders yet</h2>
+            <p className="shop-subtitle mt-2 max-w-sm">
+              You haven't placed any orders. Start shopping to see your orders here.
+            </p>
+            <button
+              type="button"
+              className="shop-btn-primary mt-8"
+              onClick={() => navigate('/buyer/products')}
+            >
+              Browse products
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
         </motion.div>
       </DashboardLayout>
     );
   }
 
+  const statTiles = [
+    { label: 'Total orders', value: stats.totalOrders, icon: Package, accent: 'text-ink' },
+    { label: 'Pending', value: stats.pendingOrders, icon: Clock, accent: 'text-amber-700' },
+    { label: 'Confirmed', value: stats.confirmedOrders, icon: CheckCircle, accent: 'text-ink-700' },
+    { label: 'Delivered', value: stats.deliveredOrders, icon: CheckCircle, accent: 'text-emerald-700' },
+  ];
+
   return (
     <DashboardLayout title="Orders" subtitle="Your order history">
-      <motion.div 
-        className="py-2 space-y-6"
+      <motion.div
+        className="py-2 space-y-8"
         variants={fadeVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5 rounded-2xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Total Orders</p>
-                <p className="text-3xl font-black text-slate-900 mt-1 tracking-tight">{stats.totalOrders}</p>
+        <OrdersHeader />
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden rounded-2xl border border-ivory-200 bg-ivory-200">
+          {statTiles.map(({ label, value, icon: Icon, accent }) => (
+            <div key={label} className="bg-white p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">{label}</p>
+                <Icon className="w-4 h-4 text-brass-500 shrink-0" strokeWidth={1.75} aria-hidden="true" />
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
-                <Package className="w-6 h-6" />
-              </div>
+              <p className={`font-display text-3xl sm:text-4xl font-medium tracking-tight tabular-nums mt-3 ${accent}`}>
+                {value}
+              </p>
             </div>
-          </Card>
-          
-          <Card className="p-5 rounded-2xl border border-amber-100/80 bg-gradient-to-br from-amber-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Pending</p>
-                <p className="text-3xl font-black text-amber-600 mt-1 tracking-tight">{stats.pendingOrders}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-                <Clock className="w-6 h-6" />
-              </div>
-            </div>
-          </Card>
-          
-          <Card className="p-5 rounded-2xl border border-blue-100/80 bg-gradient-to-br from-blue-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Confirmed</p>
-                <p className="text-3xl font-black text-blue-600 mt-1 tracking-tight">{stats.confirmedOrders}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-            </div>
-          </Card>
-          
-          <Card className="p-5 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-emerald-50/50 via-white to-white shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Delivered</p>
-                <p className="text-3xl font-black text-emerald-600 mt-1 tracking-tight">{stats.deliveredOrders}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-            </div>
-          </Card>
+          ))}
         </div>
 
         {/* Filters */}
-        <Card className="p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by order number, name, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-semibold text-slate-700 bg-white"
-              >
-                <option value="all">All Orders</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="assigned">Assigned</option>
-                <option value="delivered">Delivered</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" aria-hidden="true" />
+            <input
+              type="text"
+              aria-label="Search orders"
+              placeholder="Search by order number, name, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="shop-input rounded-full pl-10"
+            />
           </div>
-        </Card>
+
+          {/* Status Filter */}
+          <div className="relative sm:w-56">
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" aria-hidden="true" />
+            <select
+              aria-label="Filter by status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="shop-input rounded-full pl-10 pr-8 font-medium cursor-pointer"
+            >
+              <option value="all">All orders</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="assigned">Partner assigned</option>
+              <option value="delivered">Delivered</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
-          <Card className="p-8 rounded-2xl border border-slate-200/80 text-center">
-            <EmptyState
-              icon={AlertCircle}
-              title="No orders found"
-              description="Try adjusting your filters or search query."
-            />
-          </Card>
+          <div className="shop-card px-6 py-14 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-full bg-ivory-100 border border-ivory-200 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-brass-600" strokeWidth={1.5} aria-hidden="true" />
+            </div>
+            <h2 className="shop-heading mt-5">No orders found</h2>
+            <p className="shop-subtitle mt-1.5 max-w-sm">Try adjusting your filters or search query.</p>
+          </div>
         ) : (
-          <motion.div 
+          <motion.div
             className="space-y-4"
             variants={listContainerVariants}
             initial="hidden"
             animate="visible"
           >
             {filteredOrders.map((order) => {
-              const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus] || { label: order.orderStatus, color: 'gray', icon: Package };
-              const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus as keyof typeof PAYMENT_STATUS_CONFIG] || { label: order.paymentStatus, color: 'gray' };
+              const statusConfig = ORDER_STATUS_CONFIG[order.orderStatus] || { label: order.orderStatus, tone: TONE.stone, icon: Package };
+              const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus as keyof typeof PAYMENT_STATUS_CONFIG] || { label: order.paymentStatus, tone: TONE.stone };
               const StatusIcon = statusConfig.icon;
-              
+
               return (
                 <motion.div
                   key={order.id}
                   variants={listItemVariants}
                 >
-                  <Card 
-                    className="p-6 rounded-2xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group bg-white"
+                  <div
+                    className="shop-card group cursor-pointer transition-[border-color,box-shadow] duration-300 hover:border-ivory-300 hover:shadow-[0_6px_20px_rgba(20,33,61,0.06)]"
                     onClick={() => handleOrderClick(order.id)}
                   >
-                    <div className="flex items-start gap-4">
-                      {/* Order Icon */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-indigo-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                        <StatusIcon className="w-6 h-6 text-indigo-600" />
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 sm:pt-6">
+                      <div className="flex items-start gap-4 min-w-0">
+                        <div className="hidden sm:flex w-11 h-11 rounded-full bg-ivory-100 border border-ivory-200 items-center justify-center shrink-0">
+                          <StatusIcon className="w-5 h-5 text-ink-500" strokeWidth={1.75} aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-display text-lg sm:text-xl font-medium tracking-tight text-ink truncate">
+                            Order #{order.orderNumber || order.id.slice(0, 8).toUpperCase()}
+                          </h3>
+                          <p className="text-xs text-stone-500 mt-1">
+                            Placed on {formatDate(order.createdAt)}
+                          </p>
+                        </div>
                       </div>
-
-                      {/* Order Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4 mb-2">
-                          <div>
-                            <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                              Order #{order.orderNumber}
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                              Placed on {formatDate(order.createdAt)}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
-                        </div>
-
-                        {/* Order Info */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Items</p>
-                            <p className="text-sm font-bold text-slate-800 mt-0.5">{order.items.length} items</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Total Amount</p>
-                            <p className="text-base font-extrabold text-indigo-600 mt-0.5">₹{order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Delivery To</p>
-                            <p className="text-sm font-bold text-slate-800 truncate mt-0.5">
-                              {order.deliveryAddress.name}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Status Badges */}
-                        <div className="flex flex-wrap items-center gap-2 mt-4">
-                          <Badge variant={statusConfig.color as any} className="font-semibold text-xs">
-                            {statusConfig.label}
-                          </Badge>
-                          <Badge variant={paymentConfig.color as any} className="font-semibold text-xs">
-                            Payment: {paymentConfig.label}
-                          </Badge>
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">
-                            {order.paymentMethod}
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`${PILL} ${statusConfig.tone}`}>
+                          {statusConfig.label}
+                        </span>
+                        <ChevronRight className="hidden sm:block w-5 h-5 text-stone-400 group-hover:text-ink group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
                       </div>
                     </div>
-                  </Card>
+
+                    {/* Order Info */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 px-5 sm:px-6 py-5 mt-5 border-t border-ivory-200">
+                      <div>
+                        <p className={META_LABEL}>Items</p>
+                        <p className="text-sm font-medium text-ink mt-1">{order.items.length} items</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className={META_LABEL}>Deliver to</p>
+                        <p className="text-sm font-medium text-ink truncate mt-1">
+                          {order.deliveryAddress.name}
+                        </p>
+                      </div>
+                      <div className="col-span-2 sm:col-span-1 sm:text-right">
+                        <p className={META_LABEL}>Total</p>
+                        <p className="shop-price text-xl mt-0.5">₹{order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      </div>
+                    </div>
+
+                    {/* Payment */}
+                    <div className="flex flex-wrap items-center gap-2 px-5 sm:px-6 py-3.5 bg-ivory-50 border-t border-ivory-200 rounded-b-2xl">
+                      <span className={`${PILL} ${paymentConfig.tone}`}>
+                        Payment: {paymentConfig.label}
+                      </span>
+                      <span className="shop-chip uppercase tracking-wider">
+                        {order.paymentMethod}
+                      </span>
+                      <span className="ml-auto inline-flex items-center gap-0.5 text-xs font-semibold text-ink-500 group-hover:text-ink transition-colors">
+                        View details
+                        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
@@ -315,7 +323,7 @@ export function Orders() {
 
         {/* Results Count */}
         {filteredOrders.length > 0 && (
-          <p className="text-sm text-slate-500 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400 text-center">
             Showing {filteredOrders.length} of {orders.length} orders
           </p>
         )}

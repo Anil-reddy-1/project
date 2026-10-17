@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Package, Filter, MapPin, Phone, User, ChevronRight,
-  Clock, CheckCircle, Truck, AlertCircle 
+  Clock, CheckCircle, Truck, AlertCircle, Banknote
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout';
 import { useDeliveries } from '../../hooks/useDeliveries';
@@ -18,6 +18,12 @@ import {
 } from '../../components/ui';
 import { fadeVariants, listContainerVariants, listItemVariants } from '../../utils/animations';
 import { formatDate } from '../../utils/date';
+import { isCashPendingReturn, type Delivery } from '../../services/delivery.service';
+
+// Delivered COD orders aren't successful until the supervisor confirms the cash handover
+const CASH_PENDING_CONFIG = { label: 'Pending · Return Cash', color: 'yellow', icon: Banknote };
+
+const amountOf = (d: Delivery) => d.totalAmount ?? d.orderAmount ?? 0;
 
 const DELIVERY_STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'gray', icon: Clock },
@@ -39,6 +45,10 @@ export function Deliveries() {
   // Filter deliveries based on status
   const filteredDeliveries = useMemo(() => {
     if (statusFilter === 'all') return deliveries;
+    if (statusFilter === 'cash_pending') return deliveries.filter(isCashPendingReturn);
+    if (statusFilter === 'delivered') {
+      return deliveries.filter(d => d.status === 'delivered' && !isCashPendingReturn(d));
+    }
     return deliveries.filter(delivery => delivery.status === statusFilter);
   }, [deliveries, statusFilter]);
 
@@ -48,9 +58,14 @@ export function Deliveries() {
     const assignedCount = deliveries.filter(d => d.status === 'assigned').length;
     const acceptedCount = deliveries.filter(d => d.status === 'accepted').length;
     const inTransitCount = deliveries.filter(d => d.status === 'in_transit').length;
-    const deliveredCount = deliveries.filter(d => d.status === 'delivered').length;
-    
-    return { totalDeliveries, assignedCount, acceptedCount, inTransitCount, deliveredCount };
+    const cashPending = deliveries.filter(isCashPendingReturn);
+    const successfulCount = deliveries.filter(d => d.status === 'delivered').length - cashPending.length;
+    const cashPendingAmount = cashPending.reduce((sum, d) => sum + amountOf(d), 0);
+
+    return {
+      totalDeliveries, assignedCount, acceptedCount, inTransitCount, successfulCount,
+      cashPendingCount: cashPending.length, cashPendingAmount,
+    };
   }, [deliveries]);
 
   const handleDeliveryClick = (deliveryId: string) => {
@@ -105,8 +120,31 @@ export function Deliveries() {
         initial="hidden"
         animate="visible"
       >
+        {/* Cash to return */}
+        {stats.cashPendingCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setStatusFilter('cash_pending')}
+            className="w-full text-left rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 sm:p-5 flex items-center gap-4 hover:bg-amber-100/70 transition-colors"
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+              <Banknote className="w-6 h-6 text-amber-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-amber-900">
+                Return ₹{stats.cashPendingAmount.toLocaleString('en-IN')} cash to your supervisor
+              </p>
+              <p className="text-sm text-amber-800/80">
+                {stats.cashPendingCount} {stats.cashPendingCount === 1 ? 'delivery is' : 'deliveries are'} pending
+                until the supervisor confirms receiving the cash.
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-amber-700 ml-auto shrink-0" />
+          </button>
+        )}
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -158,11 +196,23 @@ export function Deliveries() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Delivered</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.deliveredCount}</p>
+                <p className="text-sm text-slate-500">Successful</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">{stats.successfulCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Cash to Return</p>
+                <p className="text-2xl font-bold text-amber-600 mt-1">{stats.cashPendingCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Banknote className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </Card>
@@ -181,7 +231,8 @@ export function Deliveries() {
               <option value="assigned">Assigned</option>
               <option value="accepted">Accepted</option>
               <option value="in_transit">In Transit</option>
-              <option value="delivered">Delivered</option>
+              <option value="cash_pending">Pending · Return Cash</option>
+              <option value="delivered">Successful</option>
             </select>
             <Button
               variant="outline"
@@ -210,7 +261,9 @@ export function Deliveries() {
             animate="visible"
           >
             {filteredDeliveries.map((delivery) => {
-              const statusConfig = DELIVERY_STATUS_CONFIG[delivery.status];
+              const statusConfig = isCashPendingReturn(delivery)
+                ? CASH_PENDING_CONFIG
+                : DELIVERY_STATUS_CONFIG[delivery.status];
               const StatusIcon = statusConfig.icon;
               
               return (
@@ -274,9 +327,14 @@ export function Deliveries() {
                           <Badge variant={statusConfig.color as any}>
                             {statusConfig.label}
                           </Badge>
-                          {delivery.cashHandoverStatus === 'pending' && (
+                          {delivery.status === 'in_transit' && delivery.deliveryOtpVerifiedAt && (
                             <Badge variant="warning">
-                              Cash Pending Collection
+                              OTP Verified · Collect Cash
+                            </Badge>
+                          )}
+                          {isCashPendingReturn(delivery) && (
+                            <Badge variant="warning">
+                              Return ₹{amountOf(delivery).toLocaleString('en-IN')} cash to supervisor
                             </Badge>
                           )}
                         </div>

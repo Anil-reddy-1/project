@@ -124,7 +124,7 @@ export function AddressSelector({
     return (
       <div className="space-y-3">
         {[1, 2].map(i => (
-          <div key={i} className="h-24 bg-slate-100 rounded-lg animate-pulse" />
+          <div key={i} className="h-24 bg-ivory-100 border border-ivory-200 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -135,11 +135,11 @@ export function AddressSelector({
    */
   if (error) {
     return (
-      <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+      <div className="p-4 rounded-xl bg-red-50 border border-red-200">
         <p className="text-sm text-red-700 font-medium">{error}</p>
         <button
           onClick={loadAddresses}
-          className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium underline"
+          className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium underline underline-offset-4"
         >
           Try again
         </button>
@@ -152,17 +152,17 @@ export function AddressSelector({
    */
   if (addresses.length === 0) {
     return (
-      <div className="text-center py-8 px-4 border-2 border-dashed border-slate-300 rounded-lg">
-        <MapPin className="w-12 h-12 mx-auto text-slate-400 mb-3" />
-        <p className="text-sm text-slate-600 font-medium mb-1">No delivery addresses</p>
-        <p className="text-xs text-slate-500 mb-4">Add an address to continue with checkout</p>
+      <div className="text-center py-10 px-4 border border-dashed border-ivory-300 bg-ivory-50 rounded-2xl">
+        <MapPin className="w-10 h-10 mx-auto text-brass-500 mb-3" strokeWidth={1.25} />
+        <p className="font-display text-base text-ink font-medium mb-1">No delivery addresses</p>
+        <p className="text-xs text-stone-500 mb-5">Add an address to continue with checkout</p>
         {onAddAddress && (
           <button
             onClick={onAddAddress}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            className="shop-btn-primary h-10 px-5"
           >
             <Plus className="w-4 h-4" />
-            Add Address
+            Add address
           </button>
         )}
       </div>
@@ -178,16 +178,16 @@ export function AddressSelector({
       {!compact && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-slate-600" />
-            <h3 className="text-base font-semibold text-slate-900">Delivery Address</h3>
+            <MapPin className="w-4 h-4 text-brass-600" />
+            <h3 className="shop-heading text-lg">Delivery address</h3>
           </div>
           {onAddAddress && (
             <button
               onClick={onAddAddress}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="shop-btn-ghost text-ink"
             >
               <Plus className="w-4 h-4" />
-              Add New
+              Add new
             </button>
           )}
         </div>
@@ -203,10 +203,10 @@ export function AddressSelector({
             key={address.id}
             onClick={() => onAddressSelect(address.id)}
             disabled={isDeleting}
-            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+            className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-colors duration-200 ${
               isSelected
-                ? 'border-blue-600 bg-blue-50/50'
-                : 'border-slate-200 hover:border-slate-300 bg-white'
+                ? 'border-ink bg-ivory-50 ring-1 ring-ink'
+                : 'border-ivory-200 hover:border-ivory-300 bg-white'
             } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="flex gap-3">
@@ -215,8 +215,8 @@ export function AddressSelector({
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-600'
-                      : 'border-slate-300 bg-white'
+                      ? 'border-ink bg-ink'
+                      : 'border-ivory-300 bg-white'
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -227,19 +227,19 @@ export function AddressSelector({
               <div className="flex-1 min-w-0">
                 {/* Name and Default Badge */}
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-slate-900">{address.name}</p>
+                  <p className="font-display text-[15px] font-medium text-ink">{address.name}</p>
                   {address.isDefault && (
-                    <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-xs font-medium">
+                    <span className="shop-chip border-brass-100 text-brass-700">
                       Default
                     </span>
                   )}
                 </div>
 
                 {/* Phone */}
-                <p className="text-xs text-slate-600 mb-2">{address.phone}</p>
+                <p className="text-xs text-stone-500 tabular-nums mb-2">{address.phone}</p>
 
                 {/* Address */}
-                <p className="text-sm text-slate-700 leading-relaxed">
+                <p className="text-sm text-ink-700 leading-relaxed">
                   {formatAddress(address)}
                 </p>
               </div>
@@ -251,7 +251,7 @@ export function AddressSelector({
                     <button
                       onClick={(e) => handleEdit(address.id, e)}
                       disabled={isDeleting}
-                      className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40"
+                      className="p-2 text-ink-500 hover:text-ink hover:bg-ivory-100 rounded-full transition-colors disabled:opacity-40" aria-label="Edit address"
                       title="Edit address"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -262,7 +262,7 @@ export function AddressSelector({
                     <button
                       onClick={(e) => handleDelete(address.id, e)}
                       disabled={isDeleting}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-40" aria-label="Delete address"
                       title="Delete address"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -279,10 +279,10 @@ export function AddressSelector({
       {compact && onAddAddress && (
         <button
           onClick={onAddAddress}
-          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-ivory-300 rounded-2xl text-ink-500 hover:border-ink-300 hover:text-ink hover:bg-ivory-50 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Add New Address</span>
+          <span className="text-sm font-medium">Add new address</span>
         </button>
       )}
     </div>

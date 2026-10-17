@@ -4,9 +4,6 @@
  */
 
 import { useState } from "react";
-import { Card } from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import {
   MapPin,
   Phone,
@@ -103,137 +100,146 @@ export function AddressCard({
   // If in edit mode, show the form
   if (isEditMode) {
     return (
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Edit Address</h3>
-        <AddressForm
-          mode="edit"
-          initialData={{
-            name: address.name,
-            phone: address.phone,
-            addressLine1: address.addressLine1,
-            addressLine2: address.addressLine2 || "",
-            city: address.city,
-            state: address.state,
-            postalCode: address.postalCode,
-            isDefault: address.isDefault,
-            latitude: address.latitude || undefined,
-            longitude: address.longitude || undefined,
-            imageUrl: address.imageUrl || undefined,
-          }}
-          onSubmit={handleUpdateSubmit}
-          onCancel={handleEditCancel}
-          submitLabel="Update Address"
-          isLoading={isUpdating}
-        />
-      </Card>
+      <div className="shop-card">
+        <div className="shop-card-header">
+          <h3 className="shop-heading">Edit address</h3>
+        </div>
+        <div className="p-5 sm:p-6">
+          <AddressForm
+            mode="edit"
+            initialData={{
+              name: address.name,
+              phone: address.phone,
+              addressLine1: address.addressLine1,
+              addressLine2: address.addressLine2 || "",
+              city: address.city,
+              state: address.state,
+              postalCode: address.postalCode,
+              isDefault: address.isDefault,
+              latitude: address.latitude || undefined,
+              longitude: address.longitude || undefined,
+              imageUrl: address.imageUrl || undefined,
+            }}
+            onSubmit={handleUpdateSubmit}
+            onCancel={handleEditCancel}
+            submitLabel="Update Address"
+            isLoading={isUpdating}
+          />
+        </div>
+      </div>
     );
   }
 
   // Show delete confirmation
   if (showDeleteConfirm) {
     return (
-      <Card className="p-6 border-red-200 bg-red-50">
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Trash2 className="w-5 h-5 text-red-600 mt-1" />
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-900">
-                Delete Address?
+      <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5 sm:p-6">
+        <div className="space-y-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-white border border-red-200 flex items-center justify-center shrink-0">
+              <Trash2 className="w-4 h-4 text-red-600" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-xl font-medium tracking-tight text-red-900">
+                Delete this address?
               </h3>
               <p className="text-sm text-red-700 mt-1">
                 Are you sure you want to delete this address? This action cannot
                 be undone.
               </p>
-              <div className="mt-2 p-3 bg-white rounded-lg border border-red-200">
-                <p className="font-medium text-sm text-gray-900">
+              <div className="mt-3 p-4 bg-white rounded-xl border border-red-100">
+                <p className="font-medium text-sm text-ink">
                   {address.name}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-stone-500 mt-1 break-words">
                   {addressService.formatAddressOneLine(address)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="flex gap-3">
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="flex-1"
-            >
-              {isDeleting ? "Deleting..." : "Yes, Delete"}
-            </Button>
-            <Button
-              variant="outline"
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <button
+              type="button"
               onClick={handleDeleteCancel}
               disabled={isDeleting}
-              className="flex-1"
+              className="shop-btn-outline flex-1"
             >
               Cancel
-            </Button>
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="inline-flex flex-1 items-center justify-center gap-2 h-11 px-6 rounded-full bg-red-600 text-white text-sm font-semibold transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? "Deleting..." : "Yes, delete"}
+            </button>
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
   // Display mode
   return (
-    <Card
-      className={`p-6 ${address.isDefault ? "border-blue-500 border-2" : ""}`}
+    <div
+      className={`shop-card p-5 sm:p-6 ${address.isDefault ? "border-brass-300 ring-1 ring-brass-300" : ""}`}
     >
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Header with badges */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="font-display text-xl font-medium tracking-tight text-ink break-words">
                 {address.name}
               </h3>
               {address.isDefault && (
-                <Badge className="bg-blue-500">
-                  <Star className="w-3 h-3 mr-1 fill-current" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-brass-100 bg-brass-50 px-2.5 py-0.5 text-[11px] font-semibold text-brass-700">
+                  <Star className="w-3 h-3 fill-current" aria-hidden="true" />
                   Default
-                </Badge>
+                </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-              <Phone className="w-3.5 h-3.5" />
+            <p className="text-sm text-stone-500 flex items-center gap-1.5 mt-1.5">
+              <Phone className="w-3.5 h-3.5" aria-hidden="true" />
               {address.phone}
             </p>
           </div>
 
           {/* Action buttons */}
           {showActions && (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex gap-2 shrink-0">
+              <button
+                type="button"
                 onClick={handleEditClick}
                 disabled={isUpdating || isDeleting}
+                aria-label="Edit address"
+                title="Edit address"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ivory-300 bg-white text-ink-500 transition-colors hover:border-ink hover:text-ink disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                <Edit2 className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
                 onClick={handleDeleteClick}
                 disabled={isUpdating || isDeleting || address.isDefault}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                aria-label="Delete address"
+                title={address.isDefault ? "Default address cannot be deleted" : "Delete address"}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ivory-300 bg-white text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-ivory-300"
               >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
+              </button>
             </div>
           )}
         </div>
 
         {/* Address details */}
-        <div className="space-y-2">
-          <p className="text-sm text-gray-700">{address.addressLine1}</p>
+        <div className="space-y-1 text-sm text-ink-700 leading-relaxed break-words">
+          <p>{address.addressLine1}</p>
           {address.addressLine2 && (
-            <p className="text-sm text-gray-700">{address.addressLine2}</p>
+            <p>{address.addressLine2}</p>
           )}
-          <p className="text-sm text-gray-700">
+          <p>
             {address.city}, {address.state} {address.postalCode}
           </p>
         </div>
@@ -241,11 +247,11 @@ export function AddressCard({
         {/* Shop image */}
         {addressService.hasImage(address) && address.imageUrl && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <ImageIcon className="w-4 h-4" />
-              Shop Image
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+              <ImageIcon className="w-3.5 h-3.5" aria-hidden="true" />
+              Shop image
             </div>
-            <div className="rounded-lg overflow-hidden border border-gray-200">
+            <div className="rounded-xl overflow-hidden border border-ivory-200">
               <img
                 src={address.imageUrl}
                 alt="Shop location"
@@ -260,12 +266,12 @@ export function AddressCard({
           address.latitude &&
           address.longitude && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPin className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+                <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
                 Location
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-sm text-gray-700">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3.5 bg-ivory-50 rounded-xl border border-ivory-200">
+                <span className="text-sm text-ink-700 break-words">
                   {formatCoordinatesWithLabels(
                     address.latitude,
                     address.longitude,
@@ -278,10 +284,10 @@ export function AddressCard({
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-ink underline decoration-brass-300 underline-offset-4 hover:decoration-brass shrink-0"
                 >
-                  View on Map
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  View on map
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                 </a>
               </div>
             </div>
@@ -289,18 +295,18 @@ export function AddressCard({
 
         {/* Set as default button */}
         {!address.isDefault && showActions && onSetDefault && (
-          <Button
-            variant="outline"
+          <button
+            type="button"
             onClick={handleSetDefault}
             disabled={isUpdating || isDeleting}
-            className="w-full"
+            className="shop-btn-outline w-full"
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Set as Default
-          </Button>
+            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+            Set as default
+          </button>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 

@@ -43,9 +43,9 @@ export const StockWarning: React.FC<StockWarningProps> = ({
       case 'insufficient':
         return {
           icon: AlertCircle,
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
+          color: 'text-amber-700',
+          bgColor: 'bg-amber-50',
+          borderColor: 'border-amber-200',
           title: 'Insufficient Stock',
           message: `Only ${availableQuantity} ${availableQuantity === 1 ? 'unit' : 'units'} available. You requested ${requestedQuantity}.`,
           severity: 'high' as const,
@@ -54,9 +54,9 @@ export const StockWarning: React.FC<StockWarningProps> = ({
       case 'low':
         return {
           icon: AlertTriangle,
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
+          color: 'text-amber-600',
+          bgColor: 'bg-amber-50/60',
+          borderColor: 'border-amber-100',
           title: 'Low Stock',
           message: `Only ${availableQuantity} ${availableQuantity === 1 ? 'unit' : 'units'} remaining. Order soon!`,
           severity: 'medium' as const,
@@ -80,8 +80,8 @@ export const StockWarning: React.FC<StockWarningProps> = ({
   // Inline variant (compact, for cart items)
   if (variant === 'inline') {
     return (
-      <div className={`flex items-center gap-2 text-sm ${color} ${className}`}>
-        <Icon className="w-4 h-4 flex-shrink-0" />
+      <div className={`flex items-start gap-2 text-xs leading-relaxed ${color} ${className}`}>
+        <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
         <span className="font-medium">{message}</span>
       </div>
     );
@@ -91,7 +91,7 @@ export const StockWarning: React.FC<StockWarningProps> = ({
   return (
     <Alert 
       variant={severity === 'critical' ? 'destructive' : 'default'}
-      className={`${bgColor} ${borderColor} ${className}`}
+      className={`rounded-xl ${bgColor} ${borderColor} ${className}`}
     >
       <Icon className={`h-4 w-4 ${color}`} />
       <AlertDescription className={color}>
@@ -130,8 +130,8 @@ export const MOQWarning: React.FC<MOQWarningProps> = ({
   // Inline variant
   if (variant === 'inline') {
     return (
-      <div className={`flex items-center gap-2 text-sm text-blue-600 ${className}`}>
-        <Info className="w-4 h-4 flex-shrink-0" />
+      <div className={`flex items-center gap-2 text-xs text-ink-500 ${className}`}>
+        <Info className="w-3.5 h-3.5 flex-shrink-0 text-brass-600" />
         <span className="font-medium">MOQ: {minOrderQuantity} (Current: {currentQuantity})</span>
       </div>
     );
@@ -139,9 +139,9 @@ export const MOQWarning: React.FC<MOQWarningProps> = ({
 
   // Alert variant
   return (
-    <Alert className={`bg-blue-50 border-blue-200 ${className}`}>
-      <Info className="h-4 w-4 text-blue-600" />
-      <AlertDescription className="text-blue-600">
+    <Alert className={`rounded-xl bg-ivory-50 border-ivory-300 ${className}`}>
+      <Info className="h-4 w-4 text-brass-600" />
+      <AlertDescription className="text-ink-700">
         <span className="font-semibold">Below MOQ:</span> {message}
       </AlertDescription>
     </Alert>
@@ -195,18 +195,18 @@ export const CartStockSummary: React.FC<CartStockSummaryProps> = ({
   const hasCritical = outOfStockCount > 0 || insufficientStockCount > 0;
   const icon = hasCritical ? XCircle : AlertTriangle;
   const IconComponent = icon;
-  const color = hasCritical ? 'text-red-600' : 'text-orange-600';
-  const bgColor = hasCritical ? 'bg-red-50' : 'bg-orange-50';
-  const borderColor = hasCritical ? 'border-red-200' : 'border-orange-200';
+  const color = hasCritical ? 'text-red-700' : 'text-amber-800';
+  const bgColor = hasCritical ? 'bg-red-50' : 'bg-amber-50';
+  const borderColor = hasCritical ? 'border-red-200' : 'border-amber-200';
 
   return (
     <Alert 
       variant={hasCritical ? 'destructive' : 'default'}
-      className={`${bgColor} ${borderColor} ${className}`}
+      className={`rounded-xl ${bgColor} ${borderColor} ${className}`}
     >
       <IconComponent className={`h-4 w-4 ${color}`} />
       <AlertDescription className={color}>
-        <span className="font-semibold">Cart Issues:</span> {issues.join(', ')}
+        <span className="font-semibold">Cart issues:</span> {issues.join(', ')}
         {hasCritical && (
           <p className="mt-1 text-sm">
             Please adjust quantities or remove items before checkout.
@@ -233,7 +233,7 @@ export const StockBadge: React.FC<StockBadgeProps> = ({
   className = '',
 }) => {
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5',
+    sm: 'text-[11px] px-2.5 py-0.5',
     md: 'text-sm px-2.5 py-1',
     lg: 'text-base px-3 py-1.5',
   };
@@ -241,19 +241,19 @@ export const StockBadge: React.FC<StockBadgeProps> = ({
   const config = {
     out: {
       label: 'Out of Stock',
-      classes: 'bg-red-100 text-red-700 border border-red-200',
+      classes: 'bg-red-50 text-red-700 border border-red-200',
     },
     insufficient: {
       label: 'Insufficient',
-      classes: 'bg-orange-100 text-orange-700 border border-orange-200',
+      classes: 'bg-amber-50 text-amber-800 border border-amber-200',
     },
     low: {
       label: 'Low Stock',
-      classes: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+      classes: 'bg-amber-50 text-amber-700 border border-amber-100',
     },
     healthy: {
       label: 'In Stock',
-      classes: 'bg-green-100 text-green-700 border border-green-200',
+      classes: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
     },
   };
 
@@ -261,7 +261,7 @@ export const StockBadge: React.FC<StockBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center justify-center font-medium rounded ${sizeClasses[size]} ${classes} ${className}`}
+      className={`inline-flex items-center justify-center font-semibold rounded-full ${sizeClasses[size]} ${classes} ${className}`}
     >
       {label}
     </span>

@@ -436,6 +436,56 @@ async function initializeTables() {
     await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS cash_handover_status VARCHAR(20);");
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS cash_handover_at TIMESTAMPTZ;');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_cash_handover_status ON orders(cash_handover_status);');
+    // Set when the delivery partner verifies the buyer's delivery OTP at the door. For COD
+    // orders the delivery stays in transit until the partner confirms the cash was collected.
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_otp_verified_at TIMESTAMPTZ;');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;');
+
+    // Human-readable order numbers (ORD-YYYY-NNNNNN), assigned by a BEFORE INSERT trigger.
+    // orderModel.createOrder relies on this — without it every order_number is NULL.
+    await client.query('CREATE SEQUENCE IF NOT EXISTS order_number_seq;');
+    await client.query(`
+      CREATE OR REPLACE FUNCTION set_order_number() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.order_number IS NULL THEN
+          NEW.order_number := 'ORD-' || to_char(COALESCE(NEW.created_at, NOW()), 'YYYY') || '-'
+            || lpad(nextval('order_number_seq')::text, 6, '0');
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    await client.query('DROP TRIGGER IF EXISTS trg_set_order_number ON orders;');
+    await client.query(`
+      CREATE TRIGGER trg_set_order_number
+      BEFORE INSERT ON orders
+      FOR EACH ROW EXECUTE FUNCTION set_order_number();
+    `);
+    // Backfill orders created while the trigger was missing, oldest first
+    await client.query(`
+      DO $$
+      DECLARE r RECORD;
+      BEGIN
+        FOR r IN SELECT id, created_at FROM orders WHERE order_number IS NULL ORDER BY created_at, id LOOP
+          UPDATE orders
+          SET order_number = 'ORD-' || to_char(COALESCE(r.created_at, NOW()), 'YYYY') || '-'
+            || lpad(nextval('order_number_seq')::text, 6, '0')
+          WHERE id = r.id;
+        END LOOP;
+      END;
+      $$;
+    `);
+    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);');
+    // Repair notifications sent while order numbers were missing ("Order #null ...")
+    await client.query(`
+      UPDATE notifications n
+      SET message = replace(n.message, '#null', '#' || o.order_number),
+          data = jsonb_set(COALESCE(n.data, '{}'::jsonb), '{orderNumber}', to_jsonb(o.order_number))
+      FROM orders o
+      WHERE n.data->>'orderId' = o.id::text
+        AND o.order_number IS NOT NULL
+        AND n.message LIKE '%#null%';
+    `);
 
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_partner_id UUID REFERENCES users(id) ON DELETE SET NULL;');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS notes TEXT;');

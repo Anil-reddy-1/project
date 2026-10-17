@@ -1,7 +1,6 @@
 import { Navbar } from '../../components/Navbar';
 import { useAuth } from '../../context/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ShoppingCart, Package, History, CreditCard, TrendingUp, HeadphonesIcon } from 'lucide-react';
+import { ShoppingCart, Package, History, CreditCard, TrendingUp, HeadphonesIcon, ArrowRight } from 'lucide-react';
 
 const buyerMenuItems = [
   { title: 'My Orders', description: 'View and track your purchase orders', icon: ShoppingCart },
@@ -16,13 +15,14 @@ export function BuyerDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-ivory text-ink">
       <Navbar />
-      <main className="p-6 lg:p-8 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-headline-xl font-semibold">Buyer Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, <span className="font-medium text-foreground">{user?.name || user?.email}</span>. Manage your orders and purchases.
+      <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12 max-w-7xl mx-auto">
+        <div className="mb-10">
+          <p className="shop-eyebrow">Your account</p>
+          <h1 className="shop-title mt-2">Buyer dashboard</h1>
+          <p className="shop-subtitle mt-2">
+            Welcome back, <span className="font-medium text-ink">{user?.name || user?.email}</span>. Manage your orders and purchases.
           </p>
         </div>
 
@@ -30,17 +30,19 @@ export function BuyerDashboard() {
           {buyerMenuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Card key={item.title} className="hover:shadow-md transition-shadow cursor-pointer group">
-                <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="h-5 w-5 text-primary" />
+              <div
+                key={item.title}
+                className="shop-card group cursor-pointer p-6 transition-[border-color,box-shadow] duration-300 hover:border-ivory-300 hover:shadow-[0_6px_20px_rgba(20,33,61,0.06)]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ivory-200 bg-ivory-100 transition-colors group-hover:border-brass-300">
+                    <Icon className="h-5 w-5 text-brass-600" strokeWidth={1.75} aria-hidden="true" />
                   </div>
-                  <CardTitle className="text-headline-sm">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </CardContent>
-              </Card>
+                  <h2 className="shop-heading text-lg flex-1">{item.title}</h2>
+                  <ArrowRight className="h-4 w-4 text-stone-400 transition-all group-hover:translate-x-0.5 group-hover:text-ink" aria-hidden="true" />
+                </div>
+                <p className="shop-subtitle mt-3">{item.description}</p>
+              </div>
             );
           })}
         </div>

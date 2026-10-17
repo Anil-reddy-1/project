@@ -3,7 +3,7 @@
  * Full order detail with action buttons: Prepare, Pack (OTP), Assign Delivery
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -18,19 +18,26 @@ import {
   AlertCircle,
   Copy,
   RefreshCw,
+  Banknote,
+  ShieldCheck,
+  BadgeCheck,
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { Button, Card, Badge, Skeleton } from "../../components/ui";
 import { fadeVariants } from "../../utils/animations";
 import { supervisorService } from "../../services/supervisor.service";
+import { useSocketEvent } from "../../context/SocketContext";
+import type { Notification } from "../../services/notification.service";
 import toast from "react-hot-toast";
 
 const STATUS_FLOW = [
   { key: "confirmed", label: "Confirmed", icon: AlertCircle, color: "text-blue-600", bg: "bg-blue-100" },
   { key: "preparing", label: "Preparing", icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
   { key: "packed", label: "Packed", icon: PackageCheck, color: "text-emerald-600", bg: "bg-emerald-100" },
-  { key: "assigned", label: "Assigned", icon: Truck, color: "text-violet-600", bg: "bg-violet-100" },
+  { key: "assigned", label: "Assigned", icon: UserCheck, color: "text-violet-600", bg: "bg-violet-100" },
+  { key: "in_transit", label: "Out for Delivery", icon: Truck, color: "text-indigo-600", bg: "bg-indigo-100" },
   { key: "delivered", label: "Delivered", icon: CheckCircle, color: "text-green-600", bg: "bg-green-100" },
+  { key: "completed", label: "Completed", icon: BadgeCheck, color: "text-emerald-700", bg: "bg-emerald-100" },
 ];
 
 export function SupervisorOrderDetails() {
@@ -42,11 +49,12 @@ export function SupervisorOrderDetails() {
   const [partners, setPartners] = useState<any[]>([]);
   const [selectedPartner, setSelectedPartner] = useState("");
   const [showAssignPanel, setShowAssignPanel] = useState(false);
+  const [cashReceived, setCashReceived] = useState(false);
 
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!id) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await supervisorService.getOrderById(id);
       const data = res?.data;
       setOrder(data?.order || data);
@@ -54,9 +62,9 @@ export function SupervisorOrderDetails() {
       console.error("Failed to load order:", err);
       toast.error("Failed to load order details");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, [id]);
 
   const loadPartners = async () => {
     try {
@@ -69,7 +77,17 @@ export function SupervisorOrderDetails() {
 
   useEffect(() => {
     loadOrder();
-  }, [id]);
+  }, [loadOrder]);
+
+  // Live refresh when a notification about this order arrives (OTP verified, delivered,
+  // cash pending handover, ...)
+  const handleNotification = useCallback(
+    (n: Notification) => {
+      if (id && n?.data?.orderId === id) loadOrder({ silent: true });
+    },
+    [id, loadOrder],
+  );
+  useSocketEvent<Notification>("notification:new", handleNotification);
 
   const handlePrepare = async () => {
     if (!id) return;
@@ -158,15 +176,21 @@ export function SupervisorOrderDetails() {
     }
   };
 
-  const handleConfirmCashHandover = async () => {
+  const handleCompleteOrder = async () => {
     if (!id) return;
+    const cashPending = order?.cashHandoverStatus === "pending";
+    if (cashPending && !cashReceived) {
+      toast.error("Confirm you have received the cash from the delivery partner");
+      return;
+    }
     try {
       setActionLoading(true);
-      await supervisorService.confirmCashHandover(id);
-      toast.success("Cash handover confirmed");
+      await supervisorService.completeOrder(id, cashPending);
+      toast.success(cashPending ? "Cash received — order marked complete" : "Order marked complete");
+      setCashReceived(false);
       await loadOrder();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to confirm cash handover");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to complete order");
     } finally {
       setActionLoading(false);
     }
@@ -231,7 +255,7 @@ export function SupervisorOrderDetails() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Orders
           </Button>
-          <Button variant="outline" size="sm" onClick={loadOrder}>
+          <Button variant="outline" size="sm" onClick={() => loadOrder()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -338,9 +362,7 @@ export function SupervisorOrderDetails() {
             )}
 
             {/* Terminal status */}
-            {["delivered", "completed", "cancelled"].includes(
-              order.orderStatus
-            ) && (
+            {["completed", "cancelled"].includes(order.orderStatus) && (
               <Badge
                 variant={
                   order.orderStatus === "cancelled"
@@ -351,6 +373,19 @@ export function SupervisorOrderDetails() {
                 {order.orderStatus.charAt(0).toUpperCase() +
                   order.orderStatus.slice(1)}
               </Badge>
+            )}
+
+            {order.orderStatus === "in_transit" && (
+              <p className="text-sm text-slate-500">
+                Out for delivery — waiting for the partner to verify the buyer&apos;s OTP
+                {order.deliveryOtpVerifiedAt ? " and collect payment" : ""}.
+              </p>
+            )}
+
+            {order.orderStatus === "delivered" && (
+              <p className="text-sm text-slate-500">
+                Delivered. Mark the order complete below once everything is settled.
+              </p>
             )}
           </div>
         </Card>
@@ -428,8 +463,8 @@ export function SupervisorOrderDetails() {
           );
         })()}
 
-        {/* Buyer Delivery OTP Display (in-transit orders) */}
-        {order.orderStatus === "in_transit" && (() => {
+        {/* Buyer Delivery OTP Display (assigned / in-transit, until verified at the door) */}
+        {["assigned", "in_transit"].includes(order.orderStatus) && !order.deliveryOtpVerifiedAt && (() => {
           const isExpired =
             order.deliveryOtp &&
             order.deliveryOtpExpiresAt &&
@@ -455,7 +490,9 @@ export function SupervisorOrderDetails() {
                   <div>
                     <h3 className="font-semibold text-slate-800">Buyer Delivery OTP</h3>
                     <p className="text-xs text-slate-500">
-                      The buyer shares this with the delivery partner to confirm receipt
+                      {order.deliveryOtp
+                        ? "Issued to the buyer at assignment. They share it with the partner on delivery."
+                        : "No active OTP — regenerate to send the buyer a new one."}
                     </p>
                   </div>
                 </div>
@@ -479,31 +516,96 @@ export function SupervisorOrderDetails() {
           );
         })()}
 
-        {/* Cash Handover Status */}
-        {order.cashHandoverStatus === "pending" && (
-          <Card className="p-6 border-2 border-amber-300 bg-amber-50/60">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-amber-600" />
+        {/* OTP verified at the door — partner collecting COD cash */}
+        {order.orderStatus === "in_transit" && order.deliveryOtpVerifiedAt && (
+          <Card className="p-6 border-2 border-emerald-200 bg-emerald-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800">Buyer OTP Verified</h3>
+                <p className="text-xs text-slate-500">
+                  Verified {new Date(order.deliveryOtpVerifiedAt).toLocaleString("en-IN")}. The delivery
+                  partner is collecting ₹{order.totalAmount?.toFixed?.(2) || order.totalAmount} cash.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Mark as Complete (delivered orders) */}
+        {order.orderStatus === "delivered" && (() => {
+          const cashPending = order.cashHandoverStatus === "pending";
+          const partnerName =
+            (order.deliveryPartner && typeof order.deliveryPartner === "object"
+              ? order.deliveryPartner.name
+              : order.deliveryPartnerName) || "the delivery partner";
+          const amount = order.totalAmount?.toFixed?.(2) || order.totalAmount;
+
+          return (
+            <Card className={`p-6 border-2 ${cashPending ? "border-amber-300 bg-amber-50/60" : "border-emerald-200 bg-emerald-50/40"}`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cashPending ? "bg-amber-100" : "bg-emerald-100"}`}>
+                  {cashPending ? (
+                    <Banknote className="w-5 h-5 text-amber-600" />
+                  ) : (
+                    <BadgeCheck className="w-5 h-5 text-emerald-600" />
+                  )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold text-slate-800">
-                    Cash Pending Collection
+                    {cashPending ? "Collect Cash & Complete Order" : "Complete Order"}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    This order was delivered COD — the cash is still with the delivery partner.
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {cashPending
+                      ? `Delivered (COD). ${partnerName} collected ₹${amount} from the buyer and must submit it to you.`
+                      : "The order has been delivered and needs no cash handover."}
                   </p>
                 </div>
               </div>
+
+              {cashPending && (
+                <label
+                  className={`mt-4 flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                    cashReceived ? "border-emerald-400 bg-emerald-50" : "border-amber-300 bg-white"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.checked)}
+                    className="mt-0.5 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
+                    disabled={actionLoading}
+                  />
+                  <span className="text-sm">
+                    <span className="font-bold text-slate-800 block">
+                      I have received ₹{amount} cash from {partnerName}.
+                    </span>
+                    <span className="text-slate-500">
+                      This marks the order as paid and completed, and notifies the buyer and the partner.
+                    </span>
+                  </span>
+                </label>
+              )}
+
               <Button
-                onClick={handleConfirmCashHandover}
-                disabled={actionLoading}
-                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0"
+                onClick={handleCompleteOrder}
+                disabled={actionLoading || (cashPending && !cashReceived)}
+                className="mt-4 w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0"
               >
-                {actionLoading ? "Confirming..." : "Confirm Cash Received"}
+                <BadgeCheck className="w-4 h-4 mr-2" />
+                {actionLoading ? "Completing..." : "Mark Order as Complete"}
               </Button>
-            </div>
+            </Card>
+          );
+        })()}
+
+        {order.orderStatus === "completed" && order.cashHandoverStatus === "collected" && (
+          <Card className="p-4 border border-emerald-200 bg-emerald-50/40 text-sm text-emerald-800 flex items-center gap-2">
+            <BadgeCheck className="w-4 h-4 shrink-0" />
+            Cash received from the delivery partner
+            {order.cashHandoverAt ? ` on ${new Date(order.cashHandoverAt).toLocaleString("en-IN")}` : ""}.
           </Card>
         )}
 

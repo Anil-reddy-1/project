@@ -136,16 +136,18 @@ export function CartItemCard({
       exit="exit"
       variants={fadeVariants}
       transition={transitions.normal}
-      className={`bg-white rounded-lg border transition-all duration-200 ${
-        hasStockIssue ? 'border-red-200 bg-red-50/30' : 'border-slate-200 hover:border-slate-300'
+      className={`rounded-2xl border transition-colors duration-200 ${
+        hasStockIssue
+          ? 'border-red-200 bg-red-50/40'
+          : 'border-ivory-200 bg-white hover:border-ivory-300'
       }`}
     >
-      <div className="p-4">
-        <div className="flex gap-4">
+      <div className="p-4 sm:p-5">
+        <div className="flex gap-4 sm:gap-5">
           {/* Product Image */}
           <Link
             to={`/buyer/products/${product.id}`}
-            className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-slate-100 hover:opacity-90 transition-opacity"
+            className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-ivory-100 border border-ivory-200 hover:opacity-90 transition-opacity"
           >
             <img
               src={getPrimaryImageUrl(product, '/placeholder-product.png')}
@@ -161,22 +163,22 @@ export function CartItemCard({
               <div className="flex-1 min-w-0">
                 <Link
                   to={`/buyer/products/${product.id}`}
-                  className="text-base font-semibold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
+                  className="font-display text-[17px] font-medium leading-snug text-ink hover:text-brass-700 transition-colors line-clamp-2 sm:line-clamp-1"
                 >
                   {product.name}
                 </Link>
-                <p className="text-xs text-slate-500 mt-0.5">SKU: {product.sku}</p>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-stone-400 mt-1">SKU {product.sku}</p>
               </div>
 
               {/* Item Total - Desktop */}
               <div className="hidden sm:block text-right flex-shrink-0">
-                <p className="text-lg font-bold text-slate-900">
+                <p className="shop-price text-lg">
                   {formatPrice(itemTotal)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-stone-500 tabular-nums mt-0.5">
                   {formatPrice(unitPrice)}
                   {product.displayPrice && product.displayPrice > unitPrice && (
-                    <span className="ml-1 line-through text-slate-400">
+                    <span className="ml-1 line-through text-stone-400">
                       {formatPrice(product.displayPrice)}
                     </span>
                   )}
@@ -188,31 +190,30 @@ export function CartItemCard({
             {/* Badges Row */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {getStockBadge()}
-              
+
               {isBelowMOQ && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   Below MOQ ({product.minOrderQuantity})
                 </span>
               )}
 
               {product.minOrderQuantity > 1 && !isBelowMOQ && (
-                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">
-                  MOQ: {product.minOrderQuantity}
+                <span className="shop-chip">
+                  MOQ {product.minOrderQuantity}
                 </span>
               )}
             </div>
 
             {/* Stock Issue Message */}
             {hasStockIssue && (
-              <div className="mb-3 p-2 rounded-md bg-red-50 border border-red-200">
+              <div className="mb-3 rounded-xl border border-red-200 bg-white/70 px-3 py-2">
                 <p className="text-xs text-red-700 font-medium">
                   Stock issue detected
                 </p>
               </div>
             )}
 
-            {/* MOQ Warning Message */}
             {/* Stock Warnings */}
             {(hasStockIssue || isBelowMOQ) && (
               <div className="mb-3 space-y-2">
@@ -227,7 +228,7 @@ export function CartItemCard({
                     variant="inline"
                   />
                 )}
-                
+
                 {/* MOQ Warning */}
                 {isBelowMOQ && !isOutOfStock && (
                   <MOQWarning
@@ -241,99 +242,97 @@ export function CartItemCard({
             )}
 
             {/* Controls Row */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               {/* Quantity Controls */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-600 font-medium">Qty:</span>
-                <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden">
+                <span className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">Qty</span>
+                <div className="flex items-center h-9 rounded-full border border-ivory-300 bg-white overflow-hidden">
                   <motion.button
-                    whileHover={{ backgroundColor: 'rgb(248 250 252)' }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleDecrement}
                     disabled={quantity <= 1 || anyActionPending}
-                    className="px-2 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-full px-3 text-ink-500 hover:bg-ivory-100 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     title="Decrease quantity"
+                    aria-label="Decrease quantity"
                   >
-                    <Minus className="w-3.5 h-3.5 text-slate-600" />
+                    <Minus className="w-3.5 h-3.5" />
                   </motion.button>
-                  
+
                   <input
                     type="number"
                     min="1"
                     value={quantity}
                     onChange={handleQuantityInput}
                     disabled={anyActionPending}
-                    className="w-14 px-2 py-1.5 text-center text-sm font-semibold text-slate-900 border-x border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label={`Quantity for ${product.name}`}
+                    className="w-12 h-full bg-transparent text-center text-sm font-semibold text-ink tabular-nums focus:outline-none focus:bg-ivory-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   />
-                  
+
                   <motion.button
-                    whileHover={{ backgroundColor: 'rgb(248 250 252)' }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleIncrement}
                     disabled={isOutOfStock || anyActionPending}
-                    className="px-2 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-full px-3 text-ink-500 hover:bg-ivory-100 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     title="Increase quantity"
+                    aria-label="Increase quantity"
                   >
-                    <Plus className="w-3.5 h-3.5 text-slate-600" />
+                    <Plus className="w-3.5 h-3.5" />
                   </motion.button>
                 </div>
               </div>
 
               {/* Divider - Desktop */}
-              <div className="hidden sm:block w-px h-6 bg-slate-200" />
+              <div className="hidden sm:block w-px h-5 bg-ivory-300" />
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-1 -ml-2.5 sm:ml-0">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleSaveForLater}
                   disabled={anyActionPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="shop-btn-ghost h-8 px-2.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Save for later"
                 >
                   <Bookmark className="w-3.5 h-3.5" />
-                  <span className="font-medium">{isSaving ? 'Saving...' : 'Save'}</span>
+                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
                 </motion.button>
 
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleMoveToWishlist}
                   disabled={anyActionPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="shop-btn-ghost h-8 px-2.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Move to wishlist"
                 >
                   <Heart className="w-3.5 h-3.5" />
-                  <span className="font-medium">{isMovingToWishlist ? 'Moving...' : 'Wishlist'}</span>
+                  <span>{isMovingToWishlist ? 'Moving...' : 'Wishlist'}</span>
                 </motion.button>
 
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleRemove}
                   disabled={anyActionPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   title="Remove from cart"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span className="font-medium">{isRemoving ? 'Removing...' : 'Remove'}</span>
+                  <span>{isRemoving ? 'Removing...' : 'Remove'}</span>
                 </motion.button>
               </div>
             </div>
 
             {/* Item Total - Mobile */}
-            <div className="sm:hidden mt-3 pt-3 border-t border-slate-200">
+            <div className="sm:hidden mt-3 pt-3 border-t border-ivory-200">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Item Total:</span>
+                <span className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">Item total</span>
                 <div className="text-right">
-                  <p className="text-base font-bold text-slate-900">
+                  <p className="shop-price text-base">
                     {formatPrice(itemTotal)}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-stone-500 tabular-nums">
                     {formatPrice(unitPrice)}
                     {product.displayPrice && product.displayPrice > unitPrice && (
-                      <span className="ml-1 line-through text-slate-400">
+                      <span className="ml-1 line-through text-stone-400">
                         {formatPrice(product.displayPrice)}
                       </span>
                     )}

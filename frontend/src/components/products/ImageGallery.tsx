@@ -17,10 +17,10 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
 
   if (!images || images.length === 0) {
     return (
-      <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-        <div className="text-center text-gray-400">
+      <div className="aspect-square bg-ivory-100 border border-ivory-200 rounded-2xl flex items-center justify-center">
+        <div className="text-center text-stone-400">
           <svg
-            className="w-24 h-24 mx-auto mb-4"
+            className="w-16 h-16 mx-auto mb-3"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -28,11 +28,11 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={1.25}
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <p className="text-sm">No image available</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em]">No image available</p>
         </div>
       </div>
     );
@@ -52,11 +52,11 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
   return (
     <div className="space-y-4">
       {/* Main Image Display */}
-      <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
+      <div className="relative aspect-square bg-white border border-ivory-200 rounded-2xl overflow-hidden group">
         <img
           src={currentImage.url}
           alt={`${productName} - Image ${selectedIndex + 1}`}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain p-4 sm:p-6"
         />
 
         {/* Navigation Arrows (show only if multiple images) */}
@@ -64,31 +64,31 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
           <>
             <button
               onClick={handlePrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white border border-ivory-300 hover:border-ink rounded-full text-ink transition-[opacity,border-color] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brass-300"
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-6 h-6 text-gray-800" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white border border-ivory-300 hover:border-ink rounded-full text-ink transition-[opacity,border-color] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brass-300"
               aria-label="Next image"
             >
-              <ChevronRight className="w-6 h-6 text-gray-800" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </>
         )}
 
         {/* Image Counter */}
         {sortedImages.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+          <div className="absolute bottom-3 right-3 bg-ink text-ivory-100 px-3 py-1 rounded-full text-[11px] font-semibold tracking-[0.14em] tabular-nums">
             {selectedIndex + 1} / {sortedImages.length}
           </div>
         )}
 
         {/* Primary Badge */}
         {currentImage.isPrimary && (
-          <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <div className="absolute top-3 left-3 shop-chip">
             Primary
           </div>
         )}
@@ -96,15 +96,17 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
 
       {/* Thumbnail Strip */}
       {sortedImages.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-2.5 overflow-x-auto pb-1">
           {sortedImages.map((image, index) => (
             <button
               key={image.id}
               onClick={() => setSelectedIndex(index)}
-              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+              aria-label={`Show image ${index + 1}`}
+              aria-current={index === selectedIndex ? 'true' : undefined}
+              className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border bg-white transition-[border-color,box-shadow] ${
                 index === selectedIndex
-                  ? 'border-blue-500 ring-2 ring-blue-200'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-ink ring-1 ring-ink'
+                  : 'border-ivory-300 hover:border-ink-300'
               }`}
             >
               <img
@@ -124,10 +126,10 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
+              className={`h-1.5 rounded-full transition-all ${
                 index === selectedIndex
-                  ? 'bg-blue-500 w-6'
-                  : 'bg-gray-300 hover:bg-gray-400'
+                  ? 'bg-ink w-6'
+                  : 'w-1.5 bg-ivory-300 hover:bg-ink-300'
               }`}
               aria-label={`Go to image ${index + 1}`}
             />

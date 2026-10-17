@@ -15,7 +15,7 @@ import { useCart } from '../../hooks/useCart';
 import { useCheckout } from '../../hooks/useCheckout';
 import { addressService } from '../../services/address.service';
 import { AddressForm } from '../../components/address';
-import { Alert, Button, Skeleton, Card } from '../../components/ui';
+import { Alert, Skeleton } from '../../components/ui';
 import { showErrorToast, showToast } from '../../utils/toast';
 import { fadeVariants } from '../../utils/animations';
 import type { Address, AddressFormData } from '../../types/address.types';
@@ -158,11 +158,18 @@ export function Checkout() {
   if (cartLoading || loadingAddresses) {
     return (
       <DashboardLayout title="Store" subtitle="Checkout">
-        <div className="max-w-4xl mx-auto py-2 space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <div className="grid md:grid-cols-2 gap-6">
-            <Skeleton className="h-64" />
-            <Skeleton className="h-64" />
+        <div className="w-full space-y-8">
+          <div className="space-y-3 pb-6 border-b border-ivory-200">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-64 rounded-2xl" />
+              <Skeleton className="h-48 rounded-2xl" />
+            </div>
+            <Skeleton className="h-80 rounded-2xl" />
           </div>
         </div>
       </DashboardLayout>
@@ -173,20 +180,20 @@ export function Checkout() {
   if (cartItems.length === 0) {
     return (
       <DashboardLayout title="Store" subtitle="Checkout">
-        <div className="max-w-4xl mx-auto py-8">
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <div>
-              <p className="font-semibold">Your cart is empty</p>
-              <p className="text-sm mt-1">Add items to your cart before checking out.</p>
-            </div>
-          </Alert>
-          <Button
+        <div className="max-w-xl mx-auto py-10 sm:py-16 text-center">
+          <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-white border border-ivory-300 flex items-center justify-center">
+            <Package className="w-7 h-7 text-ink" strokeWidth={1.25} />
+          </div>
+          <p className="shop-eyebrow">Checkout</p>
+          <h1 className="shop-title mt-2">Your cart is empty</h1>
+          <p className="shop-subtitle mt-3">Add items to your cart before checking out.</p>
+          <button
             onClick={() => navigate('/buyer/products')}
-            className="mt-4"
+            className="shop-btn-primary mt-8"
           >
-            Browse Products
-          </Button>
+            Browse products
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </DashboardLayout>
     );
@@ -196,42 +203,53 @@ export function Checkout() {
   if (addresses.length === 0) {
     return (
       <DashboardLayout title="Store" subtitle="Checkout">
-        <div className="max-w-4xl mx-auto py-8 space-y-6">
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="pb-6 border-b border-ivory-200">
+            <p className="shop-eyebrow">Checkout</p>
+            <h1 className="shop-title mt-2">Where should we deliver?</h1>
+            <p className="shop-subtitle mt-2">Please add a delivery address to continue with checkout.</p>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">No delivery address found</p>
-              <p className="text-sm mt-1">Please add a delivery address to continue with checkout.</p>
+              <p className="text-sm font-semibold text-amber-900">No delivery address found</p>
+              <p className="text-xs text-amber-800 mt-0.5">Add one below, or manage your saved addresses.</p>
             </div>
-          </Alert>
+          </div>
 
           {/* Inline Add Address Form */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Add Delivery Address</h2>
-            <AddressForm
-              mode="create"
-              onSubmit={handleAddAddress}
-              submitLabel="Add Address & Continue"
-              isLoading={isCreatingAddress}
-            />
-          </Card>
+          <div className="shop-card">
+            <div className="shop-card-header">
+              <h2 className="shop-heading text-lg flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-brass-600" />
+                Add delivery address
+              </h2>
+            </div>
+            <div className="p-5 sm:p-6">
+              <AddressForm
+                mode="create"
+                onSubmit={handleAddAddress}
+                submitLabel="Add Address & Continue"
+                isLoading={isCreatingAddress}
+              />
+            </div>
+          </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
               onClick={() => navigate('/buyer/addresses')}
-              className="flex-1"
+              className="shop-btn-outline flex-1"
             >
-              Go to Address Page
-            </Button>
-            <Button
-              variant="outline"
+              Go to address page
+            </button>
+            <button
               onClick={() => navigate('/buyer/cart')}
-              className="flex-1"
+              className="shop-btn-outline flex-1"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Cart
-            </Button>
+              <ArrowLeft className="w-4 h-4" />
+              Back to cart
+            </button>
           </div>
         </div>
       </DashboardLayout>
@@ -240,36 +258,37 @@ export function Checkout() {
 
   return (
     <DashboardLayout title="Store" subtitle="Checkout">
-      <motion.div 
-        className="max-w-5xl mx-auto py-2 space-y-6"
+      <motion.div
+        className="w-full space-y-8"
         variants={fadeVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-6 border-b border-ivory-200">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Checkout</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Complete your order</p>
+            <p className="shop-eyebrow">Secure checkout</p>
+            <h1 className="shop-title mt-2">Checkout</h1>
+            <p className="shop-subtitle mt-2">Review your items, choose a delivery address and place your order.</p>
           </div>
-          <Button
-            variant="outline"
+          <button
             onClick={() => navigate('/buyer/cart')}
+            className="shop-btn-outline self-start sm:self-auto h-10 px-5"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Cart
-          </Button>
+            Back to cart
+          </button>
         </div>
 
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="rounded-2xl">
             <AlertCircle className="h-4 w-4" />
             <div>
               <p className="font-semibold">Cannot proceed with checkout</p>
-              <ul className="text-sm mt-1 space-y-1">
+              <ul className="text-sm mt-1 space-y-1 list-disc pl-4">
                 {validationErrors.map((error, idx) => (
-                  <li key={idx}>• {error}</li>
+                  <li key={idx}>{error}</li>
                 ))}
               </ul>
             </div>
@@ -278,51 +297,55 @@ export function Checkout() {
 
         {/* Stock Issues Warning */}
         {hasStockIssues && (
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">Stock availability issues</p>
-              <p className="text-sm mt-1">Some items in your cart have stock issues. Please review your cart.</p>
+              <p className="text-sm font-semibold text-amber-900">Stock availability issues</p>
+              <p className="text-xs text-amber-800 mt-0.5">Some items in your cart have stock issues. Please review your cart.</p>
             </div>
-          </Alert>
+          </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
           {/* Left Column - Cart & Address */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 min-w-0">
             {/* Cart Items */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6 border-b border-slate-200">
+            <section className="shop-card">
+              <div className="shop-card-header">
                 <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-slate-600" />
-                  <h2 className="text-lg font-semibold text-slate-800">Order Items ({itemCount})</h2>
+                  <span className="font-display text-sm text-brass-600 tabular-nums">01</span>
+                  <h2 className="shop-heading text-lg">Order items</h2>
                 </div>
+                <span className="shop-chip">
+                  <Package className="w-3 h-3" />
+                  {itemCount} {itemCount === 1 ? 'unit' : 'units'}
+                </span>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="px-5 sm:px-6 divide-y divide-ivory-200">
                 {cartItems.map((item) => (
-                  <div key={item.cartItemId} className="flex gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div key={item.cartItemId} className="flex gap-4 py-4">
                     {item.product.primaryImageUrl && (
                       <img
                         src={item.product.primaryImageUrl}
                         alt={item.product.name}
-                        className="w-16 h-16 object-cover rounded-lg border border-slate-200"
+                        className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 object-cover rounded-xl border border-ivory-200 bg-ivory-100"
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-800 truncate">{item.product.name}</h3>
-                      <p className="text-sm text-slate-500">SKU: {item.product.sku}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-sm text-slate-600">Qty: {item.quantity}</span>
-                        <span className="text-sm text-slate-400">×</span>
-                        <span className="text-sm font-semibold text-slate-800">₹{item.product.price.toFixed(2)}</span>
+                      <h3 className="font-display text-[15px] font-medium text-ink truncate">{item.product.name}</h3>
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-stone-400 mt-0.5">SKU {item.product.sku}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-stone-500 tabular-nums">
+                        <span>Qty {item.quantity}</span>
+                        <span className="text-stone-300">×</span>
+                        <span className="font-medium text-ink-700">₹{item.product.price.toFixed(2)}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-slate-800">
+                    <div className="text-right shrink-0">
+                      <p className="shop-price text-[15px]">
                         ₹{(item.product.price * item.quantity).toFixed(2)}
                       </p>
                       {item.product.hasStockIssue && (
-                        <span className="inline-flex items-center gap-1 text-xs text-red-600 mt-1">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 mt-1">
                           <AlertCircle className="w-3 h-3" />
                           Stock issue
                         </span>
@@ -331,42 +354,38 @@ export function Checkout() {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
             {/* Delivery Address */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-slate-600" />
-                    <h2 className="text-lg font-semibold text-slate-800">Delivery Address</h2>
-                  </div>
-                  {!showAddAddressForm && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleToggleAddAddressForm}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add New
-                    </Button>
-                  )}
+            <section className="shop-card">
+              <div className="shop-card-header">
+                <div className="flex items-center gap-3">
+                  <span className="font-display text-sm text-brass-600 tabular-nums">02</span>
+                  <h2 className="shop-heading text-lg">Delivery address</h2>
                 </div>
+                {!showAddAddressForm && (
+                  <button
+                    onClick={handleToggleAddAddressForm}
+                    className="shop-btn-outline h-9 px-4 text-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add new
+                  </button>
+                )}
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-5 sm:p-6 space-y-3">
                 {/* Add Address Form (inline) */}
                 {showAddAddressForm && (
-                  <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-blue-900">Add New Address</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                  <div className="mb-5 p-4 sm:p-5 bg-ivory-50 rounded-2xl border border-ivory-300">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <h3 className="font-display text-base font-medium text-ink">Add new address</h3>
+                      <button
                         onClick={handleToggleAddAddressForm}
                         disabled={isCreatingAddress}
+                        className="shop-btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancel
-                      </Button>
+                      </button>
                     </div>
                     <AddressForm
                       mode="create"
@@ -382,37 +401,37 @@ export function Checkout() {
                   <div
                     key={address.id}
                     onClick={() => setSelectedAddressId(address.id)}
-                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                    className={`p-4 sm:p-5 rounded-2xl border transition-colors cursor-pointer ${
                       selectedAddressId === address.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-ink bg-ivory-50 ring-1 ring-ink'
+                        : 'border-ivory-200 bg-white hover:border-ivory-300'
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      <div className={`mt-0.5 w-5 h-5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
                         selectedAddressId === address.id
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-slate-300'
+                          ? 'border-ink bg-ink'
+                          : 'border-ivory-300 bg-white'
                       }`}>
                         {selectedAddressId === address.id && (
                           <CheckCircle className="w-3 h-3 text-white" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-slate-800">{address.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <p className="font-display text-[15px] font-medium text-ink">{address.name}</p>
                           {address.isDefault && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                            <span className="shop-chip border-brass-100 text-brass-700">
                               Default
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600">{address.phone}</p>
-                        <p className="text-sm text-slate-600 mt-1">
+                        <p className="text-xs text-stone-500 tabular-nums">{address.phone}</p>
+                        <p className="text-sm text-ink-700 mt-1.5 leading-relaxed">
                           {address.addressLine1}
                           {address.addressLine2 && `, ${address.addressLine2}`}
                         </p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-ink-700 leading-relaxed">
                           {address.city}, {address.state} {address.postalCode}
                         </p>
                       </div>
@@ -420,103 +439,116 @@ export function Checkout() {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
             {/* Order Notes */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-2">
-                  Order Notes (Optional)
+            <section className="shop-card">
+              <div className="p-5 sm:p-6">
+                <label htmlFor="checkout-notes" className="flex items-center gap-3 mb-3">
+                  <span className="font-display text-sm text-brass-600 tabular-nums">03</span>
+                  <span className="shop-heading text-lg">Order notes</span>
+                  <span className="text-xs text-stone-400">(optional)</span>
                 </label>
                 <textarea
+                  id="checkout-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add any special instructions for delivery..."
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full px-4 py-3 text-sm text-ink bg-white border border-ivory-300 rounded-xl placeholder:text-stone-400 focus:outline-none focus:border-ink-300 focus:ring-2 focus:ring-brass-100 resize-none"
                   rows={3}
                   maxLength={500}
                 />
-                <p className="text-xs text-slate-500 mt-2">{notes.length}/500 characters</p>
+                <p className="text-[11px] text-stone-400 mt-2 text-right tabular-nums">{notes.length}/500 characters</p>
               </div>
-            </div>
+            </section>
           </div>
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm sticky top-4">
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-slate-600" />
-                  <h2 className="text-lg font-semibold text-slate-800">Order Summary</h2>
+            <div className="shop-card overflow-hidden lg:sticky lg:top-28">
+              <div className="px-6 pt-6 pb-5 border-b border-dashed border-ivory-300">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="shop-eyebrow">Receipt</p>
+                    <h2 className="shop-heading mt-1.5">Order summary</h2>
+                  </div>
+                  <div className="w-9 h-9 rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center text-brass-600">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-6 space-y-4">
+
+              <div className="px-6 py-5">
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Subtotal ({itemCount} items)</span>
-                    <span className="font-semibold text-slate-800">₹{subtotal.toFixed(2)}</span>
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="text-stone-500">Subtotal ({itemCount} items)</span>
+                    <span className="font-medium text-ink tabular-nums">₹{subtotal.toFixed(2)}</span>
                   </div>
                   {totalSavings > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium">Discount Savings</span>
-                      <span className="font-semibold">-₹{totalSavings.toFixed(2)}</span>
+                    <div className="flex justify-between gap-3 text-sm text-emerald-700">
+                      <span>Discount savings</span>
+                      <span className="font-medium tabular-nums">-₹{totalSavings.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Delivery Charges</span>
-                    <span className="font-semibold text-green-600">FREE</span>
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="text-stone-500">Delivery charges</span>
+                    <span className="font-semibold text-emerald-700 text-xs uppercase tracking-[0.14em]">Free</span>
                   </div>
-                  <div className="pt-3 border-t border-slate-200">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-slate-800">Total Amount</span>
-                      <span className="text-xl font-bold text-slate-900">₹{subtotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {totalSavings > 0 && (
-                    <div className="p-2.5 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between text-xs text-green-800 font-semibold">
-                      <span>🎉 You save on this order</span>
-                      <span>₹{totalSavings.toFixed(2)}</span>
-                    </div>
-                  )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-200">
-                  <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                    <p className="text-sm font-semibold text-blue-900">Payment Method</p>
-                    <p className="text-sm text-blue-700 mt-1">Cash on Delivery (COD)</p>
+                <div className="shop-rule my-5" />
+
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-500 pb-1">Total amount</span>
+                  <span className="shop-price text-3xl font-medium">₹{subtotal.toFixed(2)}</span>
+                </div>
+                <p className="text-[11px] text-stone-400 text-right mt-1">Inclusive of all taxes</p>
+
+                {totalSavings > 0 && (
+                  <div className="mt-4 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-between text-xs text-emerald-800 font-semibold">
+                    <span>You save on this order</span>
+                    <span className="tabular-nums">₹{totalSavings.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="shop-rule my-5" />
+
+                <dl className="space-y-4 mb-6">
+                  <div>
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Payment method</dt>
+                    <dd className="text-sm text-ink mt-1">Cash on Delivery (COD)</dd>
                   </div>
 
                   {selectedAddress && (
-                    <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                      <p className="text-sm font-semibold text-slate-800 mb-1">Delivering to:</p>
-                      <p className="text-sm text-slate-600">{selectedAddress.name}</p>
-                      <p className="text-xs text-slate-500 mt-1">{selectedAddress.city}, {selectedAddress.state}</p>
+                    <div>
+                      <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Delivering to</dt>
+                      <dd className="text-sm text-ink mt-1">{selectedAddress.name}</dd>
+                      <dd className="text-xs text-stone-500 mt-0.5">{selectedAddress.city}, {selectedAddress.state}</dd>
                     </div>
                   )}
+                </dl>
 
-                  <Button
-                    onClick={handlePlaceOrder}
-                    disabled={checkoutLoading || validating || hasStockIssues || !selectedAddressId}
-                    className="w-full"
-                  >
-                    {checkoutLoading ? (
-                      <>
-                        Placing Order...
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      </>
-                    ) : (
-                      <>
-                        Place Order
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={checkoutLoading || validating || hasStockIssues || !selectedAddressId}
+                  className="shop-btn-primary w-full h-12"
+                >
+                  {checkoutLoading ? (
+                    <>
+                      Placing order...
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Place order
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
 
-                  <p className="text-xs text-center text-slate-500 mt-3">
-                    By placing this order, you agree to our terms and conditions
-                  </p>
-                </div>
+                <p className="text-xs text-center text-stone-500 mt-3 leading-relaxed">
+                  By placing this order, you agree to our terms and conditions
+                </p>
               </div>
             </div>
           </div>

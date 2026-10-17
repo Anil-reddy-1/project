@@ -22,25 +22,21 @@ export function EmptyCartState({
   shopButtonLink = '/buyer/products',
 }: EmptyCartStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+    <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center">
       {/* Icon */}
-      <div className="relative mb-6">
-        {/* Background Circle */}
-        <div className="absolute inset-0 bg-blue-100 rounded-full blur-2xl opacity-50" />
-        
-        {/* Icon Container */}
-        <div className="relative w-24 h-24 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-          <ShoppingCart className="w-12 h-12 text-blue-600" strokeWidth={1.5} />
-        </div>
+      <div className="mb-7 w-20 h-20 rounded-full bg-white border border-ivory-300 flex items-center justify-center ring-1 ring-brass-100 ring-offset-4 ring-offset-ivory">
+        <ShoppingCart className="w-8 h-8 text-ink" strokeWidth={1.25} />
       </div>
 
+      <p className="shop-eyebrow">Your basket</p>
+
       {/* Title */}
-      <h2 className="text-2xl font-bold text-slate-900 mb-3">
+      <h2 className="shop-title mt-2 mb-3">
         {title}
       </h2>
 
       {/* Message */}
-      <p className="text-base text-slate-600 max-w-md mb-8 leading-relaxed">
+      <p className="shop-subtitle text-base max-w-md mb-8">
         {message}
       </p>
 
@@ -48,57 +44,55 @@ export function EmptyCartState({
       {showShopButton && (
         <Link
           to={shopButtonLink}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+          className="shop-btn-primary"
         >
           {shopButtonText}
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="w-4 h-4" />
         </Link>
       )}
 
       {/* Additional Info */}
-      <div className="mt-12 pt-8 border-t border-slate-200 max-w-2xl">
-        <p className="text-sm font-semibold text-slate-900 mb-4">
-          Why shop with us?
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-slate-900">Quality Products</span>
+      <div className="mt-14 w-full max-w-3xl">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="shop-rule flex-1" />
+          <p className="font-display text-sm italic text-ink-500">
+            Why shop with us?
+          </p>
+          <div className="shop-rule flex-1" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+          <div className="shop-card p-5">
+            <div className="w-9 h-9 rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center mb-3">
+              <svg className="w-4 h-4 text-brass-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <p className="text-xs text-slate-600">
+            <p className="font-display text-[15px] font-medium text-ink mb-1">Quality products</p>
+            <p className="text-xs text-stone-500 leading-relaxed">
               Verified suppliers and authentic products
             </p>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-slate-900">Bulk Pricing</span>
+          <div className="shop-card p-5">
+            <div className="w-9 h-9 rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center mb-3">
+              <svg className="w-4 h-4 text-brass-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <p className="text-xs text-slate-600">
+            <p className="font-display text-[15px] font-medium text-ink mb-1">Bulk pricing</p>
+            <p className="text-xs text-stone-500 leading-relaxed">
               Better rates for wholesale orders
             </p>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-slate-900">Fast Delivery</span>
+          <div className="shop-card p-5">
+            <div className="w-9 h-9 rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center mb-3">
+              <svg className="w-4 h-4 text-brass-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-            <p className="text-xs text-slate-600">
+            <p className="font-display text-[15px] font-medium text-ink mb-1">Fast delivery</p>
+            <p className="text-xs text-stone-500 leading-relaxed">
               Quick processing and reliable shipping
             </p>
           </div>

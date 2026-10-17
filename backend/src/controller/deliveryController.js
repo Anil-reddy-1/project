@@ -318,6 +318,43 @@ async function startDelivery(req, res, next) {
 }
 
 /**
+ * Verify buyer delivery OTP at the door (delivery partner)
+ * POST /api/v1/deliveries/:id/verify-otp
+ * Body: { otp }
+ * Prepaid orders are completed immediately; COD orders then require cash collection.
+ */
+async function verifyDeliveryOtp(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { otp } = req.body;
+    const partnerId = req.user.dbId;
+
+    const result = await deliveryService.verifyDeliveryOtp(id, partnerId, otp);
+
+    logger.info('Delivery OTP verified', {
+      deliveryId: id,
+      partnerId,
+      needsCashCollection: result.needsCashCollection
+    });
+
+    res.status(200).json({
+      success: true,
+      message: result.needsCashCollection
+        ? `OTP verified. Collect ₹${result.amount} cash from the customer.`
+        : 'OTP verified. Delivery completed.',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Verify delivery OTP error:', {
+      error: error.message,
+      deliveryId: req.params.id,
+      partnerId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
  * Complete delivery (delivery partner)
  * POST /api/v1/deliveries/:id/complete
  * Body: { notes? }
@@ -461,6 +498,7 @@ module.exports = {
   assignDeliveryByOrderId,
   acceptDelivery,
   startDelivery,
+  verifyDeliveryOtp,
   completeDelivery,
   updateDeliveryStatus,
   getDeliveryByOrderId

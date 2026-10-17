@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const logger = require('../utils/logger');
+const { SUCCESSFUL_DELIVERY_SQL } = require('../models/deliveryModel');
 
 /**
  * Analytics Service
@@ -336,13 +337,13 @@ async function calculateDeliveryAnalytics(startDate, endDate, filters = {}) {
     // Partner Performance
     const partnerQuery = `
       SELECT 
-        COALESCE(s.name, d.partner_name, 'Unassigned') as partner_name,
-        d.partner_id,
+        COALESCE(u.name, s.name, d.partner_name, 'Unassigned') as partner_name,
+        COALESCE(d.delivery_partner_id, d.partner_id) as partner_id,
         COUNT(*) as total_deliveries,
-        COUNT(CASE WHEN d.status = 'delivered' THEN 1 END) as successful_deliveries,
+        COUNT(CASE WHEN ${SUCCESSFUL_DELIVERY_SQL} THEN 1 END) as successful_deliveries,
         COUNT(CASE WHEN d.status = 'failed' THEN 1 END) as failed_deliveries,
         ROUND(
-          (COUNT(CASE WHEN d.status = 'delivered' THEN 1 END)::numeric / NULLIF(COUNT(*), 0)) * 100, 
+          (COUNT(CASE WHEN ${SUCCESSFUL_DELIVERY_SQL} THEN 1 END)::numeric / NULLIF(COUNT(*), 0)) * 100, 
           2
         ) as success_rate,
         COALESCE(AVG(
@@ -352,9 +353,12 @@ async function calculateDeliveryAnalytics(startDate, endDate, filters = {}) {
           END
         ), 0) as avg_delivery_hours
       FROM deliveries d
+      LEFT JOIN users u ON u.id = d.delivery_partner_id
       LEFT JOIN staff s ON d.partner_id = s.id
+      LEFT JOIN orders o ON o.id = d.order_id
       WHERE d.created_at >= $1 AND d.created_at <= $2
-      GROUP BY partner_name, d.partner_id
+      -- Group by output positions: a bare "partner_name" would bind to d.partner_name
+      GROUP BY 1, 2
       ORDER BY total_deliveries DESC
       LIMIT 20
     `;
@@ -398,15 +402,10 @@ async function calculateDeliveryAnalytics(startDate, endDate, filters = {}) {
           AND assigned_at IS NOT NULL
           AND status = 'delivered'
       ) sub
-      GROUP BY time_bucket
-      ORDER BY 
-        CASE time_bucket
-          WHEN 'Under 2 hours' THEN 1
-          WHEN '2-4 hours' THEN 2
-          WHEN '4-8 hours' THEN 3
-          WHEN '8-24 hours' THEN 4
-          ELSE 5
-        END
+      GROUP BY 1
+      -- Buckets are hour ranges, so their minimum hours sorts them in order
+      -- (an output alias can't be used inside an ORDER BY expression)
+      ORDER BY MIN(delivery_hours)
     `;
     
     const timeDistributionResult = await client.query(timeDistributionQuery, [startDate, endDate]);

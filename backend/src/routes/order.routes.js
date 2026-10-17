@@ -104,17 +104,26 @@ router.post('/:id/regenerate-pickup-otp', requireRole('admin', 'supervisor'), or
 
 /**
  * @route   POST /api/v1/orders/:id/regenerate-delivery-otp
- * @desc    Regenerate buyer delivery OTP for an in-transit order (expired OTP recovery)
- * @access  Private (supervisor, admin)
+ * @desc    Regenerate buyer delivery OTP for an assigned/in-transit order (expired/lost OTP recovery)
+ * @access  Private (buyer for own order, supervisor, admin)
  */
-router.post('/:id/regenerate-delivery-otp', requireRole('admin', 'supervisor'), orderController.regenerateDeliveryOtp);
+router.post('/:id/regenerate-delivery-otp', requireRole('admin', 'supervisor', 'buyer'), orderController.regenerateDeliveryOtp);
 
 /**
  * @route   POST /api/v1/orders/:id/confirm-cash-handover
  * @desc    Supervisor confirms they've physically collected COD cash from the delivery partner
+ *          (this also completes the order)
  * @access  Private (supervisor, admin)
  */
 router.post('/:id/confirm-cash-handover', requireRole('admin', 'supervisor'), orderController.confirmCashHandover);
+
+/**
+ * @route   POST /api/v1/orders/:id/complete
+ * @desc    Mark a delivered order as complete. COD orders require the cash handover.
+ * @access  Private (supervisor, admin)
+ * @body    { cashReceived?: boolean }
+ */
+router.post('/:id/complete', requireRole('admin', 'supervisor'), orderController.completeOrder);
 
 /**
  * @route   POST /api/v1/orders/:id/verify-otp

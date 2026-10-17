@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -124,6 +125,58 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+}
+
+/* ── Buyer Storefront ("classic & modern") ──
+   Opt-in component classes used only by buyer pages. Serif display headings,
+   ivory paper background, navy ink and a brass accent; flat surfaces with hairline
+   borders instead of heavy gradients. */
+@layer components {
+  .shop-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-brass-600;
+  }
+  .shop-title {
+    @apply font-display text-3xl sm:text-4xl font-medium tracking-tight text-ink;
+  }
+  .shop-heading {
+    @apply font-display text-xl font-medium tracking-tight text-ink;
+  }
+  .shop-subtitle {
+    @apply text-sm text-stone-500 leading-relaxed;
+  }
+  .shop-card {
+    @apply bg-white border border-ivory-200 rounded-2xl shadow-[0_1px_2px_rgba(20,33,61,0.04)];
+  }
+  .shop-card-header {
+    @apply flex items-center justify-between gap-3 px-6 py-4 border-b border-ivory-200;
+  }
+  .shop-rule {
+    @apply h-px w-full bg-ivory-200;
+  }
+  .shop-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-6 rounded-full bg-ink text-white text-sm font-semibold
+      transition-colors hover:bg-ink-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brass-300
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .shop-btn-outline {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-6 rounded-full border border-ink/20 bg-white text-ink text-sm font-semibold
+      transition-colors hover:border-ink hover:bg-ivory-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brass-300
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .shop-btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-ink-500
+      transition-colors hover:text-ink hover:bg-ivory-100;
+  }
+  .shop-chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-ivory-300 bg-ivory-50 px-2.5 py-0.5 text-[11px] font-semibold text-ink-700;
+  }
+  .shop-input {
+    @apply w-full h-11 rounded-xl border border-ivory-300 bg-white px-4 text-sm text-ink placeholder:text-stone-400
+      focus:outline-none focus:border-ink-300 focus:ring-2 focus:ring-brass-100;
+  }
+  .shop-price {
+    @apply font-display font-semibold text-ink tabular-nums;
   }
 }
 

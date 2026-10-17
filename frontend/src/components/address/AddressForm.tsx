@@ -6,7 +6,6 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Button } from "../ui/button";
 import {
   Select,
   SelectContent,
@@ -31,6 +30,14 @@ interface AddressFormProps {
   isLoading?: boolean;
   mode?: "create" | "edit";
 }
+
+// Storefront ("classic & modern") field styling — merged over the ui primitives via cn/twMerge
+const FIELD =
+  "h-11 rounded-xl border-ivory-300 bg-white px-4 text-ink placeholder:text-stone-400 focus-visible:ring-2 focus-visible:ring-brass-100 focus-visible:ring-offset-0 focus-visible:border-ink-300 focus:ring-2 focus:ring-brass-100 focus:ring-offset-0";
+const FIELD_ERROR = "border-red-400 focus-visible:border-red-400";
+const LABEL = "text-[13px] font-medium text-ink-700";
+const ERROR_TEXT = "text-xs font-medium text-red-600";
+const HINT = "text-xs text-stone-500";
 
 const initialFormData: AddressFormData = {
   name: "",
@@ -260,7 +267,7 @@ export function AddressForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {/* General error alert */}
       {errors.length > 0 && !touched.size && (
         <Alert variant="destructive">
@@ -277,9 +284,9 @@ export function AddressForm({
       )}
 
       {/* Name Field */}
-      <div className="space-y-2">
-        <Label htmlFor="name">
-          Full Name <span className="text-red-500">*</span>
+      <div className="space-y-1.5">
+        <Label htmlFor="name" className={LABEL}>
+          Full name <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -290,17 +297,17 @@ export function AddressForm({
           onChange={(e) => handleChange("name", e.target.value)}
           onBlur={() => handleBlur("name")}
           disabled={isLoading}
-          className={getFieldError("name") ? "border-red-500" : ""}
+          className={`${FIELD} ${getFieldError("name") ? FIELD_ERROR : ""}`}
         />
         {getFieldError("name") && (
-          <p className="text-sm text-red-500">{getFieldError("name")}</p>
+          <p className={ERROR_TEXT}>{getFieldError("name")}</p>
         )}
       </div>
 
       {/* Phone Field */}
-      <div className="space-y-2">
-        <Label htmlFor="phone">
-          Phone Number <span className="text-red-500">*</span>
+      <div className="space-y-1.5">
+        <Label htmlFor="phone" className={LABEL}>
+          Phone number <span className="text-red-500">*</span>
         </Label>
         <Input
           id="phone"
@@ -312,17 +319,17 @@ export function AddressForm({
           onBlur={() => handleBlur("phone")}
           disabled={isLoading}
           maxLength={10}
-          className={getFieldError("phone") ? "border-red-500" : ""}
+          className={`${FIELD} ${getFieldError("phone") ? FIELD_ERROR : ""}`}
         />
         {getFieldError("phone") && (
-          <p className="text-sm text-red-500">{getFieldError("phone")}</p>
+          <p className={ERROR_TEXT}>{getFieldError("phone")}</p>
         )}
       </div>
 
       {/* Address Line 1 */}
-      <div className="space-y-2">
-        <Label htmlFor="addressLine1">
-          Address Line 1 <span className="text-red-500">*</span>
+      <div className="space-y-1.5">
+        <Label htmlFor="addressLine1" className={LABEL}>
+          Address line 1 <span className="text-red-500">*</span>
         </Label>
         <Input
           id="addressLine1"
@@ -333,18 +340,18 @@ export function AddressForm({
           onChange={(e) => handleChange("addressLine1", e.target.value)}
           onBlur={() => handleBlur("addressLine1")}
           disabled={isLoading}
-          className={getFieldError("addressLine1") ? "border-red-500" : ""}
+          className={`${FIELD} ${getFieldError("addressLine1") ? FIELD_ERROR : ""}`}
         />
         {getFieldError("addressLine1") && (
-          <p className="text-sm text-red-500">
+          <p className={ERROR_TEXT}>
             {getFieldError("addressLine1")}
           </p>
         )}
       </div>
 
       {/* Address Line 2 */}
-      <div className="space-y-2">
-        <Label htmlFor="addressLine2">Address Line 2 (Optional)</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="addressLine2" className={LABEL}>Address line 2 <span className="text-stone-400 font-normal">(optional)</span></Label>
         <Input
           id="addressLine2"
           name="addressLine2"
@@ -354,14 +361,15 @@ export function AddressForm({
           onChange={(e) => handleChange("addressLine2", e.target.value)}
           onBlur={() => handleBlur("addressLine2")}
           disabled={isLoading}
+          className={FIELD}
         />
       </div>
 
       {/* City and State Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* City Field */}
-        <div className="space-y-2">
-          <Label htmlFor="city">
+        <div className="space-y-1.5">
+          <Label htmlFor="city" className={LABEL}>
             City <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -373,16 +381,16 @@ export function AddressForm({
             onChange={(e) => handleChange("city", e.target.value)}
             onBlur={() => handleBlur("city")}
             disabled={isLoading}
-            className={getFieldError("city") ? "border-red-500" : ""}
+            className={`${FIELD} ${getFieldError("city") ? FIELD_ERROR : ""}`}
           />
           {getFieldError("city") && (
-            <p className="text-sm text-red-500">{getFieldError("city")}</p>
+            <p className={ERROR_TEXT}>{getFieldError("city")}</p>
           )}
         </div>
 
         {/* State Field */}
-        <div className="space-y-2">
-          <Label htmlFor="state">
+        <div className="space-y-1.5">
+          <Label htmlFor="state" className={LABEL}>
             State <span className="text-red-500">*</span>
           </Label>
           <Select
@@ -393,7 +401,7 @@ export function AddressForm({
             <SelectTrigger
               id="state"
               name="state"
-              className={getFieldError("state") ? "border-red-500" : ""}
+              className={`${FIELD} ${getFieldError("state") ? FIELD_ERROR : ""}`}
               onBlur={() => handleBlur("state")}
             >
               <SelectValue placeholder="Select state" />
@@ -407,15 +415,15 @@ export function AddressForm({
             </SelectContent>
           </Select>
           {getFieldError("state") && (
-            <p className="text-sm text-red-500">{getFieldError("state")}</p>
+            <p className={ERROR_TEXT}>{getFieldError("state")}</p>
           )}
         </div>
       </div>
 
       {/* Postal Code */}
-      <div className="space-y-2">
-        <Label htmlFor="postalCode">
-          Postal Code <span className="text-red-500">*</span>
+      <div className="space-y-1.5">
+        <Label htmlFor="postalCode" className={LABEL}>
+          PIN code <span className="text-red-500">*</span>
         </Label>
         <Input
           id="postalCode"
@@ -427,23 +435,23 @@ export function AddressForm({
           onBlur={() => handleBlur("postalCode")}
           disabled={isLoading}
           maxLength={6}
-          className={getFieldError("postalCode") ? "border-red-500" : ""}
+          className={`${FIELD} ${getFieldError("postalCode") ? FIELD_ERROR : ""}`}
         />
         {getFieldError("postalCode") && (
-          <p className="text-sm text-red-500">{getFieldError("postalCode")}</p>
+          <p className={ERROR_TEXT}>{getFieldError("postalCode")}</p>
         )}
       </div>
 
       {/* Shop/Location Image Upload */}
-      <div className="space-y-2">
-        <Label htmlFor="shopImage">Shop/Location Image (Optional)</Label>
-        <p className="text-xs text-gray-500 mb-2">
+      <div className="space-y-1.5">
+        <Label htmlFor="shopImage" className={LABEL}>Shop / location image <span className="text-stone-400 font-normal">(optional)</span></Label>
+        <p className={`${HINT} mb-2`}>
           Upload a photo of your shop or location front for easy identification
         </p>
 
         {!imagePreview ? (
           <div
-            className="relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+            className="relative border border-dashed border-ivory-300 bg-ivory-50 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:border-brass-300 hover:bg-ivory-100/60 transition-colors"
             onClick={() => document.getElementById("shopImage")?.click()}
           >
             <input
@@ -455,15 +463,17 @@ export function AddressForm({
               className="hidden"
             />
             <div className="flex flex-col items-center gap-2">
-              <Upload className="w-10 h-10 text-gray-400" />
-              <p className="text-sm text-gray-600">
+              <div className="w-11 h-11 rounded-full bg-white border border-ivory-200 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-brass-600" strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <p className="text-sm font-medium text-ink">
                 Click to upload shop image
               </p>
-              <p className="text-xs text-gray-400">PNG, JPG, WebP up to 5MB</p>
+              <p className="text-xs text-stone-400">PNG, JPG, WebP up to 5MB</p>
             </div>
           </div>
         ) : (
-          <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
+          <div className="relative rounded-xl overflow-hidden border border-ivory-200">
             <img
               src={imagePreview}
               alt="Shop preview"
@@ -473,14 +483,15 @@ export function AddressForm({
               <button
                 type="button"
                 onClick={handleImageRemove}
-                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
+                className="absolute top-3 right-3 bg-white/95 hover:bg-white text-red-600 border border-ivory-200 p-2 rounded-full shadow-sm transition-colors"
                 title="Remove image"
+                aria-label="Remove image"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             )}
             {isUploadingImage && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-ink/60 flex items-center justify-center">
                 <div className="text-white text-sm flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Uploading...
@@ -492,33 +503,32 @@ export function AddressForm({
       </div>
 
       {/* Geolocation Section */}
-      <div className="space-y-2">
-        <Label>Location Coordinates (Optional)</Label>
-        <p className="text-xs text-gray-500 mb-2">
+      <div className="space-y-1.5">
+        <Label className={LABEL}>Location coordinates <span className="text-stone-400 font-normal">(optional)</span></Label>
+        <p className={`${HINT} mb-2`}>
           Capture your exact location for better delivery accuracy
         </p>
 
         {!coordinates && !formData.latitude ? (
-          <div className="space-y-2">
-            <Button
+          <div className="space-y-1.5">
+            <button
               type="button"
-              variant="outline"
               onClick={handleCaptureLocation}
               disabled={isLoading || geoLoading}
-              className="w-full"
+              className="shop-btn-outline w-full"
             >
               {geoLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Capturing Location...
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Capturing location...
                 </>
               ) : (
                 <>
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Capture Location
+                  <MapPin className="w-4 h-4" aria-hidden="true" />
+                  Capture location
                 </>
               )}
-            </Button>
+            </button>
 
             {geoError && (
               <Alert variant="destructive" className="mt-2">
@@ -530,11 +540,11 @@ export function AddressForm({
             )}
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-green-800">
-                <MapPin className="w-4 h-4" />
-                <span className="font-medium">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="flex items-center gap-2 min-w-0 text-sm text-emerald-800">
+                <MapPin className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="font-medium break-words">
                   {formData.latitude && formData.longitude
                     ? formatCoordinatesWithLabels(
                         formData.latitude,
@@ -552,15 +562,16 @@ export function AddressForm({
                 <button
                   type="button"
                   onClick={handleClearLocation}
-                  className="text-green-600 hover:text-green-800 transition-colors"
+                  className="shrink-0 p-1 rounded-full text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 transition-colors"
                   title="Clear location"
+                  aria-label="Clear location"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
             </div>
             {coordinates && coordinates.accuracy && (
-              <p className="text-xs text-gray-500">
+              <p className={HINT}>
                 Accuracy: ±{Math.round(coordinates.accuracy)}m
               </p>
             )}
@@ -569,7 +580,7 @@ export function AddressForm({
       </div>
 
       {/* Set as Default Checkbox */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2.5 rounded-xl border border-ivory-200 bg-ivory-50 px-4 py-3">
         <input
           type="checkbox"
           id="isDefault"
@@ -577,37 +588,36 @@ export function AddressForm({
           checked={formData.isDefault}
           onChange={(e) => handleChange("isDefault", e.target.checked)}
           disabled={isLoading}
-          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          className="h-4 w-4 rounded border-ivory-300 accent-ink text-ink focus:ring-brass-300"
         />
-        <Label htmlFor="isDefault" className="cursor-pointer font-normal">
+        <Label htmlFor="isDefault" className="cursor-pointer text-sm font-medium text-ink">
           Set as default address
         </Label>
       </div>
 
       {/* Form Actions */}
-      <div className="flex gap-3 pt-4">
-        <Button type="submit" disabled={isLoading} className="flex-1">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-5 border-t border-ivory-200">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isLoading}
+            className="shop-btn-outline flex-1"
+          >
+            Cancel
+          </button>
+        )}
+
+        <button type="submit" disabled={isLoading} className="shop-btn-primary flex-1">
           {isLoading ? (
             <>
-              <span className="mr-2">⏳</span>
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
               Saving...
             </>
           ) : (
             submitLabel
           )}
-        </Button>
-
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-        )}
+        </button>
       </div>
     </form>
   );

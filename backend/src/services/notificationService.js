@@ -86,8 +86,12 @@ async function sendDeliveryStatusUpdate(userId, status, deliveryData) {
     ? `Your order #${deliveryData.orderNumber} has been picked up and is out for delivery! Share OTP ${deliveryData.deliveryOtp} with your delivery partner to confirm delivery.`
     : `Your order #${deliveryData.orderNumber} is out for delivery!`;
 
+  const assignedMsg = deliveryData.deliveryOtp
+    ? `Your order #${deliveryData.orderNumber} has been assigned to a delivery partner. Your delivery OTP is ${deliveryData.deliveryOtp} — share it with the partner only when you receive your order.`
+    : `Your order #${deliveryData.orderNumber} has been assigned to a delivery partner.`;
+
   const messages = {
-    assigned: `Your order #${deliveryData.orderNumber} has been assigned to a delivery partner.`,
+    assigned: assignedMsg,
     accepted: `Your delivery partner has accepted order #${deliveryData.orderNumber}.`,
     in_transit: inTransitMsg,
     delivered: `Your order #${deliveryData.orderNumber} has been delivered successfully.`
@@ -366,7 +370,7 @@ async function notifySupervisorsCashPending(orderData) {
         row.id,
         'cash_pending',
         'Cash Collection Pending',
-        `Order #${orderData.orderNumber} delivered. ₹${orderData.totalAmount?.toFixed?.(2) || orderData.totalAmount} cash is with the delivery partner — confirm once collected.`,
+        `Order #${orderData.orderNumber} delivered. ₹${formatAmount(orderData.totalAmount)} cash is with ${orderData.partnerName || 'the delivery partner'} — mark the order complete once the cash is handed over.`,
         {
           orderId: orderData.id,
           orderNumber: orderData.orderNumber,
@@ -381,8 +385,110 @@ async function notifySupervisorsCashPending(orderData) {
   }
 }
 
+function formatAmount(amount) {
+  const n = Number(amount);
+  return Number.isFinite(n) ? n.toFixed(2) : amount;
+}
+
+/**
+ * Prompt the delivery partner to collect COD cash once the buyer's delivery OTP is verified.
+ */
+async function sendCollectCashPrompt(partnerId, orderData) {
+  return await createNotification(
+    partnerId,
+    'collect_cash',
+    'OTP Verified — Collect Cash',
+    `OTP verified for order #${orderData.orderNumber}. Collect ₹${formatAmount(orderData.totalAmount)} in cash from the customer, then confirm to complete the delivery.`,
+    {
+      deliveryId: orderData.deliveryId,
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      totalAmount: orderData.totalAmount
+    }
+  );
+}
+
+/**
+ * Tell the buyer their OTP was verified and how much cash to hand over.
+ */
+async function sendBuyerPayCashPrompt(userId, orderData) {
+  return await createNotification(
+    userId,
+    'pay_cash',
+    'Delivery Verified',
+    `Your delivery OTP for order #${orderData.orderNumber} was verified. Please pay ₹${formatAmount(orderData.totalAmount)} in cash to the delivery partner.`,
+    {
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      totalAmount: orderData.totalAmount
+    }
+  );
+}
+
+/**
+ * Send the buyer their freshly regenerated delivery OTP.
+ */
+async function sendDeliveryOtpRegenerated(userId, orderData) {
+  return await createNotification(
+    userId,
+    'delivery_otp_regenerated',
+    'New Delivery OTP',
+    `A new delivery OTP was generated for order #${orderData.orderNumber}: ${orderData.deliveryOtp}. Your previous OTP no longer works.`,
+    {
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      deliveryOtp: orderData.deliveryOtp
+    }
+  );
+}
+
+/**
+ * Tell the assigned delivery partner that an OTP for their order changed.
+ * @param {'pickup'|'delivery'} kind
+ */
+async function sendPartnerOtpChanged(partnerId, kind, orderData) {
+  const message = kind === 'pickup'
+    ? `The pickup OTP for order #${orderData.orderNumber} was regenerated. Ask the supervisor for the new OTP.`
+    : `The customer's delivery OTP for order #${orderData.orderNumber} was regenerated. Ask the customer for the latest OTP.`;
+
+  return await createNotification(
+    partnerId,
+    'otp_regenerated',
+    kind === 'pickup' ? 'Pickup OTP Changed' : 'Delivery OTP Changed',
+    message,
+    {
+      deliveryId: orderData.deliveryId,
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      kind
+    }
+  );
+}
+
+/**
+ * Tell the delivery partner the supervisor received their cash and closed the order.
+ */
+async function sendCashHandoverConfirmed(partnerId, orderData) {
+  return await createNotification(
+    partnerId,
+    'cash_handover_confirmed',
+    'Cash Handover Confirmed',
+    `Supervisor confirmed receiving ₹${formatAmount(orderData.totalAmount)} for order #${orderData.orderNumber}. The order is now complete.`,
+    {
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      totalAmount: orderData.totalAmount
+    }
+  );
+}
+
 module.exports = {
   createNotification,
+  sendCollectCashPrompt,
+  sendBuyerPayCashPrompt,
+  sendDeliveryOtpRegenerated,
+  sendPartnerOtpChanged,
+  sendCashHandoverConfirmed,
   sendOrderConfirmation,
   sendDeliveryAssigned,
   sendDeliveryStatusUpdate,

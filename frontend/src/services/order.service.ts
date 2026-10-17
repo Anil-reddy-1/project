@@ -39,6 +39,11 @@ export interface Order {
   deliveryOtpExpiresAt?: string | null;
   pickupOtp?: string | null;
   pickupOtpExpiresAt?: string | null;
+  /** Set once the delivery partner verified the buyer's OTP at the door */
+  deliveryOtpVerifiedAt?: string | null;
+  cashHandoverStatus?: 'pending' | 'collected' | null;
+  completedAt?: string | null;
+  deliveryPartnerName?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -152,6 +157,10 @@ export const orderService = {
   // Update order status (admin only)
   updateOrderStatus: (id: string, payload: UpdateOrderStatusPayload) =>
     api.patch<OrderResponse>(`/orders/${id}/status`, payload),
+
+  // Regenerate the buyer's delivery OTP (expired or lost) for an assigned / in-transit order
+  regenerateDeliveryOtp: (id: string) =>
+    api.post<OrderResponse>(`/orders/${id}/regenerate-delivery-otp`, {}),
 
   // Cancel order
   cancelOrder: (id: string, payload: CancelOrderPayload) =>

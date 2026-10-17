@@ -139,7 +139,8 @@ async function findDeliveriesByPartnerId(partnerId, { page = 1, limit = 20, stat
       o.order_status,
       o.payment_method,
       o.payment_status,
-      o.cash_handover_status
+      o.cash_handover_status,
+      o.delivery_otp_verified_at
     FROM deliveries d
     INNER JOIN orders o ON d.order_id = o.id
     WHERE ${whereString}
@@ -155,7 +156,8 @@ async function findDeliveriesByPartnerId(partnerId, { page = 1, limit = 20, stat
     orderStatus: row.order_status,
     paymentMethod: row.payment_method,
     paymentStatus: row.payment_status,
-    cashHandoverStatus: row.cash_handover_status || null
+    cashHandoverStatus: row.cash_handover_status || null,
+    deliveryOtpVerifiedAt: row.delivery_otp_verified_at || null
   }));
   
   return {
@@ -445,19 +447,31 @@ async function createStatusHistory(deliveryId, status, changedBy, notes = null, 
 }
 
 /**
+ * SQL conditions (deliveries `d` joined to orders `o`). A delivery is only successful once
+ * it is delivered AND settled: prepaid, or its COD cash confirmed by a supervisor. Delivered
+ * COD orders whose cash the partner still holds are pending.
+ */
+const SUCCESSFUL_DELIVERY_SQL = `d.status = 'delivered' AND o.cash_handover_status IS DISTINCT FROM 'pending'`;
+const CASH_PENDING_DELIVERY_SQL = `d.status = 'delivered' AND o.cash_handover_status = 'pending'`;
+
+/**
  * Get delivery statistics for a partner
  */
 async function getPartnerDeliveryStats(partnerId) {
   const query = `
     SELECT 
       COUNT(*) as total_deliveries,
-      COUNT(*) FILTER (WHERE status = 'assigned') as assigned_deliveries,
-      COUNT(*) FILTER (WHERE status = 'accepted') as accepted_deliveries,
-      COUNT(*) FILTER (WHERE status = 'in_transit') as in_transit_deliveries,
-      COUNT(*) FILTER (WHERE status = 'delivered') as delivered_deliveries,
-      COUNT(*) FILTER (WHERE status = 'failed') as failed_deliveries
-    FROM deliveries
-    WHERE delivery_partner_id = $1;
+      COUNT(*) FILTER (WHERE d.status = 'assigned') as assigned_deliveries,
+      COUNT(*) FILTER (WHERE d.status = 'accepted') as accepted_deliveries,
+      COUNT(*) FILTER (WHERE d.status = 'in_transit') as in_transit_deliveries,
+      COUNT(*) FILTER (WHERE d.status = 'delivered') as delivered_deliveries,
+      COUNT(*) FILTER (WHERE ${SUCCESSFUL_DELIVERY_SQL}) as successful_deliveries,
+      COUNT(*) FILTER (WHERE ${CASH_PENDING_DELIVERY_SQL}) as cash_pending_deliveries,
+      COALESCE(SUM(o.total_amount) FILTER (WHERE ${CASH_PENDING_DELIVERY_SQL}), 0) as cash_pending_amount,
+      COUNT(*) FILTER (WHERE d.status = 'failed') as failed_deliveries
+    FROM deliveries d
+    LEFT JOIN orders o ON o.id = d.order_id
+    WHERE d.delivery_partner_id = $1;
   `;
   
   const result = await pool.query(query, [partnerId]);
@@ -468,6 +482,11 @@ async function getPartnerDeliveryStats(partnerId) {
     acceptedDeliveries: parseInt(result.rows[0].accepted_deliveries, 10),
     inTransitDeliveries: parseInt(result.rows[0].in_transit_deliveries, 10),
     deliveredDeliveries: parseInt(result.rows[0].delivered_deliveries, 10),
+    // Delivered and settled (prepaid, or COD cash confirmed by a supervisor)
+    successfulDeliveries: parseInt(result.rows[0].successful_deliveries, 10),
+    // Delivered COD orders whose cash the partner still has to return to a supervisor
+    cashPendingDeliveries: parseInt(result.rows[0].cash_pending_deliveries, 10),
+    cashPendingAmount: parseFloat(result.rows[0].cash_pending_amount),
     failedDeliveries: parseInt(result.rows[0].failed_deliveries, 10)
   };
 }
@@ -484,6 +503,7 @@ module.exports = {
   getDeliveryStatusHistory,
   createStatusHistory,
   getPartnerDeliveryStats,
+  SUCCESSFUL_DELIVERY_SQL,
   mapDeliveryRow,
   mapStatusHistoryRow
 };

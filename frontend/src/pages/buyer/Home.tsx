@@ -12,7 +12,6 @@ import {
   ClipboardList,
   ArrowRight,
   Star,
-  TrendingUp,
   Zap,
   Shield,
   Truck,
@@ -31,7 +30,6 @@ const CATEGORIES = [
   { label: 'Oils & Spices', value: 'Oils & Spices', color: 'bg-red-100 text-red-700' },
 ];
 
-
 function ProductMiniCard({ product }: { product: Product }) {
   const imageUrl = getPrimaryImageUrl(product);
   const isOutOfStock = product.quantity === 0;
@@ -39,79 +37,77 @@ function ProductMiniCard({ product }: { product: Product }) {
   return (
     <Link
       to={`/buyer/products/${product.id}`}
-      className="group bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-indigo-300/80 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative"
+      className="group bg-white rounded-2xl border border-ivory-200 overflow-hidden flex flex-col relative transition-[border-color,box-shadow] duration-300 hover:border-ink-300/60 hover:shadow-[0_12px_32px_-20px_rgba(20,33,61,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brass-300"
     >
       {/* Product image */}
-      <div className="relative h-44 bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-[4/3] bg-ivory-100 flex items-center justify-center overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={product.name}
             width="640"
-            height="400"
+            height="480"
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04] ${isOutOfStock ? 'opacity-60' : ''}`}
           />
         ) : (
-          <Package className="w-12 h-12 text-slate-300" />
+          <Package className="w-10 h-10 text-ink-300/60" strokeWidth={1.25} />
         )}
-        
+
         {/* Discount Badge */}
         {product.discountPercent && product.discountPercent > 0 && !isOutOfStock && (
-          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-bold rounded-lg shadow-sm">
-            {Math.round(product.discountPercent)}% OFF
+          <span className="absolute top-3 left-3 px-2.5 py-0.5 bg-ink text-ivory-50 text-[10px] font-semibold uppercase tracking-[0.12em] rounded-full">
+            {Math.round(product.discountPercent)}% off
           </span>
         )}
-        
+
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center">
-            <span className="px-3 py-1 bg-rose-500/90 text-white text-xs font-bold rounded-full shadow-lg">
-              Out of Stock
-            </span>
-          </div>
+          <span className="absolute top-3 left-3 px-2.5 py-0.5 bg-white border border-red-200 text-red-700 text-[10px] font-semibold uppercase tracking-[0.12em] rounded-full">
+            Out of stock
+          </span>
         )}
-        
+
         {/* Low Stock Indicator */}
         {product.stockStatus === 'low' && !isOutOfStock && (
-          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-amber-500/90 backdrop-blur-sm text-white text-[10px] font-bold rounded-lg shadow-sm">
-            Low Stock
+          <span className="absolute top-3 right-3 px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-semibold uppercase tracking-[0.12em] rounded-full">
+            Low stock
           </span>
         )}
       </div>
 
       {/* Details */}
-      <div className="p-4 flex flex-col gap-1.5 flex-1">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-indigo-600 font-bold uppercase tracking-wider line-clamp-1">
+      <div className="p-3.5 sm:p-5 flex flex-col gap-1.5 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-brass-600 font-semibold uppercase tracking-[0.2em] line-clamp-1">
             {product.categoryTags?.[0] ?? 'General'}
           </p>
           {product.minOrderQuantity > 1 && (
-            <span className="text-[10px] text-slate-400 font-medium">
-              MOQ: {product.minOrderQuantity}
+            <span className="shrink-0 text-[10px] text-stone-500 font-medium">
+              MOQ {product.minOrderQuantity}
             </span>
           )}
         </div>
 
-        <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors">
+        <h3 className="font-display text-[15px] sm:text-[17px] font-medium text-ink line-clamp-2 leading-snug">
           {product.name}
         </h3>
 
-        <div className="mt-auto pt-3 border-t border-slate-100/80">
+        <div className="mt-auto pt-3 sm:pt-4 border-t border-ivory-200">
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-lg font-extrabold text-slate-900 tracking-tight">
+            <span className="shop-price text-base sm:text-lg">
               {formatPrice(product.sellingPrice ?? product.price)}
             </span>
-            <span className="text-xs text-slate-400 font-medium">/{product.unit}</span>
+            <span className="text-[11px] text-stone-500">/ {product.unit}</span>
             {product.displayPrice && product.displayPrice > (product.sellingPrice ?? product.price) && (
-              <span className="text-xs text-slate-400 line-through">
+              <span className="text-xs text-stone-400 line-through tabular-nums">
                 {formatPrice(product.displayPrice)}
               </span>
             )}
           </div>
           {product.discountAmount && product.discountAmount > 0 && (
-            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">
-              Save {formatPrice(product.discountAmount)}
+            <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+              You save {formatPrice(product.discountAmount)}
             </p>
           )}
         </div>
@@ -153,139 +149,142 @@ export function BuyerHome() {
     }
   };
 
+
   return (
     <DashboardLayout title="Store" subtitle="Home">
-      <div className="max-w-6xl mx-auto space-y-10 py-2">
+      <div className="max-w-6xl mx-auto space-y-14 sm:space-y-20 py-2">
 
-        {/* ── Premium Deep Space Hero Banner ── */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white p-8 md:p-12 shadow-2xl shadow-indigo-950/40 border border-indigo-500/20">
-          {/* Animated floating glow orbs */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl" />
-            <div className="absolute bottom-0 left-10 w-72 h-72 rounded-full bg-purple-500/15 blur-3xl" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl" />
-          </div>
+        {/* ── Hero ── */}
+        <section className="relative overflow-hidden rounded-3xl bg-white border border-ivory-200">
+          {/* Fine brass frame */}
+          <div className="absolute inset-3 sm:inset-4 rounded-[1.25rem] border border-brass-100 pointer-events-none" aria-hidden="true" />
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-amber-400/15 via-amber-400/25 to-orange-500/15 text-amber-300 border border-amber-400/30 backdrop-blur-md mb-4 shadow-sm">
-                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                Wholesale B2B Marketplace
-              </div>
-              <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight mb-3">
-                Welcome back,<br />
-                <span className="gradient-text-gold">{firstName}!</span>
+          <div className="relative grid md:grid-cols-[1fr_auto] gap-10 md:gap-12 p-7 sm:p-12 lg:p-14">
+            <div className="max-w-xl">
+              <p className="shop-eyebrow">Wholesale marketplace</p>
+              <h1 className="font-display text-[2.25rem] leading-[1.08] sm:text-5xl lg:text-[3.5rem] font-medium tracking-tight text-ink mt-4">
+                Welcome back,{' '}
+                <span className="italic text-brass-600">{firstName}.</span>
               </h1>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6 max-w-lg font-normal">
-                Direct warehouse wholesale pricing on verified bulk inventory. Guaranteed dispatch, live order tracking, and tiered volume discounts.
+              <p className="text-stone-500 text-[15px] sm:text-base leading-relaxed mt-5 max-w-lg">
+                Direct warehouse pricing on verified bulk inventory, with guaranteed dispatch, live order tracking and tiered volume discounts.
               </p>
 
               {/* Hero Search */}
-              <form onSubmit={handleSearch} className="flex gap-2.5 max-w-md">
+              <form onSubmit={handleSearch} className="mt-8 flex flex-col min-[420px]:flex-row gap-2.5 max-w-lg" role="search">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search wholesale products, brands, SKUs…"
-                    className="w-full h-12 pl-10 pr-4 bg-white/[0.08] border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/[0.12] transition-all backdrop-blur-md"
+                    placeholder="Search products, brands or SKUs…"
+                    aria-label="Search products"
+                    className="shop-input h-12 pl-11 rounded-full"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="h-12 px-6 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.02]"
+                  className="shop-btn-primary h-12 px-7"
                 >
                   Search
                 </button>
               </form>
             </div>
 
-            {/* Frosted Glass Quick Action Cards */}
-            <div className="grid grid-cols-2 gap-3.5 md:w-64 shrink-0">
-              {[
-                { label: 'Browse All', icon: Package, to: '/buyer/products', iconColor: 'text-indigo-400' },
-                { label: 'My Cart', icon: ShoppingCart, to: '/buyer/cart', iconColor: 'text-amber-400' },
-                { label: 'My Orders', icon: ClipboardList, to: '/buyer/orders', iconColor: 'text-emerald-400' },
-                { label: 'Wishlist', icon: Heart, to: '/buyer/wishlist', iconColor: 'text-rose-400' },
-              ].map(({ label, icon: Icon, to, iconColor }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="bg-white/[0.06] hover:bg-white/[0.12] backdrop-blur-md rounded-2xl p-4 flex flex-col items-center gap-2.5 transition-all duration-300 border border-white/10 hover:border-indigo-400/40 hover:-translate-y-1 shadow-lg group"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.08] flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon className={`w-5 h-5 ${iconColor}`} />
-                  </div>
-                  <span className="text-xs font-bold text-white/90 group-hover:text-white tracking-wide">{label}</span>
-                </Link>
-              ))}
-            </div>
+            {/* Quick Actions */}
+            <nav className="md:w-64 md:border-l md:border-ivory-200 md:pl-10 self-center" aria-label="Quick actions">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500 mb-2">Your account</p>
+              <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-6">
+                {[
+                  { label: 'Browse all', icon: Package, to: '/buyer/products' },
+                  { label: 'My cart', icon: ShoppingCart, to: '/buyer/cart' },
+                  { label: 'My orders', icon: ClipboardList, to: '/buyer/orders' },
+                  { label: 'Wishlist', icon: Heart, to: '/buyer/wishlist' },
+                ].map(({ label, icon: Icon, to }) => (
+                  <li key={to}>
+                    <Link
+                      to={to}
+                      className="group flex items-center gap-3 py-3 border-b border-ivory-200 text-sm font-medium text-ink-700 hover:text-ink transition-colors"
+                    >
+                      <Icon className="w-4 h-4 text-brass-600 shrink-0" />
+                      <span className="truncate">{label}</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-auto shrink-0 text-stone-300 group-hover:text-ink group-hover:translate-x-0.5 transition-[color,transform]" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
         </section>
 
-        {/* ── Category Filter ── */}
+        {/* ── Category Filter + Featured Products ── */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-800">Browse by Category</h2>
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {CATEGORIES.map(({ label, value }) => {
-              const isActive = selectedCategory === value;
-              return (
-                <button
-                  key={label}
-                  onClick={() => setSelectedCategory(value)}
-                  className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 border ${
-                    isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-transparent shadow-md shadow-indigo-500/25 scale-[1.02]'
-                      : 'bg-white text-slate-600 border-slate-200/90 hover:border-indigo-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ── Featured Products ── */}
-        <section>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                {selectedCategory ? selectedCategory : 'Latest Wholesale Arrivals'}
+              <p className="shop-eyebrow">{selectedCategory ? 'Department' : 'New in'}</p>
+              <h2 className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-ink mt-2">
+                {selectedCategory ? selectedCategory : 'Latest wholesale arrivals'}
               </h2>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {selectedCategory ? `Showing ${filteredProducts.length} items in ${selectedCategory}` : 'Verified products recently stocked in warehouse'}
+              <p className="shop-subtitle mt-1.5">
+                {selectedCategory ? `Showing ${filteredProducts.length} items in ${selectedCategory}` : 'Verified products recently stocked in our warehouse'}
               </p>
             </div>
             <Link
               to={selectedCategory ? `/buyer/products?category=${encodeURIComponent(selectedCategory)}` : '/buyer/products'}
-              className="flex items-center gap-1 text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+              className="inline-flex items-center gap-1 self-start sm:self-auto text-sm font-semibold text-ink underline decoration-brass-300 decoration-1 underline-offset-[6px] hover:decoration-ink transition-colors"
             >
-              View catalog
+              View catalogue
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
+          {/* Category chips */}
+          <div className="mb-8">
+            <h3 className="sr-only">Browse by category</h3>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map(({ label, value }) => {
+                const isActive = selectedCategory === value;
+                return (
+                  <button
+                    type="button"
+                    key={label}
+                    onClick={() => setSelectedCategory(value)}
+                    aria-pressed={isActive}
+                    className={`h-9 px-4 rounded-full text-[13px] font-medium transition-colors border ${
+                      isActive
+                        ? 'bg-ink text-white border-ink'
+                        : 'bg-white text-ink-700 border-ivory-300 hover:border-ink-300 hover:text-ink'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <LoadingSpinner size="lg" text="Loading catalog…" />
+            <div className="flex items-center justify-center py-20">
+              <LoadingSpinner size="lg" text="Loading catalogue…" />
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-sm">
-              <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-600 font-semibold">No products currently in this category</p>
+            <div className="shop-card px-6 py-14 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center mb-5">
+                <Package className="w-6 h-6 text-ink-300" />
+              </div>
+              <p className="shop-heading">Nothing here just yet</p>
+              <p className="shop-subtitle mt-1.5">No products are currently listed in this category.</p>
               <button
+                type="button"
                 onClick={() => setSelectedCategory(null)}
-                className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-bold"
+                className="shop-btn-outline mt-6"
               >
                 View all products
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4.5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               {filteredProducts.slice(0, 8).map((product) => (
                 <ProductMiniCard key={product.id} product={product} />
               ))}
@@ -293,59 +292,63 @@ export function BuyerHome() {
           )}
 
           {/* CTA to full catalog */}
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <Link
               to="/buyer/products"
-              className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white text-sm font-bold rounded-2xl hover:from-slate-800 hover:to-indigo-900 transition-all shadow-lg hover:shadow-indigo-900/20 hover:scale-[1.02]"
+              className="shop-btn-primary px-8"
             >
-              Explore Full Catalog ({products.length > 0 ? `${products.length}+ Items` : 'Catalog'})
+              Explore the full catalogue{products.length > 0 ? ` (${products.length}+ items)` : ''}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </section>
 
         {/* ── Perks Row ── */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { icon: Truck, title: 'Bulk Delivery', desc: 'Direct warehouse delivery for high-volume orders', gradient: 'from-blue-500 to-indigo-600' },
-            { icon: Shield, title: 'Verified Stock', desc: 'Real-time live inventory guarantee with zero surprises', gradient: 'from-emerald-500 to-teal-600' },
-            { icon: Zap, title: 'Express Processing', desc: 'Instant order confirmation and scheduled dispatch', gradient: 'from-amber-500 to-orange-600' },
-            { icon: Star, title: 'Wholesale Rates', desc: 'Direct factory pricing with tiered business discounts', gradient: 'from-purple-500 to-pink-600' },
-          ].map(({ icon: Icon, title, desc, gradient }) => (
-            <div key={title} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col items-start gap-3.5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-md`}>
-                <Icon className="w-5 h-5" />
+        <section aria-label="Why buy with us">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-px bg-ivory-200 border border-ivory-200 rounded-2xl overflow-hidden">
+            {[
+              { icon: Truck, title: 'Bulk delivery', desc: 'Direct warehouse delivery for high-volume orders' },
+              { icon: Shield, title: 'Verified stock', desc: 'Real-time inventory, with no surprises at dispatch' },
+              { icon: Zap, title: 'Express processing', desc: 'Instant order confirmation and scheduled dispatch' },
+              { icon: Star, title: 'Wholesale rates', desc: 'Direct factory pricing with tiered business discounts' },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="bg-ivory-50 p-6 sm:p-7 flex flex-col items-start gap-4">
+                <div className="w-11 h-11 rounded-full border border-brass-300 bg-white flex items-center justify-center">
+                  <Icon className="w-[18px] h-[18px] text-brass-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="font-display text-lg font-medium text-ink">{title}</p>
+                  <p className="text-sm text-stone-500 mt-1 leading-relaxed">{desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">{title}</p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{desc}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
 
         {/* ── Quick Links ── */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <h2 className="text-base font-bold text-slate-800 mb-4">Quick Navigation</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <section className="shop-card">
+          <div className="shop-card-header">
+            <h2 className="shop-heading">Quick navigation</h2>
+          </div>
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-3 p-4 sm:p-6">
             {[
-              { label: 'All Products', to: '/buyer/products', icon: Package, color: 'text-blue-600 bg-blue-50 border-blue-100' },
-              { label: 'My Orders', to: '/buyer/orders', icon: ClipboardList, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-              { label: 'My Cart', to: '/buyer/cart', icon: ShoppingCart, color: 'text-amber-600 bg-amber-50 border-amber-100' },
-              { label: 'Wishlist', to: '/buyer/wishlist', icon: Heart, color: 'text-rose-500 bg-rose-50 border-rose-100' },
-            ].map(({ label, to, icon: Icon, color }) => (
+              { label: 'All products', to: '/buyer/products', icon: Package },
+              { label: 'My orders', to: '/buyer/orders', icon: ClipboardList },
+              { label: 'My cart', to: '/buyer/cart', icon: ShoppingCart },
+              { label: 'Wishlist', to: '/buyer/wishlist', icon: Heart },
+            ].map(({ label, to, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
-                className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/70 hover:border-indigo-300 hover:bg-slate-50/80 transition-all duration-200 group"
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-ivory-200 hover:border-ink-300 hover:bg-ivory-50 transition-colors group"
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${color}`}>
-                  <Icon className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-ivory-100 border border-ivory-200">
+                  <Icon className="w-4 h-4 text-ink-700" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors truncate">{label}</p>
+                  <p className="text-sm font-semibold text-ink-700 group-hover:text-ink transition-colors truncate">{label}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 ml-auto shrink-0 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-ink ml-auto shrink-0 transition-colors" />
               </Link>
             ))}
           </div>

@@ -4,6 +4,80 @@ const orderModel = require('../models/orderModel');
 const userModel = require('../models/userModel');
 const notificationService = require('./notificationService');
 const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/error');
+const {
+  PICKUP_OTP_TTL_MS,
+  DELIVERY_OTP_TTL_MS,
+  generateOtp,
+  isExpired,
+  needsNewOtp,
+} = require('../utils/otp');
+
+/**
+ * COD orders that haven't been paid online require the partner to collect cash at the door.
+ */
+function orderNeedsCashCollection(order) {
+  const method = (order.paymentMethod || '').toLowerCase();
+  const isCOD = method.includes('cod') || method.includes('cash');
+  const isPaid = (order.paymentStatus || '').toLowerCase() === 'paid';
+  return isCOD && !isPaid;
+}
+
+/**
+ * Validate the buyer's delivery OTP entered by the delivery partner at the door.
+ */
+function assertValidDeliveryOtp(order, otp) {
+  if (!order.deliveryOtp) {
+    throw new BadRequestError('No active delivery OTP for this order. Ask the customer or supervisor to regenerate it.');
+  }
+  if (!otp) {
+    throw new BadRequestError('Buyer Delivery OTP is required to complete delivery');
+  }
+  if (isExpired(order.deliveryOtpExpiresAt)) {
+    throw new BadRequestError('Delivery OTP has expired. Ask the customer to regenerate it from their order page.');
+  }
+  if (order.deliveryOtp !== String(otp).trim()) {
+    throw new BadRequestError('Invalid Buyer Delivery OTP. Please verify with the customer and try again.');
+  }
+}
+
+/**
+ * Move the order to 'assigned' and issue its OTPs: the pickup OTP (supervisor → partner)
+ * and the buyer's delivery OTP, so the buyer already has it when the partner arrives.
+ * Still-valid OTPs are kept so a reassignment doesn't invalidate codes already shared.
+ * Returns the buyer's active delivery OTP.
+ */
+async function assignOrderAndIssueOtps(order, client) {
+  const newPickupOtp = needsNewOtp(order.pickupOtp, order.pickupOtpExpiresAt) ? generateOtp() : null;
+  const newDeliveryOtp =
+    !order.deliveryOtpVerifiedAt && needsNewOtp(order.deliveryOtp, order.deliveryOtpExpiresAt)
+      ? generateOtp()
+      : null;
+
+  const generated = [newPickupOtp && 'Pickup OTP', newDeliveryOtp && 'Buyer delivery OTP'].filter(Boolean);
+  const note = generated.length ? `Order assigned. ${generated.join(' and ')} generated.` : null;
+
+  await client.query(
+    `UPDATE orders
+     SET order_status = 'assigned',
+         pickup_otp = COALESCE($1, pickup_otp),
+         pickup_otp_expires_at = COALESCE($2, pickup_otp_expires_at),
+         delivery_otp = COALESCE($3, delivery_otp),
+         delivery_otp_expires_at = COALESCE($4, delivery_otp_expires_at),
+         notes = CASE WHEN $5::text IS NULL THEN notes ELSE COALESCE(notes || E'\\n', '') || $5::text END,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $6`,
+    [
+      newPickupOtp,
+      newPickupOtp ? new Date(Date.now() + PICKUP_OTP_TTL_MS) : null,
+      newDeliveryOtp,
+      newDeliveryOtp ? new Date(Date.now() + DELIVERY_OTP_TTL_MS) : null,
+      note,
+      order.id,
+    ]
+  );
+
+  return newDeliveryOtp || order.deliveryOtp;
+}
 
 /**
  * Delivery Business Logic Service
@@ -62,15 +136,17 @@ async function assignDelivery(deliveryId, partnerId, adminId) {
       throw new BadRequestError(`User is not a delivery partner. Current role: ${partner.role}`);
     }
     
+    const order = await orderModel.findOrderById(delivery.orderId);
+    if (!order) {
+      throw new NotFoundError('Order not found', 'Order');
+    }
+
     // Assign delivery
     const updatedDelivery = await deliveryModel.assignDeliveryPartner(deliveryId, partnerId, client);
-    
-    // Sync order status to 'assigned' (Order-Delivery Status Synchronization)
-    await client.query(
-      `UPDATE orders SET order_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [delivery.orderId]
-    );
-    
+
+    // Sync order status to 'assigned' and issue pickup + buyer delivery OTPs
+    const deliveryOtp = await assignOrderAndIssueOtps(order, client);
+
     // Create status history record
     await deliveryModel.createStatusHistory(
       deliveryId,
@@ -92,16 +168,14 @@ async function assignDelivery(deliveryId, partnerId, adminId) {
       deliveryAddress: delivery.deliveryAddress
     }).catch(err => console.error('Failed to send delivery assigned notification:', err));
     
-    // 2. Notify buyer about assignment
-    const order = await orderModel.findOrderById(delivery.orderId);
-    if (order) {
-      notificationService.sendDeliveryStatusUpdate(order.userId, 'assigned', {
-        id: deliveryId,
-        orderId: delivery.orderId,
-        orderNumber: delivery.orderNumber
-      }).catch(err => console.error('Failed to send delivery status notification:', err));
-    }
-    
+    // 2. Notify buyer about assignment, including their delivery OTP
+    notificationService.sendDeliveryStatusUpdate(order.userId, 'assigned', {
+      id: deliveryId,
+      orderId: delivery.orderId,
+      orderNumber: order.orderNumber,
+      deliveryOtp
+    }).catch(err => console.error('Failed to send delivery status notification:', err));
+
     return updatedDelivery;
   } catch (error) {
     await client.query('ROLLBACK');
@@ -158,30 +232,10 @@ async function assignDeliveryToOrder(orderId, partnerId, adminId) {
     // Assign partner
     const updatedDelivery = await deliveryModel.assignDeliveryPartner(delivery.id, partnerId, client);
 
-    // A direct assignment can happen before the order was ever packed (e.g. 'confirmed'
-    // or 'preparing'), which is the normal step that generates the pickup OTP. Without
-    // this, the delivery partner would have no OTP to use when starting the delivery.
-    if (!order.pickupOtp) {
-      const pickupOtp = String(Math.floor(100000 + Math.random() * 900000));
-      const pickupOtpExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
-
-      await client.query(
-        `UPDATE orders
-         SET order_status = 'assigned',
-             pickup_otp = $1,
-             pickup_otp_expires_at = $2,
-             notes = COALESCE(notes || E'\n', '') || $3,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $4`,
-        [pickupOtp, pickupOtpExpiresAt, 'Assigned directly by supervisor. Pickup OTP generated.', orderId]
-      );
-    } else {
-      // Sync order status
-      await client.query(
-        `UPDATE orders SET order_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-        [orderId]
-      );
-    }
+    // Sync order status and issue OTPs. A direct assignment can happen before the order
+    // was packed (the step that normally generates the pickup OTP), so both OTPs are
+    // ensured here.
+    const deliveryOtp = await assignOrderAndIssueOtps(order, client);
 
     // Status history
     await deliveryModel.createStatusHistory(
@@ -191,13 +245,20 @@ async function assignDeliveryToOrder(orderId, partnerId, adminId) {
 
     await client.query('COMMIT');
 
-    // Non-blocking notification
+    // Non-blocking notifications
     notificationService.sendDeliveryAssigned(partnerId, {
       id: delivery.id, orderId,
       orderNumber: order.orderNumber,
       customerName: delivery.customerName,
       deliveryAddress: delivery.deliveryAddress
     }).catch(err => console.error('Notification error:', err));
+
+    notificationService.sendDeliveryStatusUpdate(order.userId, 'assigned', {
+      id: delivery.id,
+      orderId,
+      orderNumber: order.orderNumber,
+      deliveryOtp
+    }).catch(err => console.error('Failed to send delivery status notification:', err));
 
     return updatedDelivery;
   } catch (error) {
@@ -297,35 +358,46 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
       if (!otp) {
         throw new BadRequestError('Pickup OTP is required to start delivery');
       }
-      if (order.pickupOtpExpiresAt && new Date(order.pickupOtpExpiresAt) < new Date()) {
-        throw new BadRequestError('Pickup OTP has expired. Please ask the supervisor to re-pack.');
+      if (isExpired(order.pickupOtpExpiresAt)) {
+        throw new BadRequestError('Pickup OTP has expired. Please ask the supervisor to regenerate it.');
       }
       if (order.pickupOtp !== otp.trim()) {
         throw new BadRequestError('Invalid Pickup OTP');
       }
     }
-    
+
     // Check current status
     if (delivery.status !== 'accepted') {
       throw new BadRequestError(`Cannot start delivery with status '${delivery.status}'. Only accepted deliveries can be started.`);
     }
 
-    // Generate 6-digit delivery OTP for buyer verification upon arrival
-    const deliveryOtp = String(Math.floor(100000 + Math.random() * 900000));
-    const deliveryOtpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    
-    // Update order: clear pickup OTP, set buyer delivery OTP, update status to in_transit
+    // The buyer's delivery OTP is normally issued at assignment — keep it so the code the
+    // buyer already has stays valid. Only issue a new one if it's missing or expired.
+    const reuseDeliveryOtp = !needsNewOtp(order.deliveryOtp, order.deliveryOtpExpiresAt);
+    const deliveryOtp = reuseDeliveryOtp ? order.deliveryOtp : generateOtp();
+    const deliveryOtpExpiresAt = reuseDeliveryOtp
+      ? order.deliveryOtpExpiresAt
+      : new Date(Date.now() + DELIVERY_OTP_TTL_MS);
+
+    // Update order: clear pickup OTP, ensure buyer delivery OTP, update status to in_transit
     await client.query(
-      `UPDATE orders 
-       SET pickup_otp = NULL, 
+      `UPDATE orders
+       SET pickup_otp = NULL,
            pickup_otp_expires_at = NULL,
-           delivery_otp = $1, 
+           delivery_otp = $1,
            delivery_otp_expires_at = $2,
            order_status = 'in_transit',
-           notes = COALESCE(notes || E'\n', '') || $3, 
-           updated_at = CURRENT_TIMESTAMP 
+           notes = COALESCE(notes || E'\n', '') || $3,
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $4`,
-      [deliveryOtp, deliveryOtpExpiresAt, 'Order picked up by delivery partner. Buyer delivery OTP generated.', delivery.orderId]
+      [
+        deliveryOtp,
+        deliveryOtpExpiresAt,
+        reuseDeliveryOtp
+          ? 'Order picked up by delivery partner.'
+          : 'Order picked up by delivery partner. Buyer delivery OTP generated.',
+        delivery.orderId
+      ]
     );
 
     // Update delivery to in_transit
@@ -366,8 +438,86 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
 }
 
 /**
+ * Verify the buyer's delivery OTP at the door (delivery partner)
+ * - Prepaid orders: the delivery is completed right away.
+ * - COD orders: the OTP is marked verified and the delivery stays in transit; the partner
+ *   (and buyer) are notified that ₹X cash must now be collected. The partner then calls
+ *   completeDelivery with cashCollected = true.
+ */
+async function verifyDeliveryOtp(deliveryId, partnerId, otp) {
+  const delivery = await deliveryModel.findDeliveryById(deliveryId);
+
+  if (!delivery) {
+    throw new NotFoundError('Delivery not found', 'Delivery');
+  }
+  if (delivery.deliveryPartnerId !== partnerId) {
+    throw new ForbiddenError('This delivery is not assigned to you');
+  }
+  if (delivery.status !== 'in_transit') {
+    throw new BadRequestError(`Cannot verify OTP for a delivery with status '${delivery.status}'. Only in-transit deliveries can be verified.`);
+  }
+
+  const order = await orderModel.findOrderById(delivery.orderId);
+  if (!order) {
+    throw new NotFoundError('Order not found', 'Order');
+  }
+
+  // Nothing to collect — verifying the OTP is the last step of the delivery.
+  if (!orderNeedsCashCollection(order)) {
+    const completed = await completeDelivery(deliveryId, partnerId, null, otp, false);
+    return { delivery: completed, otpVerified: true, needsCashCollection: false, delivered: true };
+  }
+
+  const result = { otpVerified: true, needsCashCollection: true, delivered: false, amount: order.totalAmount };
+
+  // Already verified (e.g. the partner refreshed the page) — don't re-notify.
+  if (order.deliveryOtpVerifiedAt) {
+    return { ...result, delivery };
+  }
+
+  assertValidDeliveryOtp(order, otp);
+
+  const update = await pool.query(
+    `UPDATE orders
+     SET delivery_otp_verified_at = CURRENT_TIMESTAMP,
+         delivery_otp = NULL,
+         delivery_otp_expires_at = NULL,
+         notes = COALESCE(notes || E'\n', '') || $1,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2 AND delivery_otp_verified_at IS NULL
+     RETURNING id;`,
+    ['Buyer delivery OTP verified. Awaiting cash collection.', order.id]
+  );
+
+  if (update.rowCount > 0) {
+    await deliveryModel.createStatusHistory(
+      deliveryId,
+      'in_transit',
+      partnerId,
+      `Buyer OTP verified — collecting ₹${order.totalAmount} cash`,
+      pool
+    );
+
+    const notifyData = {
+      id: order.id,
+      deliveryId,
+      orderNumber: order.orderNumber,
+      totalAmount: order.totalAmount,
+    };
+    notificationService.sendCollectCashPrompt(partnerId, notifyData)
+      .catch(err => console.error('Failed to send collect-cash prompt:', err));
+    notificationService.sendBuyerPayCashPrompt(order.userId, notifyData)
+      .catch(err => console.error('Failed to send pay-cash prompt to buyer:', err));
+  }
+
+  return { ...result, delivery };
+}
+
+/**
  * Complete delivery (delivery partner)
- * - Verifies buyer OTP with delivery partner
+ * - Requires the buyer OTP to be verified (either earlier via verifyDeliveryOtp, or in
+ *   this call via `otp`)
+ * - COD orders require the partner to confirm the cash was collected
  * - Mark delivery as delivered
  * - Updates status from 'in_transit' to 'delivered'
  * - Syncs order status to 'delivered'
@@ -400,25 +550,14 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null,
       throw new NotFoundError('Order not found', 'Order');
     }
 
-    // Verify OTP between buyer and delivery partner
-    if (order.deliveryOtp) {
-      if (!otp) {
-        throw new BadRequestError('Buyer Delivery OTP is required to complete delivery');
-      }
-      if (order.deliveryOtpExpiresAt && new Date(order.deliveryOtpExpiresAt) < new Date()) {
-        throw new BadRequestError('Delivery OTP has expired. Please contact support.');
-      }
-      if (order.deliveryOtp !== otp.trim()) {
-        throw new BadRequestError('Invalid Buyer Delivery OTP. Please verify with the customer and try again.');
-      }
+    // Verify OTP between buyer and delivery partner (unless already verified at the door)
+    if (!order.deliveryOtpVerifiedAt) {
+      assertValidDeliveryOtp(order, otp);
     }
 
     // Cash-on-delivery orders that haven't been paid online require the partner
     // to explicitly confirm they collected the cash from the buyer.
-    const isCOD = (order.paymentMethod || '').toLowerCase().includes('cod') ||
-      (order.paymentMethod || '').toLowerCase().includes('cash');
-    const isPaid = (order.paymentStatus || '').toLowerCase() === 'paid';
-    const needsCashCollection = isCOD && !isPaid;
+    const needsCashCollection = orderNeedsCashCollection(order);
 
     if (needsCashCollection && !cashCollected) {
       throw new BadRequestError('Please confirm you have collected the cash from the customer before completing this delivery.');
@@ -439,10 +578,16 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null,
        SET order_status = 'delivered',
            delivery_otp = NULL,
            delivery_otp_expires_at = NULL,
+           delivery_otp_verified_at = COALESCE(delivery_otp_verified_at, CURRENT_TIMESTAMP),
            notes = COALESCE(notes || E'\n', '') || $1,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $2`,
-      ['Delivery completed with buyer OTP verification.', delivery.orderId]
+      [
+        needsCashCollection
+          ? 'Delivered with buyer OTP verification. Cash collected by delivery partner — awaiting handover.'
+          : 'Delivery completed with buyer OTP verification.',
+        delivery.orderId
+      ]
     );
 
     // Cash is now with the delivery partner — keep the order in a distinct
@@ -471,11 +616,15 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null,
 
     // Notify supervisors that cash needs to be collected from this partner (non-blocking)
     if (needsCashCollection) {
-      notificationService.notifySupervisorsCashPending({
-        id: order.id,
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-      }).catch(err => console.error('Failed to notify supervisors about pending cash handover:', err));
+      userModel.findUserById(partnerId)
+        .catch(() => null)
+        .then(partner => notificationService.notifySupervisorsCashPending({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          partnerName: partner?.name || partner?.email,
+        }))
+        .catch(err => console.error('Failed to notify supervisors about pending cash handover:', err));
     }
 
     return { ...updatedDelivery, cashHandoverStatus: needsCashCollection ? 'pending' : null };
@@ -662,7 +811,7 @@ async function getDeliveryDetails(deliveryId, userId, userRole) {
       SELECT
         o.id, o.order_number, o.total_amount,
         o.payment_method, o.payment_status, o.order_status, o.notes as order_notes,
-        o.cash_handover_status, o.cash_handover_at
+        o.cash_handover_status, o.cash_handover_at, o.delivery_otp_verified_at
       FROM orders o
       WHERE o.id = $1
     `;
@@ -691,6 +840,7 @@ async function getDeliveryDetails(deliveryId, userId, userRole) {
         orderNotes: orderRow.order_notes,
         cashHandoverStatus: orderRow.cash_handover_status || null,
         cashHandoverAt: orderRow.cash_handover_at || null,
+        deliveryOtpVerifiedAt: orderRow.delivery_otp_verified_at || null,
         orderItems: itemsResult.rows.map(item => ({
           id: item.id,
           productId: item.product_id,
@@ -769,9 +919,10 @@ async function getAvailablePartners() {
       u.email,
       u.phone,
       COUNT(d.id) FILTER (WHERE d.status IN ('assigned', 'accepted', 'in_transit')) as active_deliveries,
-      COUNT(d.id) FILTER (WHERE d.status = 'delivered') as completed_deliveries
+      COUNT(d.id) FILTER (WHERE ${deliveryModel.SUCCESSFUL_DELIVERY_SQL}) as completed_deliveries
     FROM users u
     LEFT JOIN deliveries d ON u.id = d.delivery_partner_id
+    LEFT JOIN orders o ON o.id = d.order_id
     WHERE u.role = 'delivery' AND u.is_active = true
     GROUP BY u.id
     ORDER BY active_deliveries ASC, u.name ASC;
@@ -795,6 +946,7 @@ module.exports = {
   assignDeliveryToOrder,
   acceptDelivery,
   startDelivery,
+  verifyDeliveryOtp,
   completeDelivery,
   updateDeliveryStatus,
   getDeliveryDetails,

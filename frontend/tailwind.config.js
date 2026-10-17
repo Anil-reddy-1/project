@@ -76,6 +76,33 @@ export default {
           700: "#b91c1c",
           800: "#991b1b",
         },
+        // Buyer storefront palette — "classic & modern": ivory paper, navy ink, brass accent
+        ivory: {
+          DEFAULT: "#faf7f2",
+          50: "#fdfcf9",
+          100: "#f5f0e7",
+          200: "#ebe3d5",
+          300: "#ddd2bf",
+        },
+        ink: {
+          DEFAULT: "#14213d",
+          50: "#f1f3f8",
+          100: "#dfe4ee",
+          300: "#8d98b3",
+          500: "#4a5a7a",
+          700: "#22335a",
+          800: "#1a2a4a",
+          900: "#0d1628",
+        },
+        brass: {
+          DEFAULT: "#b08a4e",
+          50: "#faf5ec",
+          100: "#f1e6d1",
+          300: "#d6b98a",
+          500: "#b08a4e",
+          600: "#946f36",
+          700: "#7a5a2b",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -100,6 +127,8 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        // Buyer storefront display face (classic serif headings)
+        display: ['Fraunces', 'Georgia', 'Cambria', 'serif'],
       },
       fontSize: {
         'headline-xl': ['28px', { lineHeight: '36px', fontWeight: '600' }],

@@ -118,11 +118,11 @@ export function Cart() {
   if (error) {
     return (
       <DashboardLayout title="Store" subtitle="My Cart">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Alert variant="destructive">
+        <div className="max-w-2xl">
+          <Alert variant="destructive" className="rounded-2xl">
             <AlertCircle className="h-4 w-4" />
             <div>
-              <h3 className="font-semibold">Failed to load cart</h3>
+              <h3 className="font-display text-base font-medium">Failed to load cart</h3>
               <p className="text-sm mt-1">{error}</p>
             </div>
           </Alert>
@@ -143,55 +143,52 @@ export function Cart() {
   // Main cart view
   return (
     <DashboardLayout title="Store" subtitle="My Cart">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full">
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-6 mb-8 border-b border-ivory-200">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200/70 rounded-full text-indigo-700 font-bold text-xs uppercase tracking-wider mb-2">
-              <span>🛒</span> Active Shopping Cart
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Review Your Cart</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="shop-eyebrow">Your basket</p>
+            <h1 className="shop-title mt-2">Shopping cart</h1>
+            <p className="shop-subtitle mt-2">
               {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} ready for checkout
             </p>
           </div>
-          
+
           {/* Clear Cart Button */}
           {cartItems.length > 0 && (
             <button
               onClick={handleClearCart}
               disabled={clearingCart}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="self-start sm:self-auto inline-flex items-center gap-2 h-10 px-4 rounded-full text-xs font-semibold text-red-600 border border-red-200 bg-white hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Clear entire cart"
             >
-              <Trash2 className="w-4 h-4" />
-              {clearingCart ? 'Clearing...' : 'Clear Cart'}
+              <Trash2 className="w-3.5 h-3.5" />
+              {clearingCart ? 'Clearing...' : 'Clear cart'}
             </button>
           )}
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           {/* Left Column: Cart Items & Saved Items */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8 min-w-0">
             {/* Cart Items Section */}
             {cartItems.length > 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <section>
                 {/* Section Header */}
-                <div className="px-6 py-4.5 bg-slate-50/70 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <ShoppingCart className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-base font-bold text-slate-900">
-                      Cart Items ({cartItems.length})
-                    </h2>
-                  </div>
+                <div className="flex items-baseline justify-between gap-3 mb-4">
+                  <h2 className="shop-heading flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4 text-brass-600" />
+                    In your cart
+                  </h2>
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400 tabular-nums">
+                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+                  </span>
                 </div>
 
                 {/* Cart Items List */}
-                <motion.div 
-                  className="p-6 space-y-4"
+                <motion.div
+                  className="space-y-3"
                   variants={listContainerVariants}
                   initial="hidden"
                   animate="visible"
@@ -233,16 +230,18 @@ export function Cart() {
                     ))}
                   </AnimatePresence>
                 </motion.div>
-              </div>
+              </section>
             ) : (
               // Show message if only saved items exist
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex items-start gap-3">
-                  <ShoppingCart className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="shop-card p-5 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 shrink-0 rounded-full border border-ivory-300 bg-ivory-50 flex items-center justify-center text-brass-600">
+                    <ShoppingCart className="w-4 h-4" />
+                  </div>
                   <div>
-                    <p className="font-medium text-blue-900">Your cart is empty</p>
-                    <p className="text-sm text-blue-700 mt-1">
-                      You have items saved for later below. Move them to cart when you're ready!
+                    <p className="font-display text-lg font-medium text-ink">Your cart is empty</p>
+                    <p className="text-sm text-stone-500 mt-1 leading-relaxed">
+                      You have items saved for later below. Move them to cart when you're ready.
                     </p>
                   </div>
                 </div>
