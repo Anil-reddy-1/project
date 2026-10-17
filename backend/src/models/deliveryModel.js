@@ -132,11 +132,14 @@ async function findDeliveriesByPartnerId(partnerId, { page = 1, limit = 20, stat
   // Fetch deliveries with order details
   const dataParams = [...queryParams, limit, offset];
   const dataQuery = `
-    SELECT 
+    SELECT
       d.*,
       o.order_number,
       o.total_amount,
-      o.order_status
+      o.order_status,
+      o.payment_method,
+      o.payment_status,
+      o.cash_handover_status
     FROM deliveries d
     INNER JOIN orders o ON d.order_id = o.id
     WHERE ${whereString}
@@ -144,12 +147,15 @@ async function findDeliveriesByPartnerId(partnerId, { page = 1, limit = 20, stat
     LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length};
   `;
   const dataResult = await pool.query(dataQuery, dataParams);
-  
+
   const deliveries = dataResult.rows.map(row => ({
     ...mapDeliveryRow(row),
     orderNumber: row.order_number,
     totalAmount: parseFloat(row.total_amount),
-    orderStatus: row.order_status
+    orderStatus: row.order_status,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    cashHandoverStatus: row.cash_handover_status || null
   }));
   
   return {
@@ -195,6 +201,9 @@ async function findPendingDeliveries({ page = 1, limit = 20, status } = {}) {
       o.order_number,
       o.total_amount,
       o.order_status,
+      o.payment_method,
+      o.payment_status,
+      o.cash_handover_status,
       o.firebase_uid as customer_firebase_uid,
       u.name as customer_db_name,
       u.email as customer_email,
@@ -215,6 +224,9 @@ async function findPendingDeliveries({ page = 1, limit = 20, status } = {}) {
     orderNumber: row.order_number,
     totalAmount: parseFloat(row.total_amount),
     orderStatus: row.order_status,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    cashHandoverStatus: row.cash_handover_status || null,
     customerFirebaseUid: row.customer_firebase_uid,
     customerDbName: row.customer_db_name,
     customerEmail: row.customer_email,
@@ -273,6 +285,9 @@ async function findAllDeliveries({ page = 1, limit = 20, status, partnerId, date
       o.order_number,
       o.total_amount,
       o.order_status,
+      o.payment_method,
+      o.payment_status,
+      o.cash_handover_status,
       o.firebase_uid as customer_firebase_uid,
       u.name as customer_db_name,
       u.email as customer_email,
@@ -293,6 +308,9 @@ async function findAllDeliveries({ page = 1, limit = 20, status, partnerId, date
     orderNumber: row.order_number,
     totalAmount: parseFloat(row.total_amount),
     orderStatus: row.order_status,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    cashHandoverStatus: row.cash_handover_status || null,
     customerFirebaseUid: row.customer_firebase_uid,
     customerDbName: row.customer_db_name,
     customerEmail: row.customer_email,

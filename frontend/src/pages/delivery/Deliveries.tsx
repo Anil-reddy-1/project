@@ -270,10 +270,15 @@ export function Deliveries() {
                         </div>
 
                         {/* Status Badge */}
-                        <div className="mt-4">
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
                           <Badge variant={statusConfig.color as any}>
                             {statusConfig.label}
                           </Badge>
+                          {delivery.cashHandoverStatus === 'pending' && (
+                            <Badge variant="warning">
+                              Cash Pending Collection
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>

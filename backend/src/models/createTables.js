@@ -430,6 +430,12 @@ async function initializeTables() {
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID;');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);');
     await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);');
+    // Tracks cash-in-hand reconciliation for COD orders: NULL (not applicable),
+    // 'pending' (delivery partner collected cash from buyer, awaiting handover to supervisor),
+    // 'collected' (supervisor has confirmed receiving the cash from the delivery partner).
+    await client.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS cash_handover_status VARCHAR(20);");
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS cash_handover_at TIMESTAMPTZ;');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_orders_cash_handover_status ON orders(cash_handover_status);');
 
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_partner_id UUID REFERENCES users(id) ON DELETE SET NULL;');
     await client.query('ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS notes TEXT;');

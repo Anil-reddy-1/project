@@ -20,10 +20,11 @@ import {
   ShoppingBag,
   CreditCard,
   Banknote,
+  HourglassIcon,
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { useDeliveries } from "../../hooks/useDeliveries";
-import { Button, Card, Skeleton, Alert, Separator } from "../../components/ui";
+import { Button, Card, Skeleton, Alert, Separator, Modal } from "../../components/ui";
 import { fadeVariants } from "../../utils/animations";
 import { formatDateTime } from "../../utils/date";
 import { showErrorToast } from "../../utils/toast";
@@ -97,6 +98,8 @@ export function DeliveryDetails() {
   const [notes, setNotes] = useState("");
   const [pickupOtp, setPickupOtp] = useState("");
   const [deliveryOtp, setDeliveryOtp] = useState("");
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [cashCollected, setCashCollected] = useState(false);
 
   const loadDelivery = useCallback(async () => {
     if (!id) return;
@@ -123,7 +126,13 @@ export function DeliveryDetails() {
     };
   }, [id, getDeliveryById]);
 
-  const handleAction = async (action: "accept" | "start" | "complete") => {
+  const needsCashCollection =
+    !!delivery &&
+    ((delivery.paymentMethod || "").toLowerCase().includes("cod") ||
+      (delivery.paymentMethod || "").toLowerCase().includes("cash")) &&
+    (delivery.paymentStatus || "").toLowerCase() !== "paid";
+
+  const handleAction = async (action: "accept" | "start") => {
     if (!delivery) return;
 
     if (action === "start" && !pickupOtp.trim()) {
@@ -131,30 +140,46 @@ export function DeliveryDetails() {
       return;
     }
 
-    if (action === "complete") {
-      if (!deliveryOtp.trim()) {
-        showErrorToast("Please enter the Buyer Delivery OTP");
-        return;
-      }
-      if (
-        !window.confirm(
-          "Are you sure you want to verify the buyer OTP and mark this delivery as completed?",
-        )
-      )
-        return;
-    }
-
     setUpdating(true);
-    const success = await (action === "accept" 
+    const success = await (action === "accept"
       ? acceptDelivery(delivery.id, notes || undefined)
-      : action === "start" 
-      ? startDelivery(delivery.id, notes || undefined, pickupOtp)
-      : completeDelivery(delivery.id, notes || undefined, deliveryOtp));
+      : startDelivery(delivery.id, notes || undefined, pickupOtp));
     if (success) {
       await loadDelivery();
       setNotes("");
       setPickupOtp("");
+    }
+    setUpdating(false);
+  };
+
+  const openCompleteModal = () => {
+    if (!deliveryOtp.trim()) {
+      showErrorToast("Please enter the Buyer Delivery OTP");
+      return;
+    }
+    setCashCollected(false);
+    setShowCompleteModal(true);
+  };
+
+  const handleConfirmComplete = async () => {
+    if (!delivery) return;
+    if (needsCashCollection && !cashCollected) {
+      showErrorToast("Please confirm you have collected the cash from the customer");
+      return;
+    }
+
+    setUpdating(true);
+    const success = await completeDelivery(
+      delivery.id,
+      notes || undefined,
+      deliveryOtp,
+      cashCollected,
+    );
+    if (success) {
+      await loadDelivery();
+      setNotes("");
       setDeliveryOtp("");
+      setShowCompleteModal(false);
     }
     setUpdating(false);
   };
@@ -676,7 +701,7 @@ export function DeliveryDetails() {
                         />
                       </div>
                       <Button
-                        onClick={() => handleAction("complete")}
+                        onClick={openCompleteModal}
                         disabled={updating || deliveryOtp.length < 6}
                         className="w-full h-12 text-base bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0 shadow-md"
                       >
@@ -691,13 +716,26 @@ export function DeliveryDetails() {
             {/* Completed Success */}
             {isCompleted && (
               <Card className="overflow-hidden">
-                <div className="p-6 bg-gradient-to-br from-emerald-500 to-green-500 text-white text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle className="w-8 h-8" />
+                {delivery.cashHandoverStatus === "pending" ? (
+                  <div className="p-6 bg-gradient-to-br from-amber-500 to-orange-600 text-white text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
+                      <HourglassIcon className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-bold text-xl">Delivered — Cash Pending</h3>
+                    <p className="text-sm opacity-95 mt-1">
+                      Delivery completed. This order stays pending until your supervisor collects
+                      the cash from you and confirms it in the system.
+                    </p>
                   </div>
-                  <h3 className="font-bold text-xl">Delivery Completed!</h3>
-                  <p className="text-sm opacity-90 mt-1">Great work! 🎉</p>
-                </div>
+                ) : (
+                  <div className="p-6 bg-gradient-to-br from-emerald-500 to-green-500 text-white text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-bold text-xl">Delivery Completed!</h3>
+                    <p className="text-sm opacity-90 mt-1">Great work! 🎉</p>
+                  </div>
+                )}
                 {delivery.deliveredAt && (
                   <div className="p-4 text-center">
                     <p className="text-xs text-slate-500">Delivered at</p>
@@ -772,6 +810,75 @@ export function DeliveryDetails() {
           </div>
         </div>
       </motion.div>
+
+      {/* Complete Delivery Confirmation Modal */}
+      <Modal
+        isOpen={showCompleteModal}
+        onClose={() => !updating && setShowCompleteModal(false)}
+        title="Complete Delivery"
+        subtitle={delivery.orderNumber ? `Order #${delivery.orderNumber}` : undefined}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowCompleteModal(false)}
+              disabled={updating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmComplete}
+              disabled={updating || (needsCashCollection && !cashCollected)}
+              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0"
+            >
+              {updating ? "Completing..." : "Confirm & Complete"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            You're about to mark this delivery as completed using the buyer's OTP{" "}
+            <span className="font-mono font-bold text-slate-800">{deliveryOtp}</span>.
+          </p>
+
+          {needsCashCollection && (
+            <label
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                cashCollected
+                  ? "border-emerald-400 bg-emerald-50"
+                  : "border-amber-300 bg-amber-50"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={cashCollected}
+                onChange={(e) => setCashCollected(e.target.checked)}
+                className="mt-0.5 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
+              />
+              <span className="text-sm">
+                <span className="font-bold text-slate-800 block">
+                  I have collected ₹
+                  {(delivery.totalAmount ?? delivery.orderAmount ?? 0).toLocaleString("en-IN")} cash
+                  from the customer.
+                </span>
+                <span className="text-slate-500">
+                  This order will stay marked as pending until your supervisor collects this cash
+                  from you and confirms it.
+                </span>
+              </span>
+            </label>
+          )}
+
+          {!needsCashCollection && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+              <CreditCard className="w-4 h-4 shrink-0" />
+              This order is prepaid online — no cash collection needed.
+            </div>
+          )}
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 }

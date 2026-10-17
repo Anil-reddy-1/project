@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
 import { LoadingSpinner } from '../../components/ui';
@@ -126,13 +126,25 @@ export function BuyerHome() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { products, loading } = useProducts({ page: 1, limit: 8, sortBy: 'created_at', sortOrder: 'DESC' }, false);
+  const { products, loading, fetchProducts } = useProducts(
+    { page: 1, limit: 8, sortBy: 'created_at', sortOrder: 'DESC' },
+    false
+  );
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
-  const filteredProducts = selectedCategory
-    ? products.filter((p) => p.categoryTags?.includes(selectedCategory))
-    : products;
+  useEffect(() => {
+    fetchProducts({
+      page: 1,
+      limit: 8,
+      sortBy: 'created_at',
+      sortOrder: 'DESC',
+      categoryTags: selectedCategory ? [selectedCategory] : undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
+
+  const filteredProducts = products;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

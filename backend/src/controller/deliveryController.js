@@ -325,10 +325,10 @@ async function startDelivery(req, res, next) {
 async function completeDelivery(req, res, next) {
   try {
     const { id } = req.params;
-    const { notes, otp } = req.body;
+    const { notes, otp, cashCollected } = req.body;
     const partnerId = req.user.dbId;
-    
-    const delivery = await deliveryService.completeDelivery(id, partnerId, notes, otp);
+
+    const delivery = await deliveryService.completeDelivery(id, partnerId, notes, otp, !!cashCollected);
     
     logger.info('Delivery completed', {
       deliveryId: id,

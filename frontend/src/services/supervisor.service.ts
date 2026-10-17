@@ -98,4 +98,19 @@ export const supervisorService = {
   // Update order status
   updateOrderStatus: (id: string, payload: { status: string; notes?: string }) =>
     api.patch<any>(`/orders/${id}/status`, payload),
+
+  // Regenerate pickup OTP (expired OTP recovery)
+  regeneratePickupOtp: (orderId: string) =>
+    api.post<any>(`/orders/${orderId}/regenerate-pickup-otp`, {}),
+
+  // Regenerate buyer delivery OTP (expired OTP recovery)
+  regenerateDeliveryOtp: (orderId: string) =>
+    api.post<any>(`/orders/${orderId}/regenerate-delivery-otp`, {}),
+
+  // List COD orders whose cash is still with the delivery partner
+  getCashPendingOrders: () => api.get<any>('/orders/cash-pending'),
+
+  // Confirm physical receipt of COD cash from a delivery partner
+  confirmCashHandover: (orderId: string) =>
+    api.post<any>(`/orders/${orderId}/confirm-cash-handover`, {}),
 };

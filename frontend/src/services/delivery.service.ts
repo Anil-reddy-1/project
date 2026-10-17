@@ -57,6 +57,8 @@ export interface Delivery {
   paymentStatus?: string;
   orderStatus?: string;
   orderNotes?: string;
+  cashHandoverStatus?: 'pending' | 'collected' | null;
+  cashHandoverAt?: string | null;
   orderItems?: DeliveryOrderItem[];
   partnerName?: string;
   partnerPhone?: string;
@@ -100,6 +102,7 @@ export interface AssignDeliveryPayload {
 export interface UpdateDeliveryStatusPayload {
   notes?: string;
   otp?: string;
+  cashCollected?: boolean;
 }
 
 export const deliveryService = {

@@ -17,7 +17,10 @@ const assignDeliverySchema = Joi.object({
 // Update delivery status schema
 const updateDeliveryStatusSchema = Joi.object({
   notes: Joi.string().max(500).allow('', null),
-  otp: Joi.string().length(6).allow('', null)
+  otp: Joi.string().length(6).allow('', null),
+  // Required (must be true) when completing a COD delivery that hasn't been paid online —
+  // confirms the delivery partner physically collected cash from the buyer.
+  cashCollected: Joi.boolean()
 });
 
 // Delivery query parameters

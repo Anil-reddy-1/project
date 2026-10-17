@@ -56,6 +56,13 @@ router.get('/number/:orderNumber', orderController.getOrderByNumber);
  * @desc    Get order by ID
  * @access  Private (buyer can view own, admin/supervisor can view all)
  */
+/**
+ * @route   GET /api/v1/orders/cash-pending
+ * @desc    List COD orders where cash is with the delivery partner, awaiting supervisor collection
+ * @access  Private (supervisor, admin)
+ */
+router.get('/cash-pending', requireRole('admin', 'supervisor'), orderController.getCashPendingOrders);
+
 router.get('/:id', orderController.getOrderById);
 
 /**
@@ -87,6 +94,27 @@ router.post('/:id/prepare', requireRole('admin', 'supervisor'), orderController.
  * @access  Private (supervisor, admin)
  */
 router.post('/:id/pack', requireRole('admin', 'supervisor'), orderController.markAsPacked);
+
+/**
+ * @route   POST /api/v1/orders/:id/regenerate-pickup-otp
+ * @desc    Regenerate pickup OTP for a packed/assigned order (expired OTP recovery)
+ * @access  Private (supervisor, admin)
+ */
+router.post('/:id/regenerate-pickup-otp', requireRole('admin', 'supervisor'), orderController.regeneratePickupOtp);
+
+/**
+ * @route   POST /api/v1/orders/:id/regenerate-delivery-otp
+ * @desc    Regenerate buyer delivery OTP for an in-transit order (expired OTP recovery)
+ * @access  Private (supervisor, admin)
+ */
+router.post('/:id/regenerate-delivery-otp', requireRole('admin', 'supervisor'), orderController.regenerateDeliveryOtp);
+
+/**
+ * @route   POST /api/v1/orders/:id/confirm-cash-handover
+ * @desc    Supervisor confirms they've physically collected COD cash from the delivery partner
+ * @access  Private (supervisor, admin)
+ */
+router.post('/:id/confirm-cash-handover', requireRole('admin', 'supervisor'), orderController.confirmCashHandover);
 
 /**
  * @route   POST /api/v1/orders/:id/verify-otp

@@ -413,6 +413,108 @@ async function verifyPickupOtp(req, res, next) {
   }
 }
 
+/**
+ * Regenerate pickup OTP (supervisor) — used when the original OTP has expired
+ * POST /api/v1/orders/:id/regenerate-pickup-otp
+ */
+async function regeneratePickupOtp(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+
+    const order = await orderService.regeneratePickupOtp(id, supervisorId);
+
+    logger.info('Pickup OTP regenerated', { orderId: id, supervisorId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Pickup OTP regenerated successfully',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Regenerate pickup OTP error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Regenerate buyer delivery OTP (supervisor) — used when the original OTP has expired
+ * POST /api/v1/orders/:id/regenerate-delivery-otp
+ */
+async function regenerateDeliveryOtp(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+
+    const order = await orderService.regenerateDeliveryOtp(id);
+
+    logger.info('Delivery OTP regenerated', { orderId: id, supervisorId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Delivery OTP regenerated successfully',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Regenerate delivery OTP error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * Confirm cash handover from delivery partner (supervisor)
+ * POST /api/v1/orders/:id/confirm-cash-handover
+ */
+async function confirmCashHandover(req, res, next) {
+  try {
+    const { id } = req.params;
+    const supervisorId = req.user.dbId;
+
+    const order = await orderService.confirmCashHandover(id);
+
+    logger.info('Cash handover confirmed', { orderId: id, supervisorId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Cash handover confirmed',
+      data: { order }
+    });
+  } catch (error) {
+    logger.error('Confirm cash handover error:', {
+      error: error.message,
+      orderId: req.params.id,
+      userId: req.user?.dbId
+    });
+    next(error);
+  }
+}
+
+/**
+ * List orders with cash pending collection from a delivery partner (supervisor)
+ * GET /api/v1/orders/cash-pending
+ */
+async function getCashPendingOrders(req, res, next) {
+  try {
+    const orders = await orderService.getCashPendingOrders();
+
+    res.status(200).json({
+      success: true,
+      data: { orders }
+    });
+  } catch (error) {
+    logger.error('Get cash pending orders error:', { error: error.message });
+    next(error);
+  }
+}
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -425,5 +527,9 @@ module.exports = {
   validateOrder,
   markAsPreparing,
   markAsPacked,
+  regeneratePickupOtp,
+  regenerateDeliveryOtp,
+  confirmCashHandover,
+  getCashPendingOrders,
   verifyPickupOtp
 };

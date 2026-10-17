@@ -16,6 +16,7 @@ import {
   PackageCheck,
   Truck,
   AlertCircle,
+  Banknote,
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout";
 import { Button, Card, Badge, Skeleton } from "../../components/ui";
@@ -68,6 +69,13 @@ export function SupervisorOrders() {
   const [total, setTotal] = useState(0);
   const limit = 20;
 
+  // Orders delivered but whose COD cash is still with the delivery partner —
+  // kept in their own category until a supervisor confirms collection.
+  const [view, setView] = useState<"all" | "cashPending">("all");
+  const [cashPendingOrders, setCashPendingOrders] = useState<any[]>([]);
+  const [cashPendingLoading, setCashPendingLoading] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
   const loadOrders = async () => {
     try {
       setLoading(true);
@@ -93,9 +101,45 @@ export function SupervisorOrders() {
     }
   };
 
+  const loadCashPendingOrders = async () => {
+    try {
+      setCashPendingLoading(true);
+      const res = await supervisorService.getCashPendingOrders();
+      setCashPendingOrders(res?.data?.orders || []);
+    } catch (err) {
+      console.error("Failed to load cash pending orders:", err);
+      toast.error("Failed to load cash pending orders");
+    } finally {
+      setCashPendingLoading(false);
+    }
+  };
+
+  const handleConfirmCashHandover = async (orderId: string) => {
+    try {
+      setConfirmingId(orderId);
+      await supervisorService.confirmCashHandover(orderId);
+      toast.success("Cash handover confirmed");
+      setCashPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to confirm cash handover");
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
   useEffect(() => {
-    loadOrders();
-  }, [statusFilter, page]);
+    if (view === "all") {
+      loadOrders();
+    } else {
+      loadCashPendingOrders();
+    }
+  }, [statusFilter, page, view]);
+
+  // Load once on mount so the badge count shows even while on the "All Orders" tab
+  useEffect(() => {
+    loadCashPendingOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = () => {
     setPage(1);
@@ -116,6 +160,110 @@ export function SupervisorOrders() {
         initial="hidden"
         animate="visible"
       >
+        {/* View Tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setView("all");
+              setPage(1);
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              view === "all"
+                ? "bg-purple-600 text-white"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            All Orders
+          </button>
+          <button
+            onClick={() => setView("cashPending")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              view === "cashPending"
+                ? "bg-amber-600 text-white"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            <Banknote className="w-4 h-4" />
+            Cash Pending Collection
+            {cashPendingOrders.length > 0 && (
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  view === "cashPending" ? "bg-white/20" : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                {cashPendingOrders.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {view === "cashPending" ? (
+          <>
+            {cashPendingLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-20" />
+                ))}
+              </div>
+            ) : cashPendingOrders.length === 0 ? (
+              <Card className="p-12 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                  <Banknote className="w-8 h-8 text-emerald-500" />
+                </div>
+                <h3 className="font-semibold text-slate-800 text-lg">
+                  No cash pending collection
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  All COD cash has been collected from delivery partners.
+                </p>
+              </Card>
+            ) : (
+              <motion.div
+                className="space-y-3"
+                variants={listContainerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {cashPendingOrders.map((order) => (
+                  <motion.div key={order.id} variants={listItemVariants}>
+                    <Card className="p-4 border-l-4" style={{ borderLeftColor: "#f59e0b" }}>
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => navigate(`/supervisor/orders/${order.id}`)}
+                        >
+                          <h3 className="font-semibold text-slate-800">
+                            {order.orderNumber ? `Order #${order.orderNumber}` : `#${order.id.slice(0, 8)}`}
+                          </h3>
+                          <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 flex-wrap">
+                            <span className="font-bold text-amber-700">
+                              ₹{order.totalAmount?.toFixed?.(2) || order.totalAmount}
+                            </span>
+                            {order.deliveryPartnerName && (
+                              <>
+                                <span className="text-slate-400">•</span>
+                                <span>With: {order.deliveryPartnerName}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          disabled={confirmingId === order.id}
+                          onClick={() => handleConfirmCashHandover(order.id)}
+                          className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 border-0"
+                        >
+                          {confirmingId === order.id ? "Confirming..." : "Confirm Cash Received"}
+                        </Button>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </>
+        ) : (
+          <>
         {/* Filters */}
         <Card className="p-4">
           <div className="flex flex-col md:flex-row gap-3 items-end">
@@ -242,6 +390,9 @@ export function SupervisorOrders() {
                               : order.orderStatus.charAt(0).toUpperCase() +
                                 order.orderStatus.slice(1)}
                           </Badge>
+                          {order.cashHandoverStatus === "pending" && (
+                            <Badge variant="warning">Cash Pending</Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
                           <span className="font-medium">
@@ -306,6 +457,8 @@ export function SupervisorOrders() {
               </Button>
             </div>
           </div>
+        )}
+          </>
         )}
       </motion.div>
     </DashboardLayout>

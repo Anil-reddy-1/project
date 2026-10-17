@@ -11,8 +11,15 @@ import { Button } from './ui';
 import { formatRelativeTime } from '../utils/date';
 import { showSuccessToast, showErrorToast, showInfoToast } from '../utils/toast';
 import { useSocketEvent } from '../context/SocketContext';
+import { alertNewOrder } from '../utils/notificationAlert';
+import { useAuth } from '../context/AuthContext';
+
+// Roles that need an active tune + vibration alert — they must act quickly
+// when a new order comes in (vs. buyers, who just get a visual/toast update).
+const ALERT_ROLES = new Set(['supervisor', 'delivery']);
 
 export function NotificationBell() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +35,10 @@ export function NotificationBell() {
       ...prev.filter((n) => n.id !== newNotification.id),
     ]);
     showInfoToast(`🔔 ${newNotification.title}: ${newNotification.message}`);
+
+    if (user?.role && ALERT_ROLES.has(user.role)) {
+      alertNewOrder();
+    }
   });
 
   // Fetch unread count on mount

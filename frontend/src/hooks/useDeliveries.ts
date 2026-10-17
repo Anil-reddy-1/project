@@ -25,7 +25,7 @@ interface UseDeliveriesReturn {
   getDeliveryById: (id: string) => Promise<Delivery | null>;
   acceptDelivery: (id: string, notes?: string) => Promise<boolean>;
   startDelivery: (id: string, notes?: string, otp?: string) => Promise<boolean>;
-  completeDelivery: (id: string, notes?: string, otp?: string) => Promise<boolean>;
+  completeDelivery: (id: string, notes?: string, otp?: string, cashCollected?: boolean) => Promise<boolean>;
 }
 
 export function useDeliveries(params: UseDeliveriesParams = {}): UseDeliveriesReturn {
@@ -122,9 +122,9 @@ export function useDeliveries(params: UseDeliveriesParams = {}): UseDeliveriesRe
   /**
    * Complete delivery (mark as delivered)
    */
-  const completeDelivery = useCallback(async (id: string, notes?: string, otp?: string): Promise<boolean> => {
+  const completeDelivery = useCallback(async (id: string, notes?: string, otp?: string, cashCollected?: boolean): Promise<boolean> => {
     try {
-      await deliveryService.completeDelivery(id, { notes, otp });
+      await deliveryService.completeDelivery(id, { notes, otp, cashCollected });
       showSuccessToast('Delivery completed successfully');
       await refreshDeliveries();
       return true;

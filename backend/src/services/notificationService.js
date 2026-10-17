@@ -219,10 +219,9 @@ async function markAllAsRead(userId) {
     const query = `
       UPDATE notifications
       SET read_at = CURRENT_TIMESTAMP
-      WHERE user_id = $1 AND read_at IS NULL
-      RETURNING COUNT(*);
+      WHERE user_id = $1 AND read_at IS NULL;
     `;
-    
+
     const result = await pool.query(query, [userId]);
     return result.rowCount;
   } catch (error) {
@@ -257,10 +256,9 @@ async function deleteOldNotifications(daysOld = 30) {
   try {
     const query = `
       DELETE FROM notifications
-      WHERE created_at < NOW() - INTERVAL '${daysOld} days'
-      RETURNING COUNT(*);
+      WHERE created_at < NOW() - INTERVAL '${daysOld} days';
     `;
-    
+
     const result = await pool.query(query);
     console.log(`[Notification] Deleted ${result.rowCount} old notifications`);
     return result.rowCount;
@@ -354,6 +352,35 @@ async function notifyDeliveryPartnersOrderPacked(orderData) {
   }
 }
 
+/**
+ * Notify all supervisors that a delivery partner has collected COD cash
+ * and it now needs to be physically handed over / confirmed in the system.
+ */
+async function notifySupervisorsCashPending(orderData) {
+  try {
+    const query = `SELECT id FROM users WHERE role = 'supervisor' AND is_active = TRUE;`;
+    const result = await pool.query(query);
+
+    for (const row of result.rows) {
+      await createNotification(
+        row.id,
+        'cash_pending',
+        'Cash Collection Pending',
+        `Order #${orderData.orderNumber} delivered. ₹${orderData.totalAmount?.toFixed?.(2) || orderData.totalAmount} cash is with the delivery partner — confirm once collected.`,
+        {
+          orderId: orderData.id,
+          orderNumber: orderData.orderNumber,
+          totalAmount: orderData.totalAmount
+        }
+      );
+    }
+
+    console.log(`[Notification] Notified ${result.rows.length} supervisors about pending cash handover for order ${orderData.orderNumber}`);
+  } catch (error) {
+    console.error('[Notification] Error notifying supervisors about cash handover:', error);
+  }
+}
+
 module.exports = {
   createNotification,
   sendOrderConfirmation,
@@ -363,6 +390,7 @@ module.exports = {
   sendOrderCancelled,
   notifySupervisorsNewOrder,
   notifyDeliveryPartnersOrderPacked,
+  notifySupervisorsCashPending,
   getUserNotifications,
   markAsRead,
   markAllAsRead,

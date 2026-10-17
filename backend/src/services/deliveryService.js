@@ -158,11 +158,30 @@ async function assignDeliveryToOrder(orderId, partnerId, adminId) {
     // Assign partner
     const updatedDelivery = await deliveryModel.assignDeliveryPartner(delivery.id, partnerId, client);
 
-    // Sync order status
-    await client.query(
-      `UPDATE orders SET order_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [orderId]
-    );
+    // A direct assignment can happen before the order was ever packed (e.g. 'confirmed'
+    // or 'preparing'), which is the normal step that generates the pickup OTP. Without
+    // this, the delivery partner would have no OTP to use when starting the delivery.
+    if (!order.pickupOtp) {
+      const pickupOtp = String(Math.floor(100000 + Math.random() * 900000));
+      const pickupOtpExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+
+      await client.query(
+        `UPDATE orders
+         SET order_status = 'assigned',
+             pickup_otp = $1,
+             pickup_otp_expires_at = $2,
+             notes = COALESCE(notes || E'\n', '') || $3,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4`,
+        [pickupOtp, pickupOtpExpiresAt, 'Assigned directly by supervisor. Pickup OTP generated.', orderId]
+      );
+    } else {
+      // Sync order status
+      await client.query(
+        `UPDATE orders SET order_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [orderId]
+      );
+    }
 
     // Status history
     await deliveryModel.createStatusHistory(
@@ -353,7 +372,7 @@ async function startDelivery(deliveryId, partnerId, notes = null, otp = null) {
  * - Updates status from 'in_transit' to 'delivered'
  * - Syncs order status to 'delivered'
  */
-async function completeDelivery(deliveryId, partnerId, notes = null, otp = null) {
+async function completeDelivery(deliveryId, partnerId, notes = null, otp = null, cashCollected = false) {
   const client = await pool.connect();
   
   try {
@@ -393,7 +412,18 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null)
         throw new BadRequestError('Invalid Buyer Delivery OTP. Please verify with the customer and try again.');
       }
     }
-    
+
+    // Cash-on-delivery orders that haven't been paid online require the partner
+    // to explicitly confirm they collected the cash from the buyer.
+    const isCOD = (order.paymentMethod || '').toLowerCase().includes('cod') ||
+      (order.paymentMethod || '').toLowerCase().includes('cash');
+    const isPaid = (order.paymentStatus || '').toLowerCase() === 'paid';
+    const needsCashCollection = isCOD && !isPaid;
+
+    if (needsCashCollection && !cashCollected) {
+      throw new BadRequestError('Please confirm you have collected the cash from the customer before completing this delivery.');
+    }
+
     // Update to delivered
     const updatedDelivery = await deliveryModel.updateDeliveryStatus(
       deliveryId,
@@ -402,19 +432,25 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null)
       notes || 'Delivery completed',
       client
     );
-    
+
     // Sync order status to delivered, clear delivery_otp
     await client.query(
-      `UPDATE orders 
-       SET order_status = 'delivered', 
-           delivery_otp = NULL, 
-           delivery_otp_expires_at = NULL, 
+      `UPDATE orders
+       SET order_status = 'delivered',
+           delivery_otp = NULL,
+           delivery_otp_expires_at = NULL,
            notes = COALESCE(notes || E'\n', '') || $1,
-           updated_at = CURRENT_TIMESTAMP 
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $2`,
       ['Delivery completed with buyer OTP verification.', delivery.orderId]
     );
-    
+
+    // Cash is now with the delivery partner — keep the order in a distinct
+    // "pending cash handover" state until a supervisor confirms receipt.
+    if (needsCashCollection) {
+      await orderModel.markCashPendingHandover(delivery.orderId, client);
+    }
+
     // Create status history
     await deliveryModel.createStatusHistory(
       deliveryId,
@@ -423,17 +459,26 @@ async function completeDelivery(deliveryId, partnerId, notes = null, otp = null)
       notes || 'Delivery completed successfully with buyer OTP verification',
       client
     );
-    
+
     await client.query('COMMIT');
-    
+
     // Send notification to buyer (non-blocking)
     notificationService.sendDeliveryStatusUpdate(order.userId, 'delivered', {
       id: deliveryId,
       orderId: delivery.orderId,
       orderNumber: order.orderNumber
     }).catch(err => console.error('Failed to send delivery completed notification:', err));
-    
-    return updatedDelivery;
+
+    // Notify supervisors that cash needs to be collected from this partner (non-blocking)
+    if (needsCashCollection) {
+      notificationService.notifySupervisorsCashPending({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+      }).catch(err => console.error('Failed to notify supervisors about pending cash handover:', err));
+    }
+
+    return { ...updatedDelivery, cashHandoverStatus: needsCashCollection ? 'pending' : null };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -614,9 +659,10 @@ async function getDeliveryDetails(deliveryId, userId, userRole) {
   let orderDetails = {};
   try {
     const orderQuery = `
-      SELECT 
-        o.id, o.order_number, o.total_amount, 
-        o.payment_method, o.payment_status, o.order_status, o.notes as order_notes
+      SELECT
+        o.id, o.order_number, o.total_amount,
+        o.payment_method, o.payment_status, o.order_status, o.notes as order_notes,
+        o.cash_handover_status, o.cash_handover_at
       FROM orders o
       WHERE o.id = $1
     `;
@@ -643,6 +689,8 @@ async function getDeliveryDetails(deliveryId, userId, userRole) {
         paymentStatus: orderRow.payment_status,
         orderStatus: orderRow.order_status,
         orderNotes: orderRow.order_notes,
+        cashHandoverStatus: orderRow.cash_handover_status || null,
+        cashHandoverAt: orderRow.cash_handover_at || null,
         orderItems: itemsResult.rows.map(item => ({
           id: item.id,
           productId: item.product_id,

@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
+import { NotificationBell } from '../NotificationBell';
 
 interface BuyerLayoutProps {
   children: ReactNode;
@@ -114,11 +115,10 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   <Link
                     key={path}
                     to={path}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-[color,background-color] ${
-                      isActive
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-[color,background-color] ${isActive
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -128,6 +128,9 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
             </nav>
 
             <div className="flex items-center gap-2 ml-auto">
+              {/* Notifications */}
+              <NotificationBell />
+
               {/* Cart */}
               <Link
                 to="/buyer/cart"
@@ -229,9 +232,8 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
                   key={path}
                   to={path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-b border-slate-50 last:border-0 ${
-                    isActive ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
-                  }`}
+                  className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-b border-slate-50 last:border-0 ${isActive ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {label}
@@ -241,9 +243,8 @@ export function BuyerLayout({ children, searchPlaceholder = 'Search products…'
             <Link
               to="/buyer/cart"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-t border-slate-100 ${
-                location.pathname === '/buyer/cart' ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
-              }`}
+              className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-colors border-t border-slate-100 ${location.pathname === '/buyer/cart' ? 'text-blue-700 bg-blue-50' : 'text-slate-700 hover:bg-slate-50'
+                }`}
             >
               <ShoppingCart className="w-4 h-4" />
               Cart

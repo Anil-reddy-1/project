@@ -26,6 +26,8 @@ function mapOrderRow(row) {
     deliveryOtpExpiresAt: row.delivery_otp_expires_at || null,
     deliveryAddress: row.delivery_address,
     notes: row.notes,
+    cashHandoverStatus: row.cash_handover_status || null,
+    cashHandoverAt: row.cash_handover_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -339,12 +341,63 @@ async function updatePaymentStatus(orderId, paymentStatus) {
   `;
   
   const result = await pool.query(query, [paymentStatus, orderId]);
-  
+
   if (result.rows.length === 0) {
     return null;
   }
-  
+
   return mapOrderRow(result.rows[0]);
+}
+
+/**
+ * Mark a COD order's cash as collected by the delivery partner, pending handover to a supervisor.
+ */
+async function markCashPendingHandover(orderId, client = pool) {
+  const query = `
+    UPDATE orders
+    SET cash_handover_status = 'pending', updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1
+    RETURNING *;
+  `;
+  const result = await client.query(query, [orderId]);
+  return result.rows.length ? mapOrderRow(result.rows[0]) : null;
+}
+
+/**
+ * Supervisor confirms they have physically received the cash from the delivery partner.
+ */
+async function confirmCashHandover(orderId) {
+  const query = `
+    UPDATE orders
+    SET cash_handover_status = 'collected',
+        cash_handover_at = CURRENT_TIMESTAMP,
+        payment_status = 'paid',
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1 AND cash_handover_status = 'pending'
+    RETURNING *;
+  `;
+  const result = await pool.query(query, [orderId]);
+  return result.rows.length ? mapOrderRow(result.rows[0]) : null;
+}
+
+/**
+ * List orders whose COD cash is still with the delivery partner, awaiting supervisor collection.
+ */
+async function findOrdersPendingCashHandover() {
+  const query = `
+    SELECT o.*, d.delivery_partner_id, u.name AS delivery_partner_name
+    FROM orders o
+    LEFT JOIN deliveries d ON d.order_id = o.id
+    LEFT JOIN users u ON u.id = d.delivery_partner_id
+    WHERE o.cash_handover_status = 'pending'
+    ORDER BY o.updated_at DESC;
+  `;
+  const result = await pool.query(query);
+  return result.rows.map((row) => ({
+    ...mapOrderRow(row),
+    deliveryPartnerId: row.delivery_partner_id,
+    deliveryPartnerName: row.delivery_partner_name,
+  }));
 }
 
 /**
@@ -395,6 +448,9 @@ module.exports = {
   findAllOrders,
   updateOrderStatus,
   updatePaymentStatus,
+  markCashPendingHandover,
+  confirmCashHandover,
+  findOrdersPendingCashHandover,
   getUserOrderStats,
   getOrderItems,
   mapOrderRow,

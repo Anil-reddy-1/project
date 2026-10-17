@@ -126,6 +126,52 @@ export function SupervisorOrderDetails() {
     }
   };
 
+  const [otpActionLoading, setOtpActionLoading] = useState(false);
+
+  const handleRegeneratePickupOtp = async () => {
+    if (!id) return;
+    try {
+      setOtpActionLoading(true);
+      const res = await supervisorService.regeneratePickupOtp(id);
+      const updatedOrder = res?.data?.order || res?.data;
+      toast.success("Pickup OTP regenerated");
+      setOrder(updatedOrder);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to regenerate pickup OTP");
+    } finally {
+      setOtpActionLoading(false);
+    }
+  };
+
+  const handleRegenerateDeliveryOtp = async () => {
+    if (!id) return;
+    try {
+      setOtpActionLoading(true);
+      const res = await supervisorService.regenerateDeliveryOtp(id);
+      const updatedOrder = res?.data?.order || res?.data;
+      toast.success("Delivery OTP regenerated");
+      setOrder(updatedOrder);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to regenerate delivery OTP");
+    } finally {
+      setOtpActionLoading(false);
+    }
+  };
+
+  const handleConfirmCashHandover = async () => {
+    if (!id) return;
+    try {
+      setActionLoading(true);
+      await supervisorService.confirmCashHandover(id);
+      toast.success("Cash handover confirmed");
+      await loadOrder();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to confirm cash handover");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusIndex = (status: string) => {
     return STATUS_FLOW.findIndex((s) => s.key === status);
   };
@@ -309,35 +355,155 @@ export function SupervisorOrderDetails() {
           </div>
         </Card>
 
-        {/* OTP Display */}
-        {order.pickupOtp && (
-          <Card className="p-6 border-2 border-purple-200 bg-purple-50/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                <KeyRound className="w-5 h-5 text-purple-600" />
+        {/* Pickup OTP Display */}
+        {["packed", "assigned"].includes(order.orderStatus) && (() => {
+          const isExpired =
+            order.pickupOtp &&
+            order.pickupOtpExpiresAt &&
+            new Date(order.pickupOtpExpiresAt) < new Date();
+
+          return (
+            <Card
+              className={`p-6 border-2 ${
+                isExpired || !order.pickupOtp
+                  ? "border-red-200 bg-red-50/50"
+                  : "border-purple-200 bg-purple-50/50"
+              }`}
+            >
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isExpired || !order.pickupOtp ? "bg-red-100" : "bg-purple-100"
+                    }`}
+                  >
+                    <KeyRound
+                      className={`w-5 h-5 ${isExpired || !order.pickupOtp ? "text-red-600" : "text-purple-600"}`}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800">Pickup OTP</h3>
+                    <p className="text-xs text-slate-500">
+                      {order.pickupOtp
+                        ? "Share this with the delivery partner for verification"
+                        : "No OTP generated yet"}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegeneratePickupOtp}
+                  disabled={otpActionLoading}
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  {otpActionLoading ? "Regenerating..." : "Regenerate OTP"}
+                </Button>
               </div>
-              <div>
-                <h3 className="font-semibold text-slate-800">Pickup OTP</h3>
-                <p className="text-xs text-slate-500">
-                  Share this with the delivery partner for verification
+
+              {order.pickupOtp && (
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div
+                      className={`w-fit max-w-full break-all text-3xl sm:text-4xl font-mono font-bold tracking-[0.2em] sm:tracking-[0.3em] bg-white px-4 sm:px-6 py-3 rounded-xl border shadow-sm ${
+                        isExpired ? "text-red-700 border-red-200" : "text-purple-700 border-purple-200"
+                      }`}
+                    >
+                      {order.pickupOtp}
+                    </div>
+                    <Button variant="outline" size="sm" onClick={copyOtp} className="w-full sm:w-auto">
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy
+                    </Button>
+                  </div>
+                  {order.pickupOtpExpiresAt && (
+                    <p className={`text-xs mt-3 ${isExpired ? "text-red-600 font-semibold" : "text-slate-500"}`}>
+                      {isExpired ? "Expired on " : "Expires: "}
+                      {new Date(order.pickupOtpExpiresAt).toLocaleString("en-IN")}
+                    </p>
+                  )}
+                </>
+              )}
+            </Card>
+          );
+        })()}
+
+        {/* Buyer Delivery OTP Display (in-transit orders) */}
+        {order.orderStatus === "in_transit" && (() => {
+          const isExpired =
+            order.deliveryOtp &&
+            order.deliveryOtpExpiresAt &&
+            new Date(order.deliveryOtpExpiresAt) < new Date();
+
+          return (
+            <Card
+              className={`p-6 border-2 ${
+                isExpired || !order.deliveryOtp ? "border-red-200 bg-red-50/50" : "border-indigo-200 bg-indigo-50/50"
+              }`}
+            >
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isExpired || !order.deliveryOtp ? "bg-red-100" : "bg-indigo-100"
+                    }`}
+                  >
+                    <KeyRound
+                      className={`w-5 h-5 ${isExpired || !order.deliveryOtp ? "text-red-600" : "text-indigo-600"}`}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800">Buyer Delivery OTP</h3>
+                    <p className="text-xs text-slate-500">
+                      The buyer shares this with the delivery partner to confirm receipt
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegenerateDeliveryOtp}
+                  disabled={otpActionLoading}
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  {otpActionLoading ? "Regenerating..." : "Regenerate OTP"}
+                </Button>
+              </div>
+              {order.deliveryOtpExpiresAt && (
+                <p className={`text-xs ${isExpired ? "text-red-600 font-semibold" : "text-slate-500"}`}>
+                  {isExpired ? "Expired on " : "Expires: "}
+                  {new Date(order.deliveryOtpExpiresAt).toLocaleString("en-IN")}
                 </p>
+              )}
+            </Card>
+          );
+        })()}
+
+        {/* Cash Handover Status */}
+        {order.cashHandoverStatus === "pending" && (
+          <Card className="p-6 border-2 border-amber-300 bg-amber-50/60">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-800">
+                    Cash Pending Collection
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    This order was delivered COD — the cash is still with the delivery partner.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <div className="w-fit max-w-full break-all text-3xl sm:text-4xl font-mono font-bold text-purple-700 tracking-[0.2em] sm:tracking-[0.3em] bg-white px-4 sm:px-6 py-3 rounded-xl border border-purple-200 shadow-sm">
-                {order.pickupOtp}
-              </div>
-              <Button variant="outline" size="sm" onClick={copyOtp} className="w-full sm:w-auto">
-                <Copy className="w-4 h-4 mr-1" />
-                Copy
+              <Button
+                onClick={handleConfirmCashHandover}
+                disabled={actionLoading}
+                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0"
+              >
+                {actionLoading ? "Confirming..." : "Confirm Cash Received"}
               </Button>
             </div>
-            {order.pickupOtpExpiresAt && (
-              <p className="text-xs text-slate-500 mt-3">
-                Expires:{" "}
-                {new Date(order.pickupOtpExpiresAt).toLocaleString("en-IN")}
-              </p>
-            )}
           </Card>
         )}
 

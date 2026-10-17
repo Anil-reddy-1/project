@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, User, Store, ShoppingCart, LogOut, Menu } from "lucide-react";
+import { Search, User, Store, ShoppingCart, LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/useCart";
+import { NotificationBell } from "../NotificationBell";
 
 interface HeaderProps {
   title?: string;
@@ -101,14 +102,7 @@ export function Header({
         </div>
 
         {/* Notifications */}
-        <button
-          className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
-          type="button"
-          title="Notifications"
-        >
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+        <NotificationBell />
 
         {/* User Profile */}
         <div className="relative">
